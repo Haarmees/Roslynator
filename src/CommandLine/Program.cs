@@ -106,6 +106,7 @@ namespace Roslynator.CommandLine
                         typeof(PhysicalLinesOfCodeCommandLineOptions),
                         typeof(RenameSymbolCommandLineOptions),
                         typeof(SpellcheckCommandLineOptions),
+                        typeof(SuppressCommandLineOptions),
 #if DEBUG
                         typeof(AnalyzeAssemblyCommandLineOptions),
                         typeof(FindSymbolsCommandLineOptions),
@@ -198,6 +199,8 @@ namespace Roslynator.CommandLine
                                 return RenameSymbolAsync(renameSymbolCommandLineOptions).Result;
                             case SpellcheckCommandLineOptions spellcheckCommandLineOptions:
                                 return SpellcheckAsync(spellcheckCommandLineOptions).Result;
+                            case SuppressCommandLineOptions suppressCommandLineOptions:
+                                return SuppressAsync(suppressCommandLineOptions).Result;
 #if DEBUG
                             case FindSymbolsCommandLineOptions findSymbolsCommandLineOptions:
                                 return FindSymbolsAsync(findSymbolsCommandLineOptions).Result;
@@ -677,6 +680,24 @@ namespace Roslynator.CommandLine
             CommandStatus status = await command.ExecuteAsync(paths, options.MSBuildPath, options.Properties);
 
             return GetExitCode(status);
+        }
+
+        private static async Task<int> SuppressAsync(SuppressCommandLineOptions options)
+        {
+            if (!options.TryParseDiagnosticSeverity(CodeAnalyzerOptions.Default.SeverityLevel, out DiagnosticSeverity severityLevel))
+                return ExitCodes.Error;
+            
+            if (!options.TryGetProjectFilter(out ProjectFilter projectFilter))
+                return ExitCodes.Error;
+            
+            if (!TryParsePaths(options.Paths, out ImmutableArray<string> paths))
+                return ExitCodes.Error;
+            
+            var command = new SuppressCommand(options, severityLevel, projectFilter);
+
+            var result = await command.ExecuteAsync(paths, options.MSBuildPath, options.Properties);
+
+            return GetExitCode(result);
         }
 
         private static async Task<int> SlnListAsync(SlnListCommandLineOptions options)

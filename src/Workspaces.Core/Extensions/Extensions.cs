@@ -453,4 +453,29 @@ internal static class Extensions
         return reportDiagnostic != ReportDiagnostic.Suppress
             && reportDiagnostic.ToDiagnosticSeverity() >= codeAnalysisOptions.SeverityLevel;
     }
+    
+    internal static IEnumerable<IEnumerable<int>> GroupConsecutiveNumbers(this IEnumerable<int> numbers)
+    {
+        var enumerable = numbers as int[] ?? numbers.ToArray();
+        if (!enumerable.Any())
+        {
+            return new List<IEnumerable<int>>();
+        }
+
+        var filteredNumbers = new List<IEnumerable<int>>();
+        var sequence = new List<int>() { enumerable.First()};
+        for (var i = 1; i < enumerable.Length; i++)
+        {
+            if (enumerable[i] - enumerable[i - 1] > 1)
+            {
+                filteredNumbers.Add(sequence);
+                sequence = new List<int>();
+            }
+            sequence.Add(enumerable[i]);
+        }
+
+        filteredNumbers.Add(sequence);
+
+        return filteredNumbers;
+    }
 }

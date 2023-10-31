@@ -106,6 +106,7 @@ internal static class Program
                     typeof(PhysicalLinesOfCodeCommandLineOptions),
                     typeof(RenameSymbolCommandLineOptions),
                     typeof(SpellcheckCommandLineOptions),
+                    typeof(SuppressCommandLineOptions),
 #if DEBUG
                     typeof(FindSymbolsCommandLineOptions),
 #endif
@@ -193,6 +194,8 @@ internal static class Program
                             return RenameSymbolAsync(renameSymbolCommandLineOptions).Result;
                         case SpellcheckCommandLineOptions spellcheckCommandLineOptions:
                             return SpellcheckAsync(spellcheckCommandLineOptions).Result;
+                        case SuppressCommandLineOptions suppressCommandLineOptions:
+                            return SuppressAsync(suppressCommandLineOptions).Result;
 #if DEBUG
                         case FindSymbolsCommandLineOptions findSymbolsCommandLineOptions:
                             return FindSymbolsAsync(findSymbolsCommandLineOptions).Result;
@@ -803,6 +806,24 @@ internal static class Program
         WriteLine("Command 'generate-doc-root' is obsolete. Use parameter '--root-file-path' of a command 'generate-doc' instead.", ConsoleColors.Yellow, Verbosity.Minimal);
 
         return GetExitCode(status);
+    }
+    
+    private static async Task<int> SuppressAsync(SuppressCommandLineOptions options)
+    {
+        if (!options.TryParseDiagnosticSeverity(CodeAnalyzerOptions.Default.SeverityLevel, out DiagnosticSeverity severityLevel))
+            return ExitCodes.Error;
+
+        if (!options.TryGetProjectFilter(out ProjectFilter projectFilter))
+            return ExitCodes.Error;
+
+        if (!TryParsePaths(options.Paths, out ImmutableArray<PathInfo> paths))
+            return ExitCodes.Error;
+
+        var command = new SuppressCommand(options, severityLevel, projectFilter, CreateFileSystemFilter(options));
+
+        var result = await command.ExecuteAsync(paths, options.MSBuildPath, options.Properties);
+
+        return GetExitCode(result);
     }
 
     private static int Migrate(MigrateCommandLineOptions options)

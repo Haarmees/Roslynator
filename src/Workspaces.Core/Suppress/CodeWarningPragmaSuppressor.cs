@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using static Roslynator.Logger;
 
 namespace Roslynator.Suppress
 {
@@ -38,7 +40,49 @@ namespace Roslynator.Suppress
             Func<Project, bool> predicate,
             CancellationToken cancellationToken = default)
         {
-            return new ImmutableArray<ProjectWarningSuppressorResult>();
+            foreach (string id in Options.IgnoredDiagnosticIds.OrderBy(f => f))
+                WriteLine($"Ignore diagnostic '{id}'", Verbosity.Diagnostic);
+
+            ImmutableArray<ProjectId> projectIds = solution
+                .GetProjectDependencyGraph()
+                .GetTopologicallySortedProjects(cancellationToken)
+                .ToImmutableArray();
+
+            WriteLine($"Analyze solution '{solution.FilePath}'", ConsoleColors.Cyan, Verbosity.Minimal);
+
+            var results = new List<ProjectWarningSuppressorResult>();
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
+            TimeSpan lastElapsed = TimeSpan.Zero;
+
+            for (int i = 0; i < projectIds.Length; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                Project project = solution.GetProject(projectIds[i])!;
+
+                if (predicate is null || predicate(project))
+                {
+                    WriteLine($"Suppres warnings '{project.Name}' {$"{i + 1}/{projectIds.Length}"}", Verbosity.Minimal);
+
+                    ProjectWarningSuppressorResult result = await SuppressDiagnosticsProjectAsync(project, cancellationToken).ConfigureAwait(false);
+
+                    results.Add(result);
+                }
+                else
+                {
+                    WriteLine($"Skip '{project.Name}' {$"{i + 1}/{projectIds.Length}"}", ConsoleColors.DarkGray, Verbosity.Minimal);
+                }
+
+                lastElapsed = stopwatch.Elapsed;
+            }
+
+            stopwatch.Stop();
+
+            WriteLine($"Done analyzing solution '{solution.FilePath}' in {stopwatch.Elapsed:mm\\:ss\\.ff}", Verbosity.Minimal);
+
+            return results.ToImmutableArray();
         }
 
         public async Task<ProjectWarningSuppressorResult> SuppressDiagnosticsProjectAsync(Project project,

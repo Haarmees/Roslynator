@@ -66,9 +66,7 @@ namespace Roslynator.Suppress
                 {
                     WriteLine($"Suppres warnings '{project.Name}' {$"{i + 1}/{projectIds.Length}"}", Verbosity.Minimal);
 
-                    ProjectWarningSuppressorResult result = await SuppressDiagnosticsProjectAsync(project, cancellationToken).ConfigureAwait(false);
-
-                    results.Add(result);
+                    project = await InsertPragmasInProjectAsync(project, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
@@ -76,8 +74,10 @@ namespace Roslynator.Suppress
                 }
 
                 lastElapsed = stopwatch.Elapsed;
+                solution = project.Solution;
             }
 
+            _workspace.TryApplyChanges(solution);
             stopwatch.Stop();
 
             WriteLine($"Done analyzing solution '{solution.FilePath}' in {stopwatch.Elapsed:mm\\:ss\\.ff}", Verbosity.Minimal);
@@ -88,12 +88,19 @@ namespace Roslynator.Suppress
         public async Task<ProjectWarningSuppressorResult> SuppressDiagnosticsProjectAsync(Project project,
             CancellationToken cancellationToken = default)
         {
+            project = await InsertPragmasInProjectAsync(project, cancellationToken);
+
+            _workspace.TryApplyChanges(project.Solution);
+
+            return null;
+        }
+
+        private async Task<Project> InsertPragmasInProjectAsync(Project project, CancellationToken cancellationToken)
+        {
             var analyzers = _analyzerLoader.GetAnalyzers(project: project);
 
             var allDiagnostics = (await GetDiagnostics(project, analyzers, cancellationToken))
                 .Where(d => d.IsEffective(Options, project.CompilationOptions));
-
-            project = project.Solution.GetProject(project.Id);
 
             var diagnosticsPerFiles = allDiagnostics.GroupBy(diagnostic =>
             {
@@ -111,12 +118,16 @@ namespace Roslynator.Suppress
                 var diagnosticsPerIds = diagnosticsPerFile.GroupBy(d => d.Id);
                 foreach (var diagnosticsPerId in diagnosticsPerIds)
                 {
-                    var allStartLineNumbers = diagnosticsPerId.Select(diagnostic => root.SyntaxTree.GetLineSpan(diagnostic.Location.SourceSpan).StartLine()).OrderBy(l => l)
+                    var allStartLineNumbers = diagnosticsPerId
+                        .Select(diagnostic => root.SyntaxTree.GetLineSpan(diagnostic.Location.SourceSpan).StartLine())
+                        .OrderBy(l => l)
                         .GroupConsecutiveNumbers().Select(seq => seq.First())
                         .ToDictionary(l => l, _ => diagnosticsPerId.Take(1).Select(CreateDisablePragma));
                     disableLines.Merge(allStartLineNumbers);
-                    
-                    var allEndLineNumbers = diagnosticsPerId.Select(diagnostic => root.SyntaxTree.GetLineSpan(diagnostic.Location.SourceSpan).EndLine() + 1).OrderBy(l => l)
+
+                    var allEndLineNumbers = diagnosticsPerId
+                        .Select(diagnostic => root.SyntaxTree.GetLineSpan(diagnostic.Location.SourceSpan).EndLine() + 1)
+                        .OrderBy(l => l)
                         .GroupConsecutiveNumbers().Select(seq => seq.Last())
                         .ToDictionary(l => l, _ => diagnosticsPerId.Take(1).Select(CreateRestorePragma));
                     restoreLines.Merge(allEndLineNumbers);
@@ -164,13 +175,11 @@ namespace Roslynator.Suppress
                         offset += pragmas.Count();
                     }
                 }
-                
+
                 project = document.WithSyntaxRoot(root).Project;
             }
 
-            _workspace.TryApplyChanges(project.Solution);
-
-            return null;
+            return project;
         }
 
         private async Task<ImmutableArray<Diagnostic>> GetDiagnostics(Project project,

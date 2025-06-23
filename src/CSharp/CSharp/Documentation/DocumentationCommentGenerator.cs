@@ -63,7 +63,9 @@ internal static class DocumentationCommentGenerator
             case SyntaxKind.IndexerDeclaration:
                 return Generate((IndexerDeclarationSyntax)memberDeclaration, settings);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return Generate((RecordDeclarationSyntax)memberDeclaration, settings);
             default:
                 throw new ArgumentException("", nameof(memberDeclaration));
@@ -600,22 +602,22 @@ internal static class DocumentationCommentGenerator
                     {
                         case "member":
                         case "doc":
+                        {
+                            try
                             {
-                                try
-                                {
-                                    return reader.ReadInnerXml();
-                                }
-                                catch (XmlException ex)
-                                {
-                                    Debug.Fail(symbol.ToDisplayString() + "\r\n\r\n" + ex.Message + "\r\n\r\n" + xml);
-                                    return null;
-                                }
+                                return reader.ReadInnerXml();
                             }
-                        default:
+                            catch (XmlException ex)
                             {
-                                Debug.Fail(reader.Name);
+                                Debug.Fail(symbol.ToDisplayString() + "\r\n\r\n" + ex.Message + "\r\n\r\n" + xml);
                                 return null;
                             }
+                        }
+                        default:
+                        {
+                            Debug.Fail(reader.Name);
+                            return null;
+                        }
                     }
                 }
             }
@@ -633,7 +635,9 @@ internal static class DocumentationCommentGenerator
             case SyntaxKind.ClassDeclaration:
                 return ((ClassDeclarationSyntax)parent).BaseList?.Types.Any() == true;
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return ((RecordDeclarationSyntax)parent).BaseList?.Types.Any() == true;
             case SyntaxKind.StructDeclaration:
                 return ((StructDeclarationSyntax)parent).BaseList?.Types.Any() == true;

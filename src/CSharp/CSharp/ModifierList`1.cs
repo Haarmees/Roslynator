@@ -13,7 +13,6 @@ namespace Roslynator.CSharp;
 /// <summary>
 /// Represents a list of modifiers.
 /// </summary>
-/// <typeparam name="TNode"></typeparam>
 [SuppressMessage("Usage", "RCS1223:Use DebuggerDisplay attribute for publicly visible type.")]
 public abstract class ModifierList<TNode> where TNode : SyntaxNode
 {
@@ -97,15 +96,18 @@ public abstract class ModifierList<TNode> where TNode : SyntaxNode
         if (typeof(TNode) == typeof(RecordDeclarationSyntax))
             return new RecordDeclarationModifierList();
 
+        if (typeof(TNode) == typeof(LambdaExpressionSyntax))
+            return new LambdaExpressionModifierList();
+
+        if (typeof(TNode) == typeof(AnonymousMethodExpressionSyntax))
+            return new AnonymousMethodExpressionModifierList();
+
         throw new InvalidOperationException();
     }
 
     /// <summary>
     /// Creates a new node with a modifier of the specified kind inserted.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind"></param>
-    /// <param name="comparer"></param>
     public TNode Insert(TNode node, SyntaxKind kind, IComparer<SyntaxKind>? comparer = null)
     {
         if (node is null)
@@ -121,9 +123,6 @@ public abstract class ModifierList<TNode> where TNode : SyntaxNode
     /// <summary>
     /// Creates a new node with the specified modifier inserted.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="modifier"></param>
-    /// <param name="comparer"></param>
     public TNode Insert(TNode node, SyntaxToken modifier, IComparer<SyntaxToken>? comparer = null)
     {
         if (node is null)
@@ -204,8 +203,6 @@ public abstract class ModifierList<TNode> where TNode : SyntaxNode
     /// <summary>
     /// Creates a new node with a modifier of the specified kind removed.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind"></param>
     public TNode Remove(TNode node, SyntaxKind kind)
     {
         if (node is null)
@@ -228,8 +225,6 @@ public abstract class ModifierList<TNode> where TNode : SyntaxNode
     /// <summary>
     /// Creates a new node with the specified modifier removed.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="modifier"></param>
     public TNode Remove(TNode node, SyntaxToken modifier)
     {
         if (node is null)
@@ -252,8 +247,6 @@ public abstract class ModifierList<TNode> where TNode : SyntaxNode
     /// <summary>
     /// Creates a new node with a modifier at the specified index removed.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="index"></param>
     public TNode RemoveAt(TNode node, int index)
     {
         if (node is null)
@@ -332,7 +325,6 @@ public abstract class ModifierList<TNode> where TNode : SyntaxNode
     /// <summary>
     /// Creates a new node with all modifiers removed.
     /// </summary>
-    /// <param name="node"></param>
     public TNode RemoveAll(TNode node)
     {
         SyntaxTokenList modifiers = GetModifiers(node);
@@ -381,8 +373,6 @@ public abstract class ModifierList<TNode> where TNode : SyntaxNode
     /// <summary>
     /// Creates a new node with modifiers that matches the predicate removed.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="predicate"></param>
     public TNode RemoveAll(TNode node, Func<SyntaxToken, bool> predicate)
     {
         SyntaxTokenList modifiers = GetModifiers(node);
@@ -771,6 +761,46 @@ public abstract class ModifierList<TNode> where TNode : SyntaxNode
         }
 
         internal override RecordDeclarationSyntax WithModifiers(RecordDeclarationSyntax node, SyntaxTokenList modifiers)
+        {
+            return node.WithModifiers(modifiers);
+        }
+    }
+
+    private class LambdaExpressionModifierList : ModifierList<LambdaExpressionSyntax>
+    {
+        internal override SyntaxList<AttributeListSyntax> GetAttributeLists(LambdaExpressionSyntax node)
+        {
+#if ROSLYN_4_0
+            return node.AttributeLists;
+#else
+            return default;
+#endif
+        }
+
+        internal override SyntaxTokenList GetModifiers(LambdaExpressionSyntax node)
+        {
+            return node.Modifiers;
+        }
+
+        internal override LambdaExpressionSyntax WithModifiers(LambdaExpressionSyntax node, SyntaxTokenList modifiers)
+        {
+            return node.WithModifiers(modifiers);
+        }
+    }
+
+    private class AnonymousMethodExpressionModifierList : ModifierList<AnonymousMethodExpressionSyntax>
+    {
+        internal override SyntaxList<AttributeListSyntax> GetAttributeLists(AnonymousMethodExpressionSyntax node)
+        {
+            return default;
+        }
+
+        internal override SyntaxTokenList GetModifiers(AnonymousMethodExpressionSyntax node)
+        {
+            return node.Modifiers;
+        }
+
+        internal override AnonymousMethodExpressionSyntax WithModifiers(AnonymousMethodExpressionSyntax node, SyntaxTokenList modifiers)
         {
             return node.WithModifiers(modifiers);
         }

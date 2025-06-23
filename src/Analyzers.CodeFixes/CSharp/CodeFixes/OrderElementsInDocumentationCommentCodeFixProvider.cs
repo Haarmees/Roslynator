@@ -68,21 +68,21 @@ public sealed class OrderElementsInDocumentationCommentCodeFixProvider : BaseCod
             switch (SyntaxInfo.XmlElementInfo(xmlNode).GetTag())
             {
                 case XmlTag.Param:
-                    {
-                        SeparatedSyntaxList<ParameterSyntax> parameters = CSharpUtility.GetParameters(memberDeclaration);
+                {
+                    SeparatedSyntaxList<ParameterSyntax> parameters = CSharpUtility.GetParameters(memberDeclaration);
 
-                        return SortElements(parameters, content, firstIndex, XmlTag.Param, (nodes, name) => nodes.IndexOf(name));
-                    }
+                    return SortElements(parameters, content, firstIndex, XmlTag.Param, (nodes, name) => nodes.IndexOf(name));
+                }
                 case XmlTag.TypeParam:
-                    {
-                        SeparatedSyntaxList<TypeParameterSyntax> typeParameters = CSharpUtility.GetTypeParameters(memberDeclaration);
+                {
+                    SeparatedSyntaxList<TypeParameterSyntax> typeParameters = CSharpUtility.GetTypeParameters(memberDeclaration);
 
-                        return SortElements(typeParameters, content, firstIndex, XmlTag.TypeParam, (nodes, name) => nodes.IndexOf(name));
-                    }
+                    return SortElements(typeParameters, content, firstIndex, XmlTag.TypeParam, (nodes, name) => nodes.IndexOf(name));
+                }
                 default:
-                    {
-                        throw new InvalidOperationException();
-                    }
+                {
+                    throw new InvalidOperationException();
+                }
             }
         }
     }
@@ -109,8 +109,8 @@ public sealed class OrderElementsInDocumentationCommentCodeFixProvider : BaseCod
                     XmlNodeSyntax element = elementInfo.Element;
 
                     string value = (element.IsKind(SyntaxKind.XmlElement))
-                        ? ((XmlElementSyntax)element).GetAttributeValue("name")
-                        : ((XmlEmptyElementSyntax)element).GetAttributeValue("name");
+                        ? ((XmlElementSyntax)element).GetAttributeValueText("name")
+                        : ((XmlEmptyElementSyntax)element).GetAttributeValueText("name");
 
                     if (value is not null)
                     {

@@ -24,7 +24,7 @@ public sealed class AttributeArgumentCodeFixProvider : BaseCodeFixProvider
 
     public override ImmutableArray<string> FixableDiagnosticIds
     {
-        get { return ImmutableArray.Create(DiagnosticIdentifiers.UnknownLanguageName); }
+        get { return ImmutableArray.Create(CodeAnalysisDiagnosticIdentifiers.UnknownLanguageName); }
     }
 
     public override async Task RegisterCodeFixesAsync(CodeFixContext context)
@@ -39,20 +39,20 @@ public sealed class AttributeArgumentCodeFixProvider : BaseCodeFixProvider
 
         switch (diagnostic.Id)
         {
-            case DiagnosticIdentifiers.UnknownLanguageName:
+            case CodeAnalysisDiagnosticIdentifiers.UnknownLanguageName:
+            {
+                foreach (string languageName in RoslynUtility.WellKnownLanguageNames)
                 {
-                    foreach (string languageName in RoslynUtility.WellKnownLanguageNames)
-                    {
-                        CodeAction codeAction = CodeAction.Create(
-                            $"Change language name to '{languageName}'",
-                            ct => ChangeLanguageNameAsync(document, attributeArgument, languageName, ct),
-                            GetEquivalenceKey(diagnostic, languageName));
+                    CodeAction codeAction = CodeAction.Create(
+                        $"Change language name to '{languageName}'",
+                        ct => ChangeLanguageNameAsync(document, attributeArgument, languageName, ct),
+                        GetEquivalenceKey(diagnostic, languageName));
 
-                        context.RegisterCodeFix(codeAction, diagnostic);
-                    }
-
-                    break;
+                    context.RegisterCodeFix(codeAction, diagnostic);
                 }
+
+                break;
+            }
         }
     }
 

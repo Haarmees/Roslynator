@@ -91,7 +91,7 @@ public sealed class UseExceptionFilterAnalyzer : BaseDiagnosticAnalyzer
             && throwStatement.Expression is null;
     }
 
-    private class UseExceptionFilterWalker : CSharpSyntaxNodeWalker
+    private class UseExceptionFilterWalker : BaseCSharpSyntaxWalker
     {
         [ThreadStatic]
         private static UseExceptionFilterWalker _cachedInstance;
@@ -111,25 +111,25 @@ public sealed class UseExceptionFilterAnalyzer : BaseDiagnosticAnalyzer
             switch (node.Expression)
             {
                 case SimpleNameSyntax simpleName:
-                    {
-                        AnalyzeSimpleName(simpleName);
-                        break;
-                    }
+                {
+                    AnalyzeSimpleName(simpleName);
+                    break;
+                }
                 case MemberBindingExpressionSyntax memberBindingExpression:
-                    {
-                        AnalyzeSimpleName(memberBindingExpression.Name);
-                        break;
-                    }
+                {
+                    AnalyzeSimpleName(memberBindingExpression.Name);
+                    break;
+                }
                 case MemberAccessExpressionSyntax memberAccessExpression:
-                    {
-                        AnalyzeSimpleName(memberAccessExpression.Name);
-                        break;
-                    }
+                {
+                    AnalyzeSimpleName(memberAccessExpression.Name);
+                    break;
+                }
                 default:
-                    {
-                        SyntaxDebug.Fail(node);
-                        break;
-                    }
+                {
+                    SyntaxDebug.Fail(node);
+                    break;
+                }
             }
 
             base.VisitInvocationExpression(node);

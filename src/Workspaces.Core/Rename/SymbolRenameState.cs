@@ -756,6 +756,7 @@ internal class SymbolRenameState
 
         try
         {
+#if ROSLYN_4_4
             var options = new Microsoft.CodeAnalysis.Rename.SymbolRenameOptions(
                 RenameOverloads: Options.RenameOverloads,
                 RenameInStrings: Options.RenameInStrings,
@@ -769,6 +770,15 @@ internal class SymbolRenameState
                 newName,
                 cancellationToken)
                 .ConfigureAwait(false);
+#else
+            newSolution = await Microsoft.CodeAnalysis.Rename.Renamer.RenameSymbolAsync(
+                CurrentSolution,
+                symbol,
+                newName,
+                default(Microsoft.CodeAnalysis.Options.OptionSet)!,
+                cancellationToken)
+                .ConfigureAwait(false);
+#endif
         }
         catch (InvalidOperationException ex)
         {
@@ -829,17 +839,43 @@ internal class SymbolRenameState
         switch (symbol.Kind)
         {
             case SymbolKind.Local:
-                {
-                    return null;
-                }
+            {
+                return null;
+            }
             case SymbolKind.Method:
+            {
+                var methodSymbol = (IMethodSymbol)symbol;
+
+                if (methodSymbol.MethodKind == MethodKind.LocalFunction)
                 {
-                    var methodSymbol = (IMethodSymbol)symbol;
+                    id = symbol.Name;
+                    ISymbol cs = symbol.ContainingSymbol;
+
+                    while (cs is IMethodSymbol { MethodKind: MethodKind.LocalFunction })
+                    {
+                        id = cs.Name + "." + id;
+                        cs = cs.ContainingSymbol;
+                    }
+
+                    return id;
+                }
+
+                break;
+            }
+            case SymbolKind.Parameter:
+            case SymbolKind.TypeParameter:
+            {
+                ISymbol cs = symbol.ContainingSymbol;
+
+                if (cs is IMethodSymbol methodSymbol)
+                {
+                    if (methodSymbol.MethodKind == MethodKind.AnonymousFunction)
+                        return null;
 
                     if (methodSymbol.MethodKind == MethodKind.LocalFunction)
                     {
-                        id = symbol.Name;
-                        ISymbol cs = symbol.ContainingSymbol;
+                        id = cs.Name + " " + symbol.Name;
+                        cs = cs.ContainingSymbol;
 
                         while (cs is IMethodSymbol { MethodKind: MethodKind.LocalFunction })
                         {
@@ -849,36 +885,10 @@ internal class SymbolRenameState
 
                         return id;
                     }
-
-                    break;
                 }
-            case SymbolKind.Parameter:
-            case SymbolKind.TypeParameter:
-                {
-                    ISymbol cs = symbol.ContainingSymbol;
 
-                    if (cs is IMethodSymbol methodSymbol)
-                    {
-                        if (methodSymbol.MethodKind == MethodKind.AnonymousFunction)
-                            return null;
-
-                        if (methodSymbol.MethodKind == MethodKind.LocalFunction)
-                        {
-                            id = cs.Name + " " + symbol.Name;
-                            cs = cs.ContainingSymbol;
-
-                            while (cs is IMethodSymbol { MethodKind: MethodKind.LocalFunction })
-                            {
-                                id = cs.Name + "." + id;
-                                cs = cs.ContainingSymbol;
-                            }
-
-                            return id;
-                        }
-                    }
-
-                    return symbol.ContainingSymbol.GetDocumentationCommentId() + " " + (symbol.GetDocumentationCommentId() ?? symbol.Name);
-                }
+                return symbol.ContainingSymbol.GetDocumentationCommentId() + " " + (symbol.GetDocumentationCommentId() ?? symbol.Name);
+            }
         }
 
         return symbol.GetDocumentationCommentId();

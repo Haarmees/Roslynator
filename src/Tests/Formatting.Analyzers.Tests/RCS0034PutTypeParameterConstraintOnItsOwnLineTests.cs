@@ -18,7 +18,7 @@ public class RCS0034PutTypeParameterConstraintOnItsOwnLineTests : AbstractCSharp
         await VerifyDiagnosticAndFixAsync(@"
 namespace N
 {
-    class C<T1, T2> [||]where T1 : struct [||]where T2 : struct
+    class C<T1, T2>[| |]where T1 : struct[| |]where T2 : struct
     {
     }
 }
@@ -40,7 +40,7 @@ namespace N
         await VerifyDiagnosticAndFixAsync(@"
 namespace N
 {
-    struct S<T1, T2> [||]where T1 : struct [||]where T2 : struct
+    struct S<T1, T2>[| |]where T1 : struct[| |]where T2 : struct
     {
     }
 }
@@ -62,7 +62,7 @@ namespace N
         await VerifyDiagnosticAndFixAsync(@"
 namespace N
 {
-    interface I<T1, T2> [||]where T1 : struct [||]where T2 : struct
+    interface I<T1, T2>[| |]where T1 : struct[| |]where T2 : struct
     {
     }
 }
@@ -84,7 +84,7 @@ namespace N
         await VerifyDiagnosticAndFixAsync(@"
 namespace N
 {
-    delegate void DelegateName<T1, T2>() [||]where T1 : struct [||]where T2 : struct;
+    delegate void DelegateName<T1, T2>()[| |]where T1 : struct[| |]where T2 : struct;
 }
 ", @"
 namespace N
@@ -104,7 +104,7 @@ namespace N
 {
     class C
     {
-        void M<T1, T2>() [||]where T1 : struct [||]where T2 : struct
+        void M<T1, T2>()[| |]where T1 : struct[| |]where T2 : struct
         {
         }
     }
@@ -134,7 +134,7 @@ namespace N
     {
         void M()
         {
-            void M<T1, T2>() [||]where T1 : struct [||]where T2 : struct
+            void M<T1, T2>()[| |]where T1 : struct[| |]where T2 : struct
             {
             }
         }
@@ -166,5 +166,24 @@ class C<T> where T : struct
 {
 }
 ");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.PutTypeParameterConstraintOnItsOwnLine)]
+    public async Task TestNoDiagnostic_BaseType()
+    {
+        await VerifyNoDiagnosticAsync(@"
+using System;
+
+public interface IBaseInterface<TType, TKey>
+    where TType : class
+    where TKey : struct, IEquatable<TKey>
+{
+}
+
+public interface IInterface<TType, TKey> : IBaseInterface<TType, TKey>
+    where TType : class
+    where TKey : struct, IEquatable<TKey>
+{
+}");
     }
 }

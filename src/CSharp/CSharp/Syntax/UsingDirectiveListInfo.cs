@@ -91,6 +91,7 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
         return new UsingDirectiveListInfo(namespaceDeclaration, namespaceDeclaration.Usings);
     }
 
+#if ROSLYN_4_0
     internal static UsingDirectiveListInfo Create(FileScopedNamespaceDeclarationSyntax namespaceDeclaration)
     {
         if (namespaceDeclaration is null)
@@ -98,6 +99,7 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
 
         return new UsingDirectiveListInfo(namespaceDeclaration, namespaceDeclaration.Usings);
     }
+#endif
 
     internal static UsingDirectiveListInfo Create(CompilationUnitSyntax compilationUnit)
     {
@@ -112,20 +114,22 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
         switch (declaration?.Kind())
         {
             case SyntaxKind.CompilationUnit:
-                {
-                    var typeDeclaration = (CompilationUnitSyntax)declaration;
-                    return new UsingDirectiveListInfo(typeDeclaration, typeDeclaration.Usings);
-                }
+            {
+                var typeDeclaration = (CompilationUnitSyntax)declaration;
+                return new UsingDirectiveListInfo(typeDeclaration, typeDeclaration.Usings);
+            }
             case SyntaxKind.NamespaceDeclaration:
-                {
-                    var namespaceDeclaration = (NamespaceDeclarationSyntax)declaration;
-                    return new UsingDirectiveListInfo(namespaceDeclaration, namespaceDeclaration.Usings);
-                }
+            {
+                var namespaceDeclaration = (NamespaceDeclarationSyntax)declaration;
+                return new UsingDirectiveListInfo(namespaceDeclaration, namespaceDeclaration.Usings);
+            }
+#if ROSLYN_4_0
             case SyntaxKind.FileScopedNamespaceDeclaration:
-                {
-                    var fileScopedNamespaceDeclaration = (FileScopedNamespaceDeclarationSyntax)declaration;
-                    return new UsingDirectiveListInfo(fileScopedNamespaceDeclaration, fileScopedNamespaceDeclaration.Usings);
-                }
+            {
+                var fileScopedNamespaceDeclaration = (FileScopedNamespaceDeclarationSyntax)declaration;
+                return new UsingDirectiveListInfo(fileScopedNamespaceDeclaration, fileScopedNamespaceDeclaration.Usings);
+            }
+#endif
         }
 
         return default;
@@ -134,7 +138,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the usings updated.
     /// </summary>
-    /// <param name="usings"></param>
     public UsingDirectiveListInfo WithUsings(IEnumerable<UsingDirectiveSyntax> usings)
     {
         return WithUsings(List(usings));
@@ -143,7 +146,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the usings updated.
     /// </summary>
-    /// <param name="usings"></param>
     public UsingDirectiveListInfo WithUsings(SyntaxList<UsingDirectiveSyntax> usings)
     {
         ThrowInvalidOperationIfNotInitialized();
@@ -151,15 +153,15 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
         switch (Parent)
         {
             case CompilationUnitSyntax compilationUnit:
-                {
-                    compilationUnit = compilationUnit.WithUsings(usings);
-                    return new UsingDirectiveListInfo(compilationUnit, compilationUnit.Usings);
-                }
+            {
+                compilationUnit = compilationUnit.WithUsings(usings);
+                return new UsingDirectiveListInfo(compilationUnit, compilationUnit.Usings);
+            }
             case NamespaceDeclarationSyntax declaration:
-                {
-                    declaration = declaration.WithUsings(usings);
-                    return new UsingDirectiveListInfo(declaration, declaration.Usings);
-                }
+            {
+                declaration = declaration.WithUsings(usings);
+                return new UsingDirectiveListInfo(declaration, declaration.Usings);
+            }
         }
 
         throw new InvalidOperationException();
@@ -168,8 +170,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the specified node removed.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="options"></param>
     public UsingDirectiveListInfo RemoveNode(SyntaxNode node, SyntaxRemoveOptions options)
     {
         ThrowInvalidOperationIfNotInitialized();
@@ -177,15 +177,15 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
         switch (Parent)
         {
             case CompilationUnitSyntax compilationUnit:
-                {
-                    compilationUnit = compilationUnit.RemoveNode(node, options)!;
-                    return new UsingDirectiveListInfo(compilationUnit, compilationUnit.Usings);
-                }
+            {
+                compilationUnit = compilationUnit.RemoveNode(node, options)!;
+                return new UsingDirectiveListInfo(compilationUnit, compilationUnit.Usings);
+            }
             case NamespaceDeclarationSyntax declaration:
-                {
-                    declaration = declaration.RemoveNode(node, options)!;
-                    return new UsingDirectiveListInfo(declaration, declaration.Usings);
-                }
+            {
+                declaration = declaration.RemoveNode(node, options)!;
+                return new UsingDirectiveListInfo(declaration, declaration.Usings);
+            }
         }
 
         throw new InvalidOperationException();
@@ -194,8 +194,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the specified old node replaced with a new node.
     /// </summary>
-    /// <param name="oldNode"></param>
-    /// <param name="newNode"></param>
     public UsingDirectiveListInfo ReplaceNode(SyntaxNode oldNode, SyntaxNode newNode)
     {
         ThrowInvalidOperationIfNotInitialized();
@@ -203,15 +201,15 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
         switch (Parent)
         {
             case CompilationUnitSyntax compilationUnit:
-                {
-                    compilationUnit = compilationUnit.ReplaceNode(oldNode, newNode);
-                    return new UsingDirectiveListInfo(compilationUnit, compilationUnit.Usings);
-                }
+            {
+                compilationUnit = compilationUnit.ReplaceNode(oldNode, newNode);
+                return new UsingDirectiveListInfo(compilationUnit, compilationUnit.Usings);
+            }
             case NamespaceDeclarationSyntax declaration:
-                {
-                    declaration = declaration.ReplaceNode(oldNode, newNode);
-                    return new UsingDirectiveListInfo(declaration, declaration.Usings);
-                }
+            {
+                declaration = declaration.ReplaceNode(oldNode, newNode);
+                return new UsingDirectiveListInfo(declaration, declaration.Usings);
+            }
         }
 
         throw new InvalidOperationException();
@@ -220,7 +218,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the specified using directive added at the end.
     /// </summary>
-    /// <param name="usingDirective"></param>
     public UsingDirectiveListInfo Add(UsingDirectiveSyntax usingDirective)
     {
         return WithUsings(Usings.Add(usingDirective));
@@ -229,7 +226,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the specified usings added at the end.
     /// </summary>
-    /// <param name="usings"></param>
     public UsingDirectiveListInfo AddRange(IEnumerable<UsingDirectiveSyntax> usings)
     {
         return WithUsings(Usings.AddRange(usings));
@@ -262,7 +258,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Searches for an using directive that matches the predicate and returns zero-based index of the first occurrence in the list.
     /// </summary>
-    /// <param name="predicate"></param>
     public int IndexOf(Func<UsingDirectiveSyntax, bool> predicate)
     {
         return Usings.IndexOf(predicate);
@@ -271,7 +266,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// The index of the using directive in the list.
     /// </summary>
-    /// <param name="usingDirective"></param>
     public int IndexOf(UsingDirectiveSyntax usingDirective)
     {
         return Usings.IndexOf(usingDirective);
@@ -280,8 +274,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the specified using directive inserted at the index.
     /// </summary>
-    /// <param name="index"></param>
-    /// <param name="usingDirective"></param>
     public UsingDirectiveListInfo Insert(int index, UsingDirectiveSyntax usingDirective)
     {
         return WithUsings(Usings.Insert(index, usingDirective));
@@ -290,8 +282,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the specified usings inserted at the index.
     /// </summary>
-    /// <param name="index"></param>
-    /// <param name="usings"></param>
     public UsingDirectiveListInfo InsertRange(int index, IEnumerable<UsingDirectiveSyntax> usings)
     {
         return WithUsings(Usings.InsertRange(index, usings));
@@ -316,7 +306,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Searches for an using directive that matches the predicate and returns zero-based index of the last occurrence in the list.
     /// </summary>
-    /// <param name="predicate"></param>
     public int LastIndexOf(Func<UsingDirectiveSyntax, bool> predicate)
     {
         return Usings.LastIndexOf(predicate);
@@ -325,7 +314,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Searches for an using directive and returns zero-based index of the last occurrence in the list.
     /// </summary>
-    /// <param name="usingDirective"></param>
     public int LastIndexOf(UsingDirectiveSyntax usingDirective)
     {
         return Usings.LastIndexOf(usingDirective);
@@ -334,7 +322,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the specified using directive removed.
     /// </summary>
-    /// <param name="usingDirective"></param>
     public UsingDirectiveListInfo Remove(UsingDirectiveSyntax usingDirective)
     {
         return WithUsings(Usings.Remove(usingDirective));
@@ -343,7 +330,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the using directive at the specified index removed.
     /// </summary>
-    /// <param name="index"></param>
     public UsingDirectiveListInfo RemoveAt(int index)
     {
         return WithUsings(Usings.RemoveAt(index));
@@ -352,8 +338,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the specified using directive replaced with the new using directive.
     /// </summary>
-    /// <param name="usingInLine"></param>
-    /// <param name="newUsingDirective"></param>
     public UsingDirectiveListInfo Replace(UsingDirectiveSyntax usingInLine, UsingDirectiveSyntax newUsingDirective)
     {
         return WithUsings(Usings.Replace(usingInLine, newUsingDirective));
@@ -362,8 +346,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the using directive at the specified index replaced with a new using directive.
     /// </summary>
-    /// <param name="index"></param>
-    /// <param name="newUsingDirective"></param>
     public UsingDirectiveListInfo ReplaceAt(int index, UsingDirectiveSyntax newUsingDirective)
     {
         return WithUsings(Usings.ReplaceAt(index, newUsingDirective));
@@ -372,8 +354,6 @@ public readonly struct UsingDirectiveListInfo : IReadOnlyList<UsingDirectiveSynt
     /// <summary>
     /// Creates a new <see cref="UsingDirectiveListInfo"/> with the specified using directive replaced with new usings.
     /// </summary>
-    /// <param name="usingInLine"></param>
-    /// <param name="newUsingDirectives"></param>
     public UsingDirectiveListInfo ReplaceRange(UsingDirectiveSyntax usingInLine, IEnumerable<UsingDirectiveSyntax> newUsingDirectives)
     {
         return WithUsings(Usings.ReplaceRange(usingInLine, newUsingDirectives));

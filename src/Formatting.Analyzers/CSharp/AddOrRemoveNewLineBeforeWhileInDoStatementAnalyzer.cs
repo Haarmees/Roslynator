@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Text;
 using Roslynator.CSharp;
 using Roslynator.CSharp.CodeStyle;
 
@@ -50,31 +49,27 @@ public sealed class AddOrRemoveNewLineBeforeWhileInDoStatementAnalyzer : BaseDia
         if (newLineStyle == NewLineStyle.None)
             return;
 
-        SyntaxTriviaList trailingTrivia = statement.GetTrailingTrivia();
+        TriviaBlock block = TriviaBlock.FromBetween(doStatement.Statement, doStatement.WhileKeyword);
 
-        if (!trailingTrivia.Any()
-            || trailingTrivia.SingleOrDefault(shouldThrow: false).IsWhitespaceTrivia())
+        if (!block.Success)
+            return;
+
+        if (block.Kind == TriviaBlockKind.NoNewLine)
         {
-            if (!doStatement.WhileKeyword.LeadingTrivia.Any()
-                && newLineStyle == NewLineStyle.Add)
+            if (newLineStyle == NewLineStyle.Add)
             {
                 context.ReportDiagnostic(
                     DiagnosticRules.AddOrRemoveNewLineBeforeWhileInDoStatement,
-                    Location.Create(doStatement.SyntaxTree, new TextSpan(statement.FullSpan.End, 0)),
+                    block.GetLocation(),
                     "Add");
             }
         }
-        else if (SyntaxTriviaAnalysis.IsOptionalWhitespaceThenEndOfLineTrivia(trailingTrivia))
+        else if (newLineStyle == NewLineStyle.Remove)
         {
-            if (doStatement.WhileKeyword.LeadingTrivia.IsEmptyOrWhitespace()
-                && newLineStyle == NewLineStyle.Remove)
-            {
-                context.ReportDiagnostic(
-                    DiagnosticRules.AddOrRemoveNewLineBeforeWhileInDoStatement,
-                    Location.Create(doStatement.SyntaxTree, new TextSpan(trailingTrivia.Last().SpanStart, 0)),
-                    properties: DiagnosticProperties.AnalyzerOption_Invert,
-                    "Remove");
-            }
+            context.ReportDiagnostic(
+                DiagnosticRules.AddOrRemoveNewLineBeforeWhileInDoStatement,
+                block.GetLocation(),
+                "Remove");
         }
     }
 }

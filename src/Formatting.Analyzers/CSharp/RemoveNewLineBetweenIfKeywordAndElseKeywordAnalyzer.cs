@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Text;
 using Roslynator.CSharp;
 
 namespace Roslynator.Formatting.CSharp;
@@ -42,17 +41,18 @@ public sealed class RemoveNewLineBetweenIfKeywordAndElseKeywordAnalyzer : BaseDi
         if (!statement.IsKind(SyntaxKind.IfStatement))
             return;
 
-        SyntaxTriviaList trailingTrivia = elseClause.ElseKeyword.TrailingTrivia;
+        TriviaBlock block = TriviaBlock.FromBetween(elseClause.ElseKeyword, statement);
 
-        if (!SyntaxTriviaAnalysis.IsOptionalWhitespaceThenEndOfLineTrivia(trailingTrivia))
+        if (!block.Success)
             return;
 
-        if (!statement.GetLeadingTrivia().IsEmptyOrWhitespace())
-            return;
-
-        DiagnosticHelpers.ReportDiagnostic(
-            context,
-            DiagnosticRules.RemoveNewLineBetweenIfKeywordAndElseKeyword,
-            Location.Create(elseClause.SyntaxTree, new TextSpan(trailingTrivia.Last().SpanStart, 0)));
+        if (block.Kind != TriviaBlockKind.NoNewLine
+            && !block.ContainsComment)
+        {
+            DiagnosticHelpers.ReportDiagnostic(
+                context,
+                DiagnosticRules.RemoveNewLineBetweenIfKeywordAndElseKeyword,
+                block.GetLocation());
+        }
     }
 }

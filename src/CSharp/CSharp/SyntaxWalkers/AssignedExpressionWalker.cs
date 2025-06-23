@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Roslynator.CSharp.SyntaxWalkers;
 
-internal class AssignedExpressionWalker : CSharpSyntaxNodeWalker
+internal class AssignedExpressionWalker : BaseCSharpSyntaxWalker
 {
     public virtual void VisitAssignedExpression(ExpressionSyntax expression)
     {
@@ -73,19 +73,19 @@ internal class AssignedExpressionWalker : CSharpSyntaxNodeWalker
         switch (node.RefOrOutKeyword.Kind())
         {
             case SyntaxKind.RefKeyword:
-                {
-                    VisitAssignedExpression(node.Expression);
-                    break;
-                }
+            {
+                VisitAssignedExpression(node.Expression);
+                break;
+            }
             case SyntaxKind.OutKeyword:
-                {
-                    ExpressionSyntax expression = node.Expression;
+            {
+                ExpressionSyntax expression = node.Expression;
 
-                    if (expression?.IsKind(SyntaxKind.DeclarationExpression) == false)
-                        VisitAssignedExpression(expression);
+                if (expression?.IsKind(SyntaxKind.DeclarationExpression) == false)
+                    VisitAssignedExpression(expression);
 
-                    break;
-                }
+                break;
+            }
         }
 
         base.VisitArgument(node);

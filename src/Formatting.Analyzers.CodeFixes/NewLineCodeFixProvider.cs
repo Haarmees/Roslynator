@@ -7,7 +7,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Text;
-using Roslynator.Formatting.CSharp;
 
 namespace Roslynator.Formatting.CodeFixes;
 
@@ -34,25 +33,25 @@ public sealed class NewLineCodeFixProvider : BaseCodeFixProvider
         switch (diagnostic.Id)
         {
             case DiagnosticIdentifiers.UseLinefeedAsNewLine:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        "Use linefeed as newline",
-                        ct => document.WithTextChangeAsync(span, "\n", ct),
-                        GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Use linefeed as newline",
+                    ct => document.WithTextChangeAsync(span, "\n", ct),
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
             case DiagnosticIdentifiers.UseCarriageReturnAndLinefeedAsNewLine:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        "Use carriage return + linefeed as newline",
-                        ct => document.WithTextChangeAsync(span, "\r\n", ct),
-                        GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Use carriage return + linefeed as newline",
+                    ct => document.WithTextChangeAsync(span, "\r\n", ct),
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
         }
 
         return Task.CompletedTask;

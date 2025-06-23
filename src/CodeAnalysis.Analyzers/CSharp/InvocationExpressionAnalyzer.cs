@@ -24,9 +24,9 @@ public sealed class InvocationExpressionAnalyzer : BaseDiagnosticAnalyzer
             {
                 Immutable.InterlockedInitialize(
                     ref _supportedDiagnostics,
-                    DiagnosticRules.UnnecessaryNullCheck,
-                    DiagnosticRules.UseElementAccess,
-                    DiagnosticRules.UseReturnValue);
+                    CodeAnalysisDiagnosticRules.UnnecessaryNullCheck,
+                    CodeAnalysisDiagnosticRules.UseElementAccess,
+                    CodeAnalysisDiagnosticRules.UseReturnValue);
             }
 
             return _supportedDiagnostics;
@@ -59,45 +59,45 @@ public sealed class InvocationExpressionAnalyzer : BaseDiagnosticAnalyzer
         switch (invocationInfo.Arguments.Count)
         {
             case 0:
+            {
+                switch (methodName)
                 {
-                    switch (methodName)
+                    case "First":
                     {
-                        case "First":
-                            {
-                                if (DiagnosticRules.UseElementAccess.IsEffective(context))
-                                    UseElementAccessInsteadOfCallingFirst();
+                        if (CodeAnalysisDiagnosticRules.UseElementAccess.IsEffective(context))
+                            UseElementAccessInsteadOfCallingFirst();
 
-                                break;
-                            }
+                        break;
                     }
-
-                    break;
                 }
+
+                break;
+            }
             case 1:
+            {
+                switch (methodName)
                 {
-                    switch (methodName)
+                    case "ElementAt":
                     {
-                        case "ElementAt":
-                            {
-                                if (DiagnosticRules.UseElementAccess.IsEffective(context))
-                                    UseElementAccessInsteadOfCallingElementAt();
+                        if (CodeAnalysisDiagnosticRules.UseElementAccess.IsEffective(context))
+                            UseElementAccessInsteadOfCallingElementAt();
 
-                                break;
-                            }
-                        case "IsKind":
-                            {
-                                if (DiagnosticRules.UnnecessaryNullCheck.IsEffective(context))
-                                    AnalyzeUnnecessaryNullCheck();
-
-                                break;
-                            }
+                        break;
                     }
+                    case "IsKind":
+                    {
+                        if (CodeAnalysisDiagnosticRules.UnnecessaryNullCheck.IsEffective(context))
+                            AnalyzeUnnecessaryNullCheck();
 
-                    break;
+                        break;
+                    }
                 }
+
+                break;
+            }
         }
 
-        if (DiagnosticRules.UseReturnValue.IsEffective(context)
+        if (CodeAnalysisDiagnosticRules.UseReturnValue.IsEffective(context)
             && invocationExpression.IsParentKind(SyntaxKind.ExpressionStatement))
         {
             UseReturnValue();
@@ -138,7 +138,7 @@ public sealed class InvocationExpressionAnalyzer : BaseDiagnosticAnalyzer
 
             DiagnosticHelpers.ReportDiagnostic(
                 context,
-                DiagnosticRules.UnnecessaryNullCheck,
+                CodeAnalysisDiagnosticRules.UnnecessaryNullCheck,
                 Location.Create(invocationInfo.InvocationExpression.SyntaxTree, span));
         }
 
@@ -161,7 +161,7 @@ public sealed class InvocationExpressionAnalyzer : BaseDiagnosticAnalyzer
 
             DiagnosticHelpers.ReportDiagnostic(
                 context,
-                DiagnosticRules.UseElementAccess,
+                CodeAnalysisDiagnosticRules.UseElementAccess,
                 Location.Create(invocationExpression.SyntaxTree, span));
         }
 
@@ -184,7 +184,7 @@ public sealed class InvocationExpressionAnalyzer : BaseDiagnosticAnalyzer
 
             DiagnosticHelpers.ReportDiagnostic(
                 context,
-                DiagnosticRules.UseElementAccess,
+                CodeAnalysisDiagnosticRules.UseElementAccess,
                 Location.Create(invocationExpression.SyntaxTree, span));
         }
 
@@ -204,7 +204,7 @@ public sealed class InvocationExpressionAnalyzer : BaseDiagnosticAnalyzer
             if (!RoslynSymbolUtility.IsRoslynType(methodSymbol.ReturnType))
                 return;
 
-            DiagnosticHelpers.ReportDiagnostic(context, DiagnosticRules.UseReturnValue, invocationExpression);
+            DiagnosticHelpers.ReportDiagnostic(context, CodeAnalysisDiagnosticRules.UseReturnValue, invocationExpression);
         }
     }
 }

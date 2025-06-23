@@ -20,9 +20,7 @@ public sealed class PlaceNewLineAfterOrBeforeConditionalOperatorAnalyzer : BaseD
         get
         {
             if (_supportedDiagnostics.IsDefault)
-            {
                 Immutable.InterlockedInitialize(ref _supportedDiagnostics, DiagnosticRules.PlaceNewLineAfterOrBeforeConditionalOperator);
-            }
 
             return _supportedDiagnostics;
         }
@@ -51,53 +49,25 @@ public sealed class PlaceNewLineAfterOrBeforeConditionalOperatorAnalyzer : BaseD
 
         NewLinePosition newLinePosition = context.GetConditionalExpressionNewLinePosition();
 
-        if (newLinePosition == NewLinePosition.None)
-            return;
+        TriviaBlock block = TriviaBlock.FromSurrounding(conditionalExpression.QuestionToken, whenTrue, newLinePosition);
 
-        if (SyntaxTriviaAnalysis.IsTokenFollowedWithNewLineAndNotPrecededWithNewLine(condition, conditionalExpression.QuestionToken, whenTrue))
-        {
-            if (newLinePosition == NewLinePosition.Before)
-            {
-                ReportDiagnostic(conditionalExpression.QuestionToken, ImmutableDictionary<string, string>.Empty, "before");
-                return;
-            }
-        }
-        else if (SyntaxTriviaAnalysis.IsTokenPrecededWithNewLineAndNotFollowedWithNewLine(condition, conditionalExpression.QuestionToken, whenTrue))
-        {
-            if (newLinePosition == NewLinePosition.After)
-            {
-                ReportDiagnostic(conditionalExpression.QuestionToken, DiagnosticProperties.AnalyzerOption_Invert, "after");
-                return;
-            }
-        }
+        if (block.Success)
+            ReportDiagnostic(context, block);
 
-        ExpressionSyntax whenFalse = conditionalExpression.WhenFalse;
+        block = TriviaBlock.FromSurrounding(conditionalExpression.ColonToken, conditionalExpression.WhenFalse, newLinePosition);
 
-        if (!whenFalse.IsMissing)
-        {
-            if (SyntaxTriviaAnalysis.IsTokenFollowedWithNewLineAndNotPrecededWithNewLine(whenTrue, conditionalExpression.ColonToken, whenFalse))
-            {
-                if (newLinePosition == NewLinePosition.Before)
-                    ReportDiagnostic(conditionalExpression.ColonToken, ImmutableDictionary<string, string>.Empty, "before");
-            }
-            else if (SyntaxTriviaAnalysis.IsTokenPrecededWithNewLineAndNotFollowedWithNewLine(whenTrue, conditionalExpression.ColonToken, whenFalse))
-            {
-                if (newLinePosition == NewLinePosition.After)
-                    ReportDiagnostic(conditionalExpression.ColonToken, DiagnosticProperties.AnalyzerOption_Invert, "after");
-            }
-        }
+        if (block.Success)
+            ReportDiagnostic(context, block);
 
-        void ReportDiagnostic(
-            SyntaxToken token,
-            ImmutableDictionary<string, string> properties,
-            string messageArg)
+        static void ReportDiagnostic(
+            SyntaxNodeAnalysisContext context,
+            TriviaBlock block)
         {
             DiagnosticHelpers.ReportDiagnostic(
                 context,
                 DiagnosticRules.PlaceNewLineAfterOrBeforeConditionalOperator,
-                Location.Create(token.SyntaxTree, token.Span.WithLength(0)),
-                properties: properties,
-                messageArg);
+                block.GetLocation(),
+                (block.First.IsToken) ? "before" : "after");
         }
     }
 }

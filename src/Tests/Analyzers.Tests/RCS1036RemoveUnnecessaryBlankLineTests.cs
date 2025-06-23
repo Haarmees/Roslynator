@@ -10,9 +10,9 @@ namespace Roslynator.CSharp.Analysis.Tests;
 
 public class RCS1036RemoveUnnecessaryBlankLineTests : AbstractCSharpDiagnosticVerifier<RemoveUnnecessaryBlankLineAnalyzer, WhitespaceTriviaCodeFixProvider>
 {
-    public override DiagnosticDescriptor Descriptor { get; } = DiagnosticRules.RemoveUnnecessaryBlankLine;
+    public override DiagnosticDescriptor Descriptor { get; } = DiagnosticRules.Obsolete_RemoveUnnecessaryBlankLine;
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_ObjectInitializer()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -50,7 +50,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_ObjectInitializer_WithTrailingComma()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -88,7 +88,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_ArrayInitializer()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -120,7 +120,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_CollectionInitializer()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -156,7 +156,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_EmptyDeclaration()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -171,7 +171,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_EmptyBlock()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -192,7 +192,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_EmptyLineAfterDocComment()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -215,63 +215,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
-    public async Task Test_EmptyLineBetweenClosingBraceAndSwitchSection()
-    {
-        await VerifyDiagnosticAndFixAsync(@"
-class C
-{
-    void M()
-    {
-        string x = null;
-
-        switch (x)
-        {
-            case ""a"":
-                {
-                    M();
-                    break;
-                }
-[|
-|]            case ""b"":
-                {
-                    M();
-                    break;
-                }
-[|
-|]            case ""c"":
-                break;
-        }
-    }
-}
-", @"
-class C
-{
-    void M()
-    {
-        string x = null;
-
-        switch (x)
-        {
-            case ""a"":
-                {
-                    M();
-                    break;
-                }
-            case ""b"":
-                {
-                    M();
-                    break;
-                }
-            case ""c"":
-                break;
-        }
-    }
-}
-", options: Options.AddConfigOption(ConfigOptionKeys.BlankLineBetweenClosingBraceAndSwitchSection, false));
-    }
-
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_EndOfFile()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -286,7 +230,7 @@ class C
 ", options: Options.EnableConfigOption(ConfigOptionKeys.BlankLineBetweenClosingBraceAndSwitchSection));
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_EndOfFile2()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -302,7 +246,7 @@ class C
 ", options: Options.EnableConfigOption(ConfigOptionKeys.BlankLineBetweenClosingBraceAndSwitchSection));
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_LastEmptyLineInDoStatement()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -331,7 +275,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_EmptyLineAfterLastEnumMember_NoTrailingComma()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -356,7 +300,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_EmptyLineAfterLastEnumMember_TrailingComma()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -381,7 +325,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task Test_EmptyLineBeforeFirstEnumMember()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -406,7 +350,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task TestNoDiagnostic_ObjectInitializer()
     {
         await VerifyNoDiagnosticAsync(@"
@@ -427,7 +371,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task TestNoDiagnostic_ObjectInitializer_Singleline()
     {
         await VerifyNoDiagnosticAsync(@"
@@ -444,7 +388,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task TestNoDiagnostic_ObjectInitializer_Empty()
     {
         await VerifyNoDiagnosticAsync(@"
@@ -458,10 +402,10 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task TestNoDiagnostic_EmptyLineBetweenClosingBraceAndSwitchSection()
     {
-        await VerifyNoDiagnosticAsync(@"
+        await VerifyNoDiagnosticAsync("""
 class C
 {
     void M()
@@ -470,21 +414,21 @@ class C
 
         switch (x)
         {
-            case ""a"":
+            case "a":
                 {
                     M();
                     break;
                 }
 
-            case ""b"":
+            case "b":
                 break;
         }
     }
 }
-");
+""");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task TestNoDiagnostic_EmptyLineAtEndOfFile()
     {
         await VerifyNoDiagnosticAsync(@"
@@ -494,7 +438,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task TestNoDiagnostic_EmptyLineAtEndOfFileAfterMultiLineComment()
     {
         await VerifyNoDiagnosticAsync(@"
@@ -505,7 +449,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task TestNoDiagnostic_EmptyLineAtEndOfFileWithWhitespace()
     {
         await VerifyNoDiagnosticAsync(@"
@@ -515,7 +459,7 @@ class C
  ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task TestNoDiagnostic_EmptyLineAtEndOfFileAfterSingleLineComment()
     {
         await VerifyNoDiagnosticAsync(@"
@@ -526,7 +470,7 @@ class C
 ");
     }
 
-    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnnecessaryBlankLine)]
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
     public async Task TestNoDiagnostic_EmptyLineAtEndOfFileAfterPreprocessorDirective()
     {
         await VerifyNoDiagnosticAsync(@"
@@ -536,5 +480,36 @@ class C
 #if DEBUG
 #endif
 ");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine)]
+    public async Task Test_EmptyLineBetweenClosingBraceAndSwitchSection()
+    {
+        await VerifyNoDiagnosticAsync("""
+class C
+{
+    void M()
+    {
+        string x = null;
+        switch (x)
+        {
+            case "a":
+                {
+                    M();
+                    break;
+                }
+
+            case "b":
+                {
+                    M();
+                    break;
+                }
+
+            case "c":
+                break;
+        }
+    }
+}
+""", options: Options.AddConfigOption(ConfigOptionKeys.BlankLineBetweenClosingBraceAndSwitchSection, false));
     }
 }

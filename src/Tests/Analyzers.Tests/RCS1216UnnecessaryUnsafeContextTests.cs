@@ -1,3 +1,5 @@
+// Copyright (c) .NET Foundation and Contributors. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Roslynator.CSharp.CodeFixes;
@@ -297,7 +299,7 @@ public class RCS1216UnnecessaryUnsafeContextTests : AbstractCSharpDiagnosticVeri
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.UnnecessaryUnsafeContext)]
     public async Task Test_Property()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyDiagnosticAndFixAsync("""
     class C
     {
         unsafe string X
@@ -308,11 +310,11 @@ public class RCS1216UnnecessaryUnsafeContextTests : AbstractCSharpDiagnosticVeri
                 {
                     var x = 1;
                 }
-                return ""1"";
+                return "1";
             }
         }
     }
-", @"
+""", """
     class C
     {
         unsafe string X
@@ -322,11 +324,11 @@ public class RCS1216UnnecessaryUnsafeContextTests : AbstractCSharpDiagnosticVeri
                 {
                     var x = 1;
                 }
-                return ""1"";
+                return "1";
             }
         }
     }
-", options: Options.WithAllowUnsafe(true));
+""", options: Options.WithAllowUnsafe(true));
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.UnnecessaryUnsafeContext)]
@@ -361,7 +363,7 @@ public class RCS1216UnnecessaryUnsafeContextTests : AbstractCSharpDiagnosticVeri
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.UnnecessaryUnsafeContext)]
     public async Task Test_Indexer()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyDiagnosticAndFixAsync("""
     class C
     {
         unsafe string this[int i]
@@ -372,11 +374,11 @@ public class RCS1216UnnecessaryUnsafeContextTests : AbstractCSharpDiagnosticVeri
                 {
                     var x = 1;
                 }
-                return ""1"";
+                return "1";
             }
         }
     }
-", @"
+""", """
     class C
     {
         unsafe string this[int i]
@@ -386,11 +388,11 @@ public class RCS1216UnnecessaryUnsafeContextTests : AbstractCSharpDiagnosticVeri
                 {
                     var x = 1;
                 }
-                return ""1"";
+                return "1";
             }
         }
     }
-", options: Options.WithAllowUnsafe(true));
+""", options: Options.WithAllowUnsafe(true));
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.UnnecessaryUnsafeContext)]

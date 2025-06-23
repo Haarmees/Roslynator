@@ -9,7 +9,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Roslynator.CSharp;
 using Roslynator.CSharp.SyntaxWalkers;
 
 namespace Roslynator.CSharp.Analysis;
@@ -174,16 +173,16 @@ public sealed class UseAutoPropertyAnalyzer : BaseDiagnosticAnalyzer
                 switch (body.Statements[0])
                 {
                     case ReturnStatementSyntax returnStatement:
-                        {
-                            DiagnosticHelpers.ReportToken(context, DiagnosticRules.UseAutoPropertyFadeOut, returnStatement.ReturnKeyword);
-                            DiagnosticHelpers.ReportNode(context, DiagnosticRules.UseAutoPropertyFadeOut, returnStatement.Expression);
-                            break;
-                        }
+                    {
+                        DiagnosticHelpers.ReportToken(context, DiagnosticRules.UseAutoPropertyFadeOut, returnStatement.ReturnKeyword);
+                        DiagnosticHelpers.ReportNode(context, DiagnosticRules.UseAutoPropertyFadeOut, returnStatement.Expression);
+                        break;
+                    }
                     case ExpressionStatementSyntax expressionStatement:
-                        {
-                            DiagnosticHelpers.ReportNode(context, DiagnosticRules.UseAutoPropertyFadeOut, expressionStatement.Expression);
-                            break;
-                        }
+                    {
+                        DiagnosticHelpers.ReportNode(context, DiagnosticRules.UseAutoPropertyFadeOut, expressionStatement.Expression);
+                        break;
+                    }
                 }
 
                 CSharpDiagnosticHelpers.ReportBraces(context, DiagnosticRules.UseAutoPropertyFadeOut, body);
@@ -382,23 +381,23 @@ public sealed class UseAutoPropertyAnalyzer : BaseDiagnosticAnalyzer
         switch (expression?.Kind())
         {
             case SyntaxKind.IdentifierName:
-                {
-                    return (IdentifierNameSyntax)expression;
-                }
+            {
+                return (IdentifierNameSyntax)expression;
+            }
             case SyntaxKind.SimpleMemberAccessExpression:
+            {
+                var memberAccess = (MemberAccessExpressionSyntax)expression;
+
+                if (memberAccess.Expression?.Kind() == SyntaxKind.ThisExpression)
                 {
-                    var memberAccess = (MemberAccessExpressionSyntax)expression;
+                    SimpleNameSyntax name = memberAccess.Name;
 
-                    if (memberAccess.Expression?.Kind() == SyntaxKind.ThisExpression)
-                    {
-                        SimpleNameSyntax name = memberAccess.Name;
-
-                        if (name.IsKind(SyntaxKind.IdentifierName))
-                            return (IdentifierNameSyntax)name;
-                    }
-
-                    break;
+                    if (name.IsKind(SyntaxKind.IdentifierName))
+                        return (IdentifierNameSyntax)name;
                 }
+
+                break;
+            }
         }
 
         return null;
@@ -453,7 +452,7 @@ public sealed class UseAutoPropertyAnalyzer : BaseDiagnosticAnalyzer
         return true;
     }
 
-    private class UseAutoPropertyWalker : CSharpSyntaxNodeWalker
+    private class UseAutoPropertyWalker : BaseCSharpSyntaxWalker
     {
         private bool _isInInstanceConstructor;
 
@@ -486,38 +485,38 @@ public sealed class UseAutoPropertyAnalyzer : BaseDiagnosticAnalyzer
         {
             CancellationToken.ThrowIfCancellationRequested();
 
-            if (node.RefOrOutKeyword.IsKind(SyntaxKind.RefKeyword, SyntaxKind.OutKeyword))
+            if (node.RefOrOutKeyword.IsKind(SyntaxKind.RefKeyword, SyntaxKind.OutKeyword, SyntaxKind.InKeyword))
             {
                 ExpressionSyntax expression = node.Expression?.WalkDownParentheses();
 
                 switch (expression?.Kind())
                 {
                     case SyntaxKind.IdentifierName:
-                        {
-                            if (IsBackingFieldReference((IdentifierNameSyntax)expression))
-                                Success = false;
+                    {
+                        if (IsBackingFieldReference((IdentifierNameSyntax)expression))
+                            Success = false;
 
-                            return;
-                        }
+                        return;
+                    }
                     case SyntaxKind.SimpleMemberAccessExpression:
+                    {
+                        var memberAccessExpression = (MemberAccessExpressionSyntax)expression;
+
+                        if (memberAccessExpression.Expression.IsKind(SyntaxKind.ThisExpression))
                         {
-                            var memberAccessExpression = (MemberAccessExpressionSyntax)expression;
+                            SimpleNameSyntax name = memberAccessExpression.Name;
 
-                            if (memberAccessExpression.Expression.IsKind(SyntaxKind.ThisExpression))
+                            if (name.IsKind(SyntaxKind.IdentifierName))
                             {
-                                SimpleNameSyntax name = memberAccessExpression.Name;
+                                if (IsBackingFieldReference((IdentifierNameSyntax)name))
+                                    Success = false;
 
-                                if (name.IsKind(SyntaxKind.IdentifierName))
-                                {
-                                    if (IsBackingFieldReference((IdentifierNameSyntax)name))
-                                        Success = false;
-
-                                    return;
-                                }
+                                return;
                             }
-
-                            break;
                         }
+
+                        break;
+                    }
                 }
             }
 
@@ -586,47 +585,47 @@ public sealed class UseAutoPropertyAnalyzer : BaseDiagnosticAnalyzer
             switch (expression.Kind())
             {
                 case SyntaxKind.SimpleMemberAccessExpression:
-                    {
-                        var memberAccessExpression = (MemberAccessExpressionSyntax)expression;
-                        expression = memberAccessExpression.Expression;
+                {
+                    var memberAccessExpression = (MemberAccessExpressionSyntax)expression;
+                    expression = memberAccessExpression.Expression;
 
-                        break;
-                    }
+                    break;
+                }
                 case SyntaxKind.ElementAccessExpression:
-                    {
-                        var elementAccessExpression = (ElementAccessExpressionSyntax)expression;
-                        expression = elementAccessExpression.Expression;
+                {
+                    var elementAccessExpression = (ElementAccessExpressionSyntax)expression;
+                    expression = elementAccessExpression.Expression;
 
-                        break;
-                    }
+                    break;
+                }
                 default:
-                    {
-                        return false;
-                    }
+                {
+                    return false;
+                }
             }
 
             switch (expression.Kind())
             {
                 case SyntaxKind.SimpleMemberAccessExpression:
+                {
+                    var memberAccessExpression = ((MemberAccessExpressionSyntax)expression);
+
+                    if (memberAccessExpression.Expression.IsKind(SyntaxKind.ThisExpression)
+                        && memberAccessExpression.Name.IsKind(SyntaxKind.IdentifierName)
+                        && IsBackingFieldReference((IdentifierNameSyntax)memberAccessExpression.Name))
                     {
-                        var memberAccessExpression = ((MemberAccessExpressionSyntax)expression);
-
-                        if (memberAccessExpression.Expression.IsKind(SyntaxKind.ThisExpression)
-                            && memberAccessExpression.Name.IsKind(SyntaxKind.IdentifierName)
-                            && IsBackingFieldReference((IdentifierNameSyntax)memberAccessExpression.Name))
-                        {
-                            return true;
-                        }
-
-                        break;
+                        return true;
                     }
+
+                    break;
+                }
                 case SyntaxKind.IdentifierName:
-                    {
-                        if (IsBackingFieldReference((IdentifierNameSyntax)expression))
-                            return true;
+                {
+                    if (IsBackingFieldReference((IdentifierNameSyntax)expression))
+                        return true;
 
-                        break;
-                    }
+                    break;
+                }
             }
 
             return false;

@@ -9,7 +9,6 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Rename;
 using Roslynator.CodeFixes;
 
@@ -68,6 +67,10 @@ public sealed class UnusedParameterCodeFixProvider : BaseCodeFixProvider
 
         string newName = NameGenerators.UnderscoreSuffix.EnsureUniqueParameterName("_", anonymousFunctionSymbol, semanticModel, cancellationToken: cancellationToken);
 
+#if ROSLYN_4_4
         return await Renamer.RenameSymbolAsync(document.Solution(), parameterSymbol, default(SymbolRenameOptions), newName, cancellationToken).ConfigureAwait(false);
+#else
+        return await Renamer.RenameSymbolAsync(document.Solution(), parameterSymbol, newName, default(Microsoft.CodeAnalysis.Options.OptionSet), cancellationToken).ConfigureAwait(false);
+#endif
     }
 }

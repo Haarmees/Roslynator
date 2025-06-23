@@ -389,7 +389,7 @@ if (y)
       <Syntax>while statement</Syntax>
     </Syntaxes>
   </Refactoring>
-  <Refactoring Id="RR0046" Identifier="ExtractTypeDeclarationToNewFile" Title="Extract type declaration to a new file">
+  <Refactoring Id="RR0046" Identifier="ExtractTypeDeclarationToNewFile" Title="Extract type declaration to a new file" IsEnabledByDefault="false">
     <OptionKey>extract_type_declaration_to_new_file</OptionKey>
     <Syntaxes>
       <Syntax>class declaration</Syntax>
@@ -1606,6 +1606,9 @@ i--;]]></After>
       <Syntax>operator</Syntax>
     </Syntaxes>
     <Span>body or accessor list</Span>
+    <ConfigOptions>
+      <Option Key="arrow_token_new_line" IsRequired="false" />
+    </ConfigOptions>
   </Refactoring>
   <Refactoring Id="RR0170" Identifier="UseLambdaInsteadOfAnonymousMethod" Title="Use lambda instead of anonymous method">
     <OptionKey>use_lambda_instead_of_anonymous_method</OptionKey>

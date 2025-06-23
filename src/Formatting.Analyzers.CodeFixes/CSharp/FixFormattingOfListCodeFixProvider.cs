@@ -9,7 +9,6 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Roslynator.Formatting.CSharp;
 using static Roslynator.Formatting.CodeFixes.CSharp.CodeFixHelpers;
 
 namespace Roslynator.Formatting.CodeFixes.CSharp;
@@ -72,93 +71,93 @@ public sealed class FixFormattingOfListCodeFixProvider : BaseCodeFixProvider
             switch (node)
             {
                 case ParameterListSyntax parameterList:
-                    {
-                        return CodeAction.Create(
-                            Title,
-                            ct => FixListAsync(document, parameterList, ListFixMode.Fix, ct),
-                            GetEquivalenceKey(diagnostic));
-                    }
+                {
+                    return CodeAction.Create(
+                        Title,
+                        ct => FixListAsync(document, parameterList, ListFixMode.Fix, ct),
+                        GetEquivalenceKey(diagnostic));
+                }
                 case BracketedParameterListSyntax bracketedParameterList:
-                    {
-                        return CodeAction.Create(
-                            Title,
-                            ct => FixListAsync(document, bracketedParameterList, ListFixMode.Fix, ct),
-                            GetEquivalenceKey(diagnostic));
-                    }
+                {
+                    return CodeAction.Create(
+                        Title,
+                        ct => FixListAsync(document, bracketedParameterList, ListFixMode.Fix, ct),
+                        GetEquivalenceKey(diagnostic));
+                }
                 case TypeParameterListSyntax typeParameterList:
-                    {
-                        return CodeAction.Create(
-                            Title,
-                            ct => FixListAsync(document, typeParameterList, ListFixMode.Fix, ct),
-                            GetEquivalenceKey(diagnostic));
-                    }
+                {
+                    return CodeAction.Create(
+                        Title,
+                        ct => FixListAsync(document, typeParameterList, ListFixMode.Fix, ct),
+                        GetEquivalenceKey(diagnostic));
+                }
                 case ArgumentListSyntax argumentList:
-                    {
-                        return CodeAction.Create(
-                            Title,
-                            ct => FixListAsync(document, argumentList, ListFixMode.Fix, ct),
-                            GetEquivalenceKey(diagnostic));
-                    }
+                {
+                    return CodeAction.Create(
+                        Title,
+                        ct => FixListAsync(document, argumentList, ListFixMode.Fix, ct),
+                        GetEquivalenceKey(diagnostic));
+                }
                 case BracketedArgumentListSyntax bracketedArgumentList:
-                    {
-                        return CodeAction.Create(
-                            Title,
-                            ct => FixListAsync(document, bracketedArgumentList, ListFixMode.Fix, ct),
-                            GetEquivalenceKey(diagnostic));
-                    }
+                {
+                    return CodeAction.Create(
+                        Title,
+                        ct => FixListAsync(document, bracketedArgumentList, ListFixMode.Fix, ct),
+                        GetEquivalenceKey(diagnostic));
+                }
                 case AttributeArgumentListSyntax attributeArgumentList:
-                    {
-                        return CodeAction.Create(
-                            Title,
-                            ct => FixListAsync(document, attributeArgumentList, ListFixMode.Fix, ct),
-                            GetEquivalenceKey(diagnostic));
-                    }
+                {
+                    return CodeAction.Create(
+                        Title,
+                        ct => FixListAsync(document, attributeArgumentList, ListFixMode.Fix, ct),
+                        GetEquivalenceKey(diagnostic));
+                }
                 case TypeArgumentListSyntax typeArgumentList:
-                    {
-                        return CodeAction.Create(
-                            Title,
-                            ct => FixListAsync(document, typeArgumentList, ListFixMode.Fix, ct),
-                            GetEquivalenceKey(diagnostic));
-                    }
+                {
+                    return CodeAction.Create(
+                        Title,
+                        ct => FixListAsync(document, typeArgumentList, ListFixMode.Fix, ct),
+                        GetEquivalenceKey(diagnostic));
+                }
                 case AttributeListSyntax attributeList:
-                    {
-                        return CodeAction.Create(
-                            Title,
-                            ct => FixListAsync(document, attributeList, ListFixMode.Fix, ct),
-                            GetEquivalenceKey(diagnostic));
-                    }
+                {
+                    return CodeAction.Create(
+                        Title,
+                        ct => FixListAsync(document, attributeList, ListFixMode.Fix, ct),
+                        GetEquivalenceKey(diagnostic));
+                }
                 case BaseListSyntax baseList:
-                    {
-                        return CodeAction.Create(
-                            Title,
-                            ct => FixListAsync(document, baseList, ListFixMode.Fix, ct),
-                            GetEquivalenceKey(diagnostic));
-                    }
+                {
+                    return CodeAction.Create(
+                        Title,
+                        ct => FixListAsync(document, baseList, ListFixMode.Fix, ct),
+                        GetEquivalenceKey(diagnostic));
+                }
                 case TupleTypeSyntax tupleType:
-                    {
-                        return CodeAction.Create(
-                            Title,
-                            ct => FixListAsync(document, tupleType, ListFixMode.Fix, ct),
-                            GetEquivalenceKey(diagnostic));
-                    }
+                {
+                    return CodeAction.Create(
+                        Title,
+                        ct => FixListAsync(document, tupleType, ListFixMode.Fix, ct),
+                        GetEquivalenceKey(diagnostic));
+                }
                 case TupleExpressionSyntax tupleExpression:
-                    {
-                        return CodeAction.Create(
-                            Title,
-                            ct => FixListAsync(document, tupleExpression, ListFixMode.Fix, ct),
-                            GetEquivalenceKey(diagnostic));
-                    }
+                {
+                    return CodeAction.Create(
+                        Title,
+                        ct => FixListAsync(document, tupleExpression, ListFixMode.Fix, ct),
+                        GetEquivalenceKey(diagnostic));
+                }
                 case InitializerExpressionSyntax initializerExpression:
-                    {
-                        return CodeAction.Create(
-                            Title,
-                            ct => FixListAsync(document, initializerExpression, ListFixMode.Fix, ct),
-                            GetEquivalenceKey(diagnostic));
-                    }
+                {
+                    return CodeAction.Create(
+                        Title,
+                        ct => FixListAsync(document, initializerExpression, ListFixMode.Fix, ct),
+                        GetEquivalenceKey(diagnostic));
+                }
                 default:
-                    {
-                        throw new InvalidOperationException();
-                    }
+                {
+                    throw new InvalidOperationException();
+                }
             }
         }
     }

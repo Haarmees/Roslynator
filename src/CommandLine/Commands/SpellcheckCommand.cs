@@ -44,8 +44,6 @@ internal class SpellcheckCommand : MSBuildWorkspaceCommand<SpellcheckCommandResu
 
     public override async Task<SpellcheckCommandResult> ExecuteAsync(ProjectOrSolution projectOrSolution, CancellationToken cancellationToken = default)
     {
-        AssemblyResolver.Register();
-
         VisibilityFilter visibilityFilter = Visibility switch
         {
             Visibility.Public => VisibilityFilter.All,
@@ -62,9 +60,6 @@ internal class SpellcheckCommand : MSBuildWorkspaceCommand<SpellcheckCommandResu
             MinWordLength = Options.MinWordLength,
             MaxWordLength = Options.MaxWordLength,
             IncludeGeneratedCode = Options.IncludeGeneratedCode,
-#if DEBUG
-            Autofix = !Options.NoAutofix,
-#endif
             Interactive = Options.Interactive,
             DryRun = Options.DryRun,
         };
@@ -89,9 +84,9 @@ internal class SpellcheckCommand : MSBuildWorkspaceCommand<SpellcheckCommandResu
 
             Solution solution = project.Solution;
 
-            spellingFixer = GetSpellingFixer(solution);
+            spellingFixer = GetSpellcheckAnalyzer(solution);
 
-            WriteLine($"Fix '{project.Name}'", ConsoleColors.Cyan, Verbosity.Minimal);
+            WriteLine($"Analyze '{project.Name}'", ConsoleColors.Cyan, Verbosity.Minimal);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
 
@@ -99,13 +94,13 @@ internal class SpellcheckCommand : MSBuildWorkspaceCommand<SpellcheckCommandResu
 
             stopwatch.Stop();
 
-            WriteLine($"Done fixing project '{project.FilePath}' in {stopwatch.Elapsed:mm\\:ss\\.ff}", Verbosity.Minimal);
+            LogHelpers.WriteElapsedTime($"Analyzed project '{project.FilePath}'", stopwatch.Elapsed, Verbosity.Minimal);
         }
         else
         {
             Solution solution = projectOrSolution.AsSolution();
 
-            spellingFixer = GetSpellingFixer(solution);
+            spellingFixer = GetSpellcheckAnalyzer(solution);
 
             results = await spellingFixer.FixSolutionAsync(f => IsMatch(f), cancellationToken);
         }
@@ -120,7 +115,7 @@ internal class SpellcheckCommand : MSBuildWorkspaceCommand<SpellcheckCommandResu
                 : CommandStatus.NotSuccess,
             results);
 
-        SpellcheckAnalyzer GetSpellingFixer(Solution solution)
+        SpellcheckAnalyzer GetSpellcheckAnalyzer(Solution solution)
         {
             return new SpellcheckAnalyzer(
                 solution,
@@ -128,11 +123,6 @@ internal class SpellcheckCommand : MSBuildWorkspaceCommand<SpellcheckCommandResu
                 formatProvider: formatProvider,
                 options: options);
         }
-    }
-
-    protected override void OperationCanceled(OperationCanceledException ex)
-    {
-        WriteLine("Spellchecking was canceled.", Verbosity.Minimal);
     }
 
     private void WriteSummary(ImmutableArray<SpellingFixResult> results)

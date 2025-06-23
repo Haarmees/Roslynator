@@ -106,10 +106,11 @@ public sealed class UseCompoundAssignmentAnalyzer : BaseDiagnosticAnalyzer
                 case SyntaxKind.LeftShiftExpression:
                 case SyntaxKind.RightShiftExpression:
                     return true;
-
                 case SyntaxKind.CoalesceExpression:
+                {
                     return ((CSharpCompilation)context.Compilation).LanguageVersion >= LanguageVersion.CSharp8
                         && !((BinaryExpressionSyntax)expression).Right.IsKind(SyntaxKind.ThrowExpression);
+                }
             }
 
             return false;
@@ -136,10 +137,8 @@ public sealed class UseCompoundAssignmentAnalyzer : BaseDiagnosticAnalyzer
 
         ExpressionSyntax right = binaryExpressionInfo.Right;
 
-        if (!right.IsKind(SyntaxKind.ParenthesizedExpression))
+        if (right is not ParenthesizedExpressionSyntax parenthesizedExpression)
             return;
-
-        var parenthesizedExpression = (ParenthesizedExpressionSyntax)right;
 
         ExpressionSyntax expression = parenthesizedExpression.Expression;
 

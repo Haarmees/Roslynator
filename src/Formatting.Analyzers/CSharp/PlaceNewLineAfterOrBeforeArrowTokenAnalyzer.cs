@@ -20,9 +20,7 @@ public sealed class PlaceNewLineAfterOrBeforeArrowTokenAnalyzer : BaseDiagnostic
         get
         {
             if (_supportedDiagnostics.IsDefault)
-            {
                 Immutable.InterlockedInitialize(ref _supportedDiagnostics, DiagnosticRules.PlaceNewLineAfterOrBeforeArrowToken);
-            }
 
             return _supportedDiagnostics;
         }
@@ -43,27 +41,15 @@ public sealed class PlaceNewLineAfterOrBeforeArrowTokenAnalyzer : BaseDiagnostic
 
         NewLinePosition newLinePosition = context.GetArrowTokenNewLinePosition();
 
-        if (newLinePosition == NewLinePosition.None)
-            return;
+        TriviaBlock block = TriviaBlock.FromSurrounding(arrowToken, arrowExpressionClause.Expression, newLinePosition);
 
-        FormattingSuggestion suggestion = FormattingAnalysis.AnalyzeNewLineBeforeOrAfter(arrowToken, arrowExpressionClause.Expression, newLinePosition);
-
-        if (suggestion == FormattingSuggestion.AddNewLineBefore)
+        if (block.Success)
         {
             DiagnosticHelpers.ReportDiagnostic(
                 context,
                 DiagnosticRules.PlaceNewLineAfterOrBeforeArrowToken,
-                arrowToken.GetLocation(),
-                "before");
-        }
-        else if (suggestion == FormattingSuggestion.AddNewLineAfter)
-        {
-            DiagnosticHelpers.ReportDiagnostic(
-                context,
-                DiagnosticRules.PlaceNewLineAfterOrBeforeArrowToken,
-                arrowToken.GetLocation(),
-                properties: DiagnosticProperties.AnalyzerOption_Invert,
-                "after");
+                block.GetLocation(),
+                (newLinePosition == NewLinePosition.Before) ? "before" : "after");
         }
     }
 }

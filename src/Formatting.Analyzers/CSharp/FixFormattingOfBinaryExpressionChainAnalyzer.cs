@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Roslynator.CSharp;
 using Roslynator.CSharp.CodeStyle;
-using static Roslynator.CSharp.SyntaxTriviaAnalysis;
+using static Roslynator.CSharp.TriviaBlock;
 
 namespace Roslynator.Formatting.CSharp;
 
@@ -74,12 +74,12 @@ public sealed class FixFormattingOfBinaryExpressionChainAnalyzer : BaseDiagnosti
             SyntaxTriviaList leftTrailing = left.GetTrailingTrivia();
             SyntaxTriviaList tokenTrailing = token.TrailingTrivia;
 
-            if (IsOptionalWhitespaceThenOptionalSingleLineCommentThenEndOfLineTrivia(leftTrailing))
+            if (FromTrailing(left).IsWrapped)
             {
                 if (Analyze(token))
                     return;
             }
-            else if (IsOptionalWhitespaceThenOptionalSingleLineCommentThenEndOfLineTrivia(tokenTrailing))
+            else if (FromTrailing(token).IsWrapped)
             {
                 if (Analyze(binaryExpression.Right))
                     return;
@@ -113,40 +113,40 @@ public sealed class FixFormattingOfBinaryExpressionChainAnalyzer : BaseDiagnosti
             switch (en.Current.Kind())
             {
                 case SyntaxKind.WhitespaceTrivia:
+                {
+                    if ((indentationLength ??= GetIndentationLength()) == -1)
+                        return true;
+
+                    if (en.Current.Span.Length != indentationLength)
+                    {
+                        if (!en.MoveNext()
+                            || en.Current.IsEndOfLineTrivia())
+                        {
+                            if (topBinaryExpression.FindTrivia(nodeOrToken.FullSpan.Start - 1).IsEndOfLineTrivia())
+                            {
+                                ReportDiagnostic();
+                                return true;
+                            }
+                        }
+
+                        break;
+                    }
+
+                    break;
+                }
+                case SyntaxKind.EndOfLineTrivia:
+                {
+                    if (topBinaryExpression.FindTrivia(nodeOrToken.FullSpan.Start - 1).IsEndOfLineTrivia())
                     {
                         if ((indentationLength ??= GetIndentationLength()) == -1)
                             return true;
 
-                        if (en.Current.Span.Length != indentationLength)
-                        {
-                            if (!en.MoveNext()
-                                || en.Current.IsEndOfLineTrivia())
-                            {
-                                if (topBinaryExpression.FindTrivia(nodeOrToken.FullSpan.Start - 1).IsEndOfLineTrivia())
-                                {
-                                    ReportDiagnostic();
-                                    return true;
-                                }
-                            }
-
-                            break;
-                        }
-
-                        break;
+                        ReportDiagnostic();
+                        return true;
                     }
-                case SyntaxKind.EndOfLineTrivia:
-                    {
-                        if (topBinaryExpression.FindTrivia(nodeOrToken.FullSpan.Start - 1).IsEndOfLineTrivia())
-                        {
-                            if ((indentationLength ??= GetIndentationLength()) == -1)
-                                return true;
 
-                            ReportDiagnostic();
-                            return true;
-                        }
-
-                        break;
-                    }
+                    break;
+                }
             }
 
             return false;
@@ -154,7 +154,7 @@ public sealed class FixFormattingOfBinaryExpressionChainAnalyzer : BaseDiagnosti
 
         int GetIndentationLength()
         {
-            IndentationAnalysis indentationAnalysis = AnalyzeIndentation(topBinaryExpression, context.GetConfigOptions());
+            IndentationAnalysis indentationAnalysis = SyntaxTriviaAnalysis.AnalyzeIndentation(topBinaryExpression, context.GetConfigOptions());
 
             if (indentationAnalysis.IndentSize == 0)
                 return -1;

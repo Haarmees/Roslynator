@@ -37,7 +37,13 @@ internal static class IntroduceConstructorRefactoring
                 }
             }
         }
-        else if (kind.Is(SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.RecordDeclaration, SyntaxKind.RecordStructDeclaration))
+        else if (kind.Is(
+            SyntaxKind.ClassDeclaration,
+            SyntaxKind.StructDeclaration,
+#if ROSLYN_4_0
+            SyntaxKind.RecordStructDeclaration,
+#endif
+            SyntaxKind.RecordDeclaration))
         {
             SemanticModel semanticModel = null;
 
@@ -95,8 +101,16 @@ internal static class IntroduceConstructorRefactoring
         if (symbol.IsStatic)
             return false;
 
-        if (!propertyDeclaration.IsParentKind(SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.RecordDeclaration, SyntaxKind.RecordStructDeclaration))
+        if (!propertyDeclaration.IsParentKind(
+            SyntaxKind.ClassDeclaration,
+            SyntaxKind.StructDeclaration,
+#if ROSLYN_4_0
+            SyntaxKind.RecordStructDeclaration,
+#endif
+            SyntaxKind.RecordDeclaration))
+        {
             return false;
+        }
 
         ArrowExpressionClauseSyntax expressionBody = propertyDeclaration.ExpressionBody;
 
@@ -276,12 +290,12 @@ internal static class IntroduceConstructorRefactoring
         switch (expression.Kind())
         {
             case SyntaxKind.SimpleMemberAccessExpression:
-                {
-                    var memberAccess = (MemberAccessExpressionSyntax)expression;
+            {
+                var memberAccess = (MemberAccessExpressionSyntax)expression;
 
-                    return memberAccess.Expression.IsKind(SyntaxKind.ThisExpression)
-                        && memberAccess.Name.IsKind(SyntaxKind.IdentifierName);
-                }
+                return memberAccess.Expression.IsKind(SyntaxKind.ThisExpression)
+                    && memberAccess.Name.IsKind(SyntaxKind.IdentifierName);
+            }
             case SyntaxKind.IdentifierName:
                 return true;
             default:
@@ -311,7 +325,9 @@ internal static class IntroduceConstructorRefactoring
             case SyntaxKind.ClassDeclaration:
                 return ((ClassDeclarationSyntax)declaration).Identifier.Text;
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return ((RecordDeclarationSyntax)declaration).Identifier.Text;
             case SyntaxKind.StructDeclaration:
                 return ((StructDeclarationSyntax)declaration).Identifier.Text;
@@ -327,13 +343,15 @@ internal static class IntroduceConstructorRefactoring
             case SyntaxKind.ClassDeclaration:
             case SyntaxKind.RecordDeclaration:
             case SyntaxKind.StructDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return declaration;
             default:
-                {
-                    Debug.Assert(declaration.Parent is MemberDeclarationSyntax);
-                    return declaration.Parent as MemberDeclarationSyntax;
-                }
+            {
+                Debug.Assert(declaration.Parent is MemberDeclarationSyntax);
+                return declaration.Parent as MemberDeclarationSyntax;
+            }
         }
     }
 
@@ -439,13 +457,13 @@ internal static class IntroduceConstructorRefactoring
             case SyntaxKind.IdentifierName:
                 return ((IdentifierNameSyntax)expression).Identifier;
             case SyntaxKind.SimpleMemberAccessExpression:
-                {
-                    var memberAccess = (MemberAccessExpressionSyntax)expression;
+            {
+                var memberAccess = (MemberAccessExpressionSyntax)expression;
 
-                    var identifierName = (IdentifierNameSyntax)memberAccess.Name;
+                var identifierName = (IdentifierNameSyntax)memberAccess.Name;
 
-                    return identifierName.Identifier;
-                }
+                return identifierName.Identifier;
+            }
         }
 
         SyntaxDebug.Fail(expression);

@@ -15,12 +15,12 @@ namespace Roslynator.CSharp.Analysis;
 internal static class ChangeAccessibilityAnalysis
 {
     private static readonly ImmutableDictionary<Accessibility, ImmutableArray<Accessibility>> _accessibilityArrayMap = ImmutableDictionary.CreateRange(new[]
-        {
-            new KeyValuePair<Accessibility, ImmutableArray<Accessibility>>(Accessibility.Public, ImmutableArray.Create(Accessibility.Public)),
-            new KeyValuePair<Accessibility, ImmutableArray<Accessibility>>(Accessibility.Internal, ImmutableArray.Create(Accessibility.Internal)),
-            new KeyValuePair<Accessibility, ImmutableArray<Accessibility>>(Accessibility.Protected, ImmutableArray.Create(Accessibility.Protected)),
-            new KeyValuePair<Accessibility, ImmutableArray<Accessibility>>(Accessibility.Private, ImmutableArray.Create(Accessibility.Private)),
-        });
+    {
+        new KeyValuePair<Accessibility, ImmutableArray<Accessibility>>(Accessibility.Public, ImmutableArray.Create(Accessibility.Public)),
+        new KeyValuePair<Accessibility, ImmutableArray<Accessibility>>(Accessibility.Internal, ImmutableArray.Create(Accessibility.Internal)),
+        new KeyValuePair<Accessibility, ImmutableArray<Accessibility>>(Accessibility.Protected, ImmutableArray.Create(Accessibility.Protected)),
+        new KeyValuePair<Accessibility, ImmutableArray<Accessibility>>(Accessibility.Private, ImmutableArray.Create(Accessibility.Private)),
+    });
 
     private static ImmutableArray<Accessibility> AvailableAccessibilities { get; } = ImmutableArray.Create(
         Accessibility.Public,
@@ -68,15 +68,15 @@ internal static class ChangeAccessibilityAnalysis
                 case Accessibility.ProtectedOrInternal:
                 case Accessibility.Internal:
                 case Accessibility.Public:
-                    {
-                        all |= accessibility.GetAccessibilityFilter();
-                        break;
-                    }
+                {
+                    all |= accessibility.GetAccessibilityFilter();
+                    break;
+                }
                 default:
-                    {
-                        Debug.Fail(accessibility.ToString());
-                        return AccessibilityFilter.None;
-                    }
+                {
+                    Debug.Fail(accessibility.ToString());
+                    return AccessibilityFilter.None;
+                }
             }
 
             ModifierListInfo modifiersInfo = SyntaxInfo.ModifierListInfo(member);
@@ -98,19 +98,19 @@ internal static class ChangeAccessibilityAnalysis
                     case Accessibility.Protected:
                     case Accessibility.Internal:
                     case Accessibility.Public:
-                        {
-                            valid &= accessibility.GetAccessibilityFilter();
+                    {
+                        valid &= accessibility.GetAccessibilityFilter();
 
-                            if (valid == AccessibilityFilter.None)
-                                return AccessibilityFilter.None;
-
-                            availableAccessibilities = _accessibilityArrayMap[accessibility];
-                            continue;
-                        }
-                    default:
-                        {
+                        if (valid == AccessibilityFilter.None)
                             return AccessibilityFilter.None;
-                        }
+
+                        availableAccessibilities = _accessibilityArrayMap[accessibility];
+                        continue;
+                    }
+                    default:
+                    {
+                        return AccessibilityFilter.None;
+                    }
                 }
             }
 
@@ -135,10 +135,10 @@ internal static class ChangeAccessibilityAnalysis
                 case AccessibilityFilter.Protected:
                 case AccessibilityFilter.Internal:
                 case AccessibilityFilter.Public:
-                    {
-                        valid &= ~all;
-                        break;
-                    }
+                {
+                    valid &= ~all;
+                    break;
+                }
             }
         }
 
@@ -196,66 +196,15 @@ internal static class ChangeAccessibilityAnalysis
         SemanticModel semanticModel,
         CancellationToken cancellationToken)
     {
-        switch (member.Kind())
+        switch (member)
         {
-            case SyntaxKind.EventFieldDeclaration:
+            case EventFieldDeclarationSyntax eventFieldDeclaration:
+            {
+                foreach (VariableDeclaratorSyntax declarator in eventFieldDeclaration.Declaration.Variables)
                 {
-                    var eventFieldDeclaration = (EventFieldDeclarationSyntax)member;
+                    var symbol = (IEventSymbol)semanticModel.GetDeclaredSymbol(declarator, cancellationToken);
 
-                    foreach (VariableDeclaratorSyntax declarator in eventFieldDeclaration.Declaration.Variables)
-                    {
-                        var symbol = (IEventSymbol)semanticModel.GetDeclaredSymbol(declarator, cancellationToken);
-
-                        if (symbol?
-                            .BaseOverriddenEvent()?
-                            .Locations
-                            .FirstOrDefault()?
-                            .Kind != LocationKind.SourceFile)
-                        {
-                            return true;
-                        }
-                    }
-
-                    break;
-                }
-            case SyntaxKind.MethodDeclaration:
-                {
-                    var methodDeclaration = (MethodDeclarationSyntax)member;
-
-                    if (semanticModel
-                        .GetDeclaredSymbol(methodDeclaration, cancellationToken)?
-                        .BaseOverriddenMethod()?
-                        .Locations
-                        .FirstOrDefault()?
-                        .Kind != LocationKind.SourceFile)
-                    {
-                        return true;
-                    }
-
-                    break;
-                }
-            case SyntaxKind.PropertyDeclaration:
-                {
-                    var propertyDeclaration = (PropertyDeclarationSyntax)member;
-
-                    if (semanticModel
-                        .GetDeclaredSymbol(propertyDeclaration, cancellationToken)?
-                        .BaseOverriddenProperty()?
-                        .Locations
-                        .FirstOrDefault()?
-                        .Kind != LocationKind.SourceFile)
-                    {
-                        return true;
-                    }
-
-                    break;
-                }
-            case SyntaxKind.EventDeclaration:
-                {
-                    var eventDeclaration = (EventDeclarationSyntax)member;
-
-                    if (semanticModel
-                        .GetDeclaredSymbol(eventDeclaration, cancellationToken)?
+                    if (symbol?
                         .BaseOverriddenEvent()?
                         .Locations
                         .FirstOrDefault()?
@@ -263,25 +212,66 @@ internal static class ChangeAccessibilityAnalysis
                     {
                         return true;
                     }
-
-                    break;
                 }
-            case SyntaxKind.IndexerDeclaration:
+
+                break;
+            }
+            case MethodDeclarationSyntax methodDeclaration:
+            {
+                if (semanticModel
+                    .GetDeclaredSymbol(methodDeclaration, cancellationToken)?
+                    .BaseOverriddenMethod()?
+                    .Locations
+                    .FirstOrDefault()?
+                    .Kind != LocationKind.SourceFile)
                 {
-                    var indexerDeclaration = (IndexerDeclarationSyntax)member;
-
-                    if (semanticModel
-                        .GetDeclaredSymbol(indexerDeclaration, cancellationToken)?
-                        .BaseOverriddenProperty()?
-                        .Locations
-                        .FirstOrDefault()?
-                        .Kind != LocationKind.SourceFile)
-                    {
-                        return true;
-                    }
-
-                    break;
+                    return true;
                 }
+
+                break;
+            }
+            case PropertyDeclarationSyntax propertyDeclaration:
+            {
+                if (semanticModel
+                    .GetDeclaredSymbol(propertyDeclaration, cancellationToken)?
+                    .BaseOverriddenProperty()?
+                    .Locations
+                    .FirstOrDefault()?
+                    .Kind != LocationKind.SourceFile)
+                {
+                    return true;
+                }
+
+                break;
+            }
+            case EventDeclarationSyntax eventDeclaration:
+            {
+                if (semanticModel
+                    .GetDeclaredSymbol(eventDeclaration, cancellationToken)?
+                    .BaseOverriddenEvent()?
+                    .Locations
+                    .FirstOrDefault()?
+                    .Kind != LocationKind.SourceFile)
+                {
+                    return true;
+                }
+
+                break;
+            }
+            case IndexerDeclarationSyntax indexerDeclaration:
+            {
+                if (semanticModel
+                    .GetDeclaredSymbol(indexerDeclaration, cancellationToken)?
+                    .BaseOverriddenProperty()?
+                    .Locations
+                    .FirstOrDefault()?
+                    .Kind != LocationKind.SourceFile)
+                {
+                    return true;
+                }
+
+                break;
+            }
         }
 
         return false;

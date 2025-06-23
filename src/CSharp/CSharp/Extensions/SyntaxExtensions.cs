@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -16,7 +15,6 @@ using Roslynator.CSharp.SyntaxRewriters;
 using Roslynator.CSharp.SyntaxWalkers;
 using Roslynator.Documentation;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-using static Roslynator.CSharp.CSharpFactory;
 
 namespace Roslynator.CSharp;
 
@@ -29,7 +27,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true is the specified accessor is auto-implemented accessor.
     /// </summary>
-    /// <param name="accessorDeclaration"></param>
     public static bool IsAutoImplemented(this AccessorDeclarationSyntax accessorDeclaration)
     {
         return accessorDeclaration?.SemicolonToken.IsKind(SyntaxKind.SemicolonToken) == true
@@ -39,7 +36,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns accessor body or an expression body if the body is null.
     /// </summary>
-    /// <param name="accessorDeclaration"></param>
     public static CSharpSyntaxNode? BodyOrExpressionBody(this AccessorDeclarationSyntax accessorDeclaration)
     {
         if (accessorDeclaration is null)
@@ -53,7 +49,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns a get accessor contained in the specified list.
     /// </summary>
-    /// <param name="accessorList"></param>
     public static AccessorDeclarationSyntax? Getter(this AccessorListSyntax accessorList)
     {
         return Accessor(accessorList, SyntaxKind.GetAccessorDeclaration);
@@ -62,7 +57,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns a set accessor contained in the specified list.
     /// </summary>
-    /// <param name="accessorList"></param>
     public static AccessorDeclarationSyntax? Setter(this AccessorListSyntax accessorList)
     {
         return Accessor(accessorList, SyntaxKind.SetAccessorDeclaration, SyntaxKind.InitAccessorDeclaration);
@@ -155,11 +149,9 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns <see cref="ExpressionChain"/> that enables to enumerate expressions of a binary expression.
     /// </summary>
-    /// <param name="binaryExpression"></param>
-    /// <param name="span"></param>
     public static ExpressionChain AsChain(this BinaryExpressionSyntax binaryExpression, TextSpan? span = null)
     {
-        return new ExpressionChain(binaryExpression, span);
+        return new(binaryExpression, span);
     }
     #endregion BinaryExpressionSyntax
 
@@ -167,7 +159,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// The absolute span of the parentheses, not including its leading and trailing trivia.
     /// </summary>
-    /// <param name="castExpression"></param>
     public static TextSpan ParenthesesSpan(this CastExpressionSyntax castExpression)
     {
         if (castExpression is null)
@@ -183,8 +174,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="ClassDeclarationSyntax"/> with the members updated.
     /// </summary>
-    /// <param name="classDeclaration"></param>
-    /// <param name="member"></param>
     public static ClassDeclarationSyntax WithMembers(
         this ClassDeclarationSyntax classDeclaration,
         MemberDeclarationSyntax member)
@@ -198,8 +187,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="ClassDeclarationSyntax"/> with the members updated.
     /// </summary>
-    /// <param name="classDeclaration"></param>
-    /// <param name="members"></param>
     public static ClassDeclarationSyntax WithMembers(
         this ClassDeclarationSyntax classDeclaration,
         IEnumerable<MemberDeclarationSyntax> members)
@@ -213,7 +200,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// The absolute span of the braces, not including its leading and trailing trivia.
     /// </summary>
-    /// <param name="classDeclaration"></param>
     public static TextSpan BracesSpan(this ClassDeclarationSyntax classDeclaration)
     {
         if (classDeclaration is null)
@@ -229,7 +215,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// The absolute span of the parentheses, not including its leading and trailing trivia.
     /// </summary>
-    /// <param name="forEachStatement"></param>
     public static TextSpan ParenthesesSpan(this CommonForEachStatementSyntax forEachStatement)
     {
         if (forEachStatement is null)
@@ -250,8 +235,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="CompilationUnitSyntax"/> with the members updated.
     /// </summary>
-    /// <param name="compilationUnit"></param>
-    /// <param name="member"></param>
     public static CompilationUnitSyntax WithMembers(
         this CompilationUnitSyntax compilationUnit,
         MemberDeclarationSyntax member)
@@ -265,8 +248,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="CompilationUnitSyntax"/> with the members updated.
     /// </summary>
-    /// <param name="compilationUnit"></param>
-    /// <param name="members"></param>
     public static CompilationUnitSyntax WithMembers(
         this CompilationUnitSyntax compilationUnit,
         IEnumerable<MemberDeclarationSyntax> members)
@@ -280,9 +261,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="CompilationUnitSyntax"/> with the specified using directives added.
     /// </summary>
-    /// <param name="compilationUnit"></param>
-    /// <param name="keepSingleLineCommentsOnTop"></param>
-    /// <param name="usings"></param>
     public static CompilationUnitSyntax AddUsings(this CompilationUnitSyntax compilationUnit, bool keepSingleLineCommentsOnTop, params UsingDirectiveSyntax[] usings)
     {
         if (compilationUnit is null)
@@ -379,7 +357,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns constructor body or an expression body if the body is null.
     /// </summary>
-    /// <param name="constructorDeclaration"></param>
     public static CSharpSyntaxNode? BodyOrExpressionBody(this ConstructorDeclarationSyntax constructorDeclaration)
     {
         if (constructorDeclaration is null)
@@ -393,7 +370,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns conversion operator body or an expression body if the body is null.
     /// </summary>
-    /// <param name="conversionOperatorDeclaration"></param>
     public static CSharpSyntaxNode? BodyOrExpressionBody(this ConversionOperatorDeclarationSyntax conversionOperatorDeclaration)
     {
         if (conversionOperatorDeclaration is null)
@@ -439,7 +415,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true the specified delegate return type is <see cref="void"/>.
     /// </summary>
-    /// <param name="delegateDeclaration"></param>
     public static bool ReturnsVoid(this DelegateDeclarationSyntax delegateDeclaration)
     {
         return delegateDeclaration?.ReturnType?.IsVoid() == true;
@@ -450,7 +425,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns destructor body or an expression body if the body is null.
     /// </summary>
-    /// <param name="destructorDeclaration"></param>
     public static CSharpSyntaxNode? BodyOrExpressionBody(this DestructorDeclarationSyntax destructorDeclaration)
     {
         if (destructorDeclaration is null)
@@ -489,7 +463,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns the next related directive.
     /// </summary>
-    /// <param name="directiveTrivia"></param>
     public static DirectiveTriviaSyntax? GetNextRelatedDirective(this DirectiveTriviaSyntax directiveTrivia)
     {
         DirectiveTriviaSyntax? d = directiveTrivia;
@@ -498,55 +471,55 @@ public static class SyntaxExtensions
         {
             case SyntaxKind.IfDirectiveTrivia:
             case SyntaxKind.ElifDirectiveTrivia:
+            {
+                while (true)
                 {
-                    while (true)
+                    d = d.GetNextPossiblyRelatedDirective();
+
+                    if (d is null)
+                        break;
+
+                    if (d.IsKind(
+                        SyntaxKind.ElifDirectiveTrivia,
+                        SyntaxKind.ElseDirectiveTrivia,
+                        SyntaxKind.EndIfDirectiveTrivia))
                     {
-                        d = d.GetNextPossiblyRelatedDirective();
-
-                        if (d is null)
-                            break;
-
-                        if (d.IsKind(
-                            SyntaxKind.ElifDirectiveTrivia,
-                            SyntaxKind.ElseDirectiveTrivia,
-                            SyntaxKind.EndIfDirectiveTrivia))
-                        {
-                            return d;
-                        }
+                        return d;
                     }
-
-                    break;
                 }
+
+                break;
+            }
             case SyntaxKind.ElseDirectiveTrivia:
+            {
+                while (true)
                 {
-                    while (true)
-                    {
-                        d = d.GetNextPossiblyRelatedDirective();
+                    d = d.GetNextPossiblyRelatedDirective();
 
-                        if (d is null)
-                            break;
+                    if (d is null)
+                        break;
 
-                        if (d.Kind() == SyntaxKind.EndIfDirectiveTrivia)
-                            return d;
-                    }
-
-                    break;
+                    if (d.Kind() == SyntaxKind.EndIfDirectiveTrivia)
+                        return d;
                 }
+
+                break;
+            }
             case SyntaxKind.RegionDirectiveTrivia:
+            {
+                while (true)
                 {
-                    while (true)
-                    {
-                        d = d.GetNextPossiblyRelatedDirective();
+                    d = d.GetNextPossiblyRelatedDirective();
 
-                        if (d is null)
-                            break;
+                    if (d is null)
+                        break;
 
-                        if (d.Kind() == SyntaxKind.EndRegionDirectiveTrivia)
-                            return d;
-                    }
-
-                    break;
+                    if (d.Kind() == SyntaxKind.EndRegionDirectiveTrivia)
+                        return d;
                 }
+
+                break;
+            }
         }
 
         return null;
@@ -565,25 +538,25 @@ public static class SyntaxExtensions
                 switch (d.Kind())
                 {
                     case SyntaxKind.IfDirectiveTrivia:
+                    {
+                        do
                         {
-                            do
-                            {
-                                d = d.GetNextRelatedDirective();
-                            }
-                            while (d is not null && d.Kind() != SyntaxKind.EndIfDirectiveTrivia);
-
-                            continue;
+                            d = d.GetNextRelatedDirective();
                         }
+                        while (d is not null && d.Kind() != SyntaxKind.EndIfDirectiveTrivia);
+
+                        continue;
+                    }
                     case SyntaxKind.RegionDirectiveTrivia:
+                    {
+                        do
                         {
-                            do
-                            {
-                                d = d.GetNextRelatedDirective();
-                            }
-                            while (d is not null && d.Kind() != SyntaxKind.EndRegionDirectiveTrivia);
-
-                            continue;
+                            d = d.GetNextRelatedDirective();
                         }
+                        while (d is not null && d.Kind() != SyntaxKind.EndRegionDirectiveTrivia);
+
+                        continue;
+                    }
                 }
             }
 
@@ -615,8 +588,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Gets a list of xml elements with the specified local name.
     /// </summary>
-    /// <param name="documentationComment"></param>
-    /// <param name="localName"></param>
     public static IEnumerable<XmlElementSyntax> Elements(this DocumentationCommentTriviaSyntax documentationComment, string localName)
     {
         if (documentationComment is null)
@@ -649,12 +620,12 @@ public static class SyntaxExtensions
         }
     }
 
-    internal static bool IsPartOfMemberDeclaration(this DocumentationCommentTriviaSyntax documentationComment)
+    internal static bool IsPartOfDeclaration(this DocumentationCommentTriviaSyntax documentationComment)
     {
         SyntaxNode? node = documentationComment.ParentTrivia.Token.Parent;
 
-        return node is MemberDeclarationSyntax
-            || node?.Parent is MemberDeclarationSyntax;
+        return node is MemberDeclarationSyntax or LocalFunctionStatementSyntax
+            || node?.Parent is MemberDeclarationSyntax or LocalFunctionStatementSyntax;
     }
     #endregion DocumentationCommentTriviaSyntax
 
@@ -676,7 +647,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns topmost if statement of the if-else cascade the specified else clause is part of.
     /// </summary>
-    /// <param name="elseClause"></param>
     public static IfStatementSyntax? GetTopmostIf(this ElseClauseSyntax elseClause)
     {
         if (elseClause is null)
@@ -714,7 +684,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns region directive that is related to the specified endregion directive. Returns null if no matching region directive is found.
     /// </summary>
-    /// <param name="endRegionDirective"></param>
     public static RegionDirectiveTriviaSyntax? GetRegionDirective(this EndRegionDirectiveTriviaSyntax endRegionDirective)
     {
         if (endRegionDirective is null)
@@ -728,7 +697,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Gets preprocessing message for the specified endregion directive if such message exists.
     /// </summary>
-    /// <param name="endRegionDirective"></param>
     public static SyntaxTrivia GetPreprocessingMessageTrivia(this EndRegionDirectiveTriviaSyntax endRegionDirective)
     {
         if (endRegionDirective is null)
@@ -752,7 +720,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true the specified endregion directive has preprocessing message trivia.
     /// </summary>
-    /// <param name="endRegionDirective"></param>
     internal static bool HasPreprocessingMessageTrivia(this EndRegionDirectiveTriviaSyntax endRegionDirective)
     {
         return GetPreprocessingMessageTrivia(endRegionDirective).IsKind(SyntaxKind.PreprocessingMessageTrivia);
@@ -763,7 +730,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// The absolute span of the braces, not including its leading and trailing trivia.
     /// </summary>
-    /// <param name="enumDeclaration"></param>
     public static TextSpan BracesSpan(this EnumDeclarationSyntax enumDeclaration)
     {
         if (enumDeclaration is null)
@@ -791,7 +757,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns topmost parenthesized expression or self if the expression if not parenthesized.
     /// </summary>
-    /// <param name="expression"></param>
     public static ExpressionSyntax WalkUpParentheses(this ExpressionSyntax expression)
     {
         while (expression.IsParentKind(SyntaxKind.ParenthesizedExpression))
@@ -803,7 +768,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns lowest expression in parentheses or self if the expression is not parenthesized.
     /// </summary>
-    /// <param name="expression"></param>
     public static ExpressionSyntax WalkDownParentheses(this ExpressionSyntax expression)
     {
         if (expression is null)
@@ -840,7 +804,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Absolute span of the parentheses, not including the leading and trailing trivia.
     /// </summary>
-    /// <param name="forStatement"></param>
     public static TextSpan ParenthesesSpan(this ForStatementSyntax forStatement)
     {
         if (forStatement is null)
@@ -867,7 +830,6 @@ public static class SyntaxExtensions
     /// Returns true if the specified if statement is a simple if statement.
     /// Simple if statement is defined as follows: it is not a child of an else clause and it has no else clause.
     /// </summary>
-    /// <param name="ifStatement"></param>
     public static bool IsSimpleIf(this IfStatementSyntax ifStatement)
     {
         return ifStatement?.IsParentKind(SyntaxKind.ElseClause) == false
@@ -877,7 +839,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns topmost if statement of the if-else cascade the specified if statement is part of.
     /// </summary>
-    /// <param name="ifStatement"></param>
     public static IfStatementSyntax GetTopmostIf(this IfStatementSyntax ifStatement)
     {
         if (ifStatement is null)
@@ -903,7 +864,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified if statement is not a child of an else clause.
     /// </summary>
-    /// <param name="ifStatement"></param>
     public static bool IsTopmostIf(this IfStatementSyntax ifStatement)
     {
         return ifStatement?.IsParentKind(SyntaxKind.ElseClause) == false;
@@ -944,7 +904,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns <see cref="IfStatementCascade"/> that enables to enumerate if-else cascade.
     /// </summary>
-    /// <param name="ifStatement"></param>
     public static IfStatementCascade AsCascade(this IfStatementSyntax ifStatement)
     {
         if (ifStatement is null)
@@ -956,7 +915,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns <see cref="IfStatementCascadeInfo"/> that summarizes information about if-else cascade.
     /// </summary>
-    /// <param name="ifStatement"></param>
     public static IfStatementCascadeInfo GetCascadeInfo(this IfStatementSyntax ifStatement)
     {
         if (ifStatement is null)
@@ -970,8 +928,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a list of syntax nodes from a sequence of nodes.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="nodes"></param>
     public static SyntaxList<TNode> ToSyntaxList<TNode>(this IEnumerable<TNode> nodes) where TNode : SyntaxNode
     {
         return List(nodes);
@@ -980,8 +936,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a separated list of syntax nodes from a sequence of nodes.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="nodes"></param>
     public static SeparatedSyntaxList<TNode> ToSeparatedSyntaxList<TNode>(this IEnumerable<TNode> nodes) where TNode : SyntaxNode
     {
         return SeparatedList(nodes);
@@ -990,8 +944,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a separated list of syntax nodes from a sequence of nodes and tokens.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="nodesAndTokens"></param>
     public static SeparatedSyntaxList<TNode> ToSeparatedSyntaxList<TNode>(this IEnumerable<SyntaxNodeOrToken> nodesAndTokens) where TNode : SyntaxNode
     {
         return SeparatedList<TNode>(nodesAndTokens);
@@ -1000,7 +952,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a list of syntax tokens from a sequence of tokens.
     /// </summary>
-    /// <param name="tokens"></param>
     public static SyntaxTokenList ToSyntaxTokenList(this IEnumerable<SyntaxToken> tokens)
     {
         return TokenList(tokens);
@@ -1036,7 +987,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns a get accessor that is contained in the specified indexer declaration.
     /// </summary>
-    /// <param name="indexerDeclaration"></param>
     public static AccessorDeclarationSyntax? Getter(this IndexerDeclarationSyntax indexerDeclaration)
     {
         if (indexerDeclaration is null)
@@ -1050,7 +1000,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns a set accessor that is contained in the specified indexer declaration.
     /// </summary>
-    /// <param name="indexerDeclaration"></param>
     public static AccessorDeclarationSyntax? Setter(this IndexerDeclarationSyntax indexerDeclaration)
     {
         if (indexerDeclaration is null)
@@ -1066,7 +1015,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// The absolute span of the braces, not including it leading and trailing trivia.
     /// </summary>
-    /// <param name="interfaceDeclaration"></param>
     public static TextSpan BracesSpan(this InterfaceDeclarationSyntax interfaceDeclaration)
     {
         if (interfaceDeclaration is null)
@@ -1080,8 +1028,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="InterfaceDeclarationSyntax"/> with the members updated.
     /// </summary>
-    /// <param name="interfaceDeclaration"></param>
-    /// <param name="member"></param>
     public static InterfaceDeclarationSyntax WithMembers(
         this InterfaceDeclarationSyntax interfaceDeclaration,
         MemberDeclarationSyntax member)
@@ -1095,8 +1041,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="InterfaceDeclarationSyntax"/> with the members updated.
     /// </summary>
-    /// <param name="interfaceDeclaration"></param>
-    /// <param name="members"></param>
     public static InterfaceDeclarationSyntax WithMembers(
         this InterfaceDeclarationSyntax interfaceDeclaration,
         IEnumerable<MemberDeclarationSyntax> members)
@@ -1112,7 +1056,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified interpolated string is a verbatim.
     /// </summary>
-    /// <param name="interpolatedString"></param>
     public static bool IsVerbatim(this InterpolatedStringExpressionSyntax interpolatedString)
     {
         return interpolatedString?.StringStartToken.ValueText.Contains("@") == true;
@@ -1176,7 +1119,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified literal expression is a hexadecimal numeric literal expression.
     /// </summary>
-    /// <param name="literalExpression"></param>
     public static bool IsHexNumericLiteral(this LiteralExpressionSyntax literalExpression)
     {
         return literalExpression.IsKind(SyntaxKind.NumericLiteralExpression)
@@ -1188,7 +1130,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns local function body or an expression body if the body is null.
     /// </summary>
-    /// <param name="localFunctionStatement"></param>
     public static CSharpSyntaxNode? BodyOrExpressionBody(this LocalFunctionStatementSyntax localFunctionStatement)
     {
         if (localFunctionStatement is null)
@@ -1200,7 +1141,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified local function' return type is <see cref="void"/>.
     /// </summary>
-    /// <param name="localFunctionStatement"></param>
     public static bool ReturnsVoid(this LocalFunctionStatementSyntax localFunctionStatement)
     {
         return localFunctionStatement?.ReturnType?.IsVoid() == true;
@@ -1209,7 +1149,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified local function contains yield statement. Nested local functions are excluded.
     /// </summary>
-    /// <param name="localFunctionStatement"></param>
     public static bool ContainsYield(this LocalFunctionStatementSyntax localFunctionStatement)
     {
         if (localFunctionStatement is null)
@@ -1241,7 +1180,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns single-line documentation comment that is part of the specified declaration.
     /// </summary>
-    /// <param name="member"></param>
     public static SyntaxTrivia GetSingleLineDocumentationCommentTrivia(this MemberDeclarationSyntax member)
     {
         if (member is null)
@@ -1259,7 +1197,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns documentation comment that is part of the specified declaration.
     /// </summary>
-    /// <param name="member"></param>
     public static SyntaxTrivia GetDocumentationCommentTrivia(this MemberDeclarationSyntax member)
     {
         if (member is null)
@@ -1277,7 +1214,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns single-line documentation comment syntax that is part of the specified declaration.
     /// </summary>
-    /// <param name="member"></param>
     public static DocumentationCommentTriviaSyntax? GetSingleLineDocumentationComment(this MemberDeclarationSyntax member)
     {
         if (member is null)
@@ -1294,7 +1230,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns documentation comment syntax that is part of the specified declaration.
     /// </summary>
-    /// <param name="member"></param>
     public static DocumentationCommentTriviaSyntax? GetDocumentationComment(this MemberDeclarationSyntax member)
     {
         if (member is null)
@@ -1315,7 +1250,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified declaration has a single-line documentation comment.
     /// </summary>
-    /// <param name="member"></param>
     public static bool HasSingleLineDocumentationComment(this MemberDeclarationSyntax member)
     {
         if (member is null)
@@ -1329,7 +1263,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified declaration has a documentation comment.
     /// </summary>
-    /// <param name="member"></param>
     public static bool HasDocumentationComment(this MemberDeclarationSyntax member)
     {
         if (member is null)
@@ -1402,7 +1335,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified method contains yield statement. Nested local functions are excluded.
     /// </summary>
-    /// <param name="methodDeclaration"></param>
     public static bool ContainsYield(this MethodDeclarationSyntax methodDeclaration)
     {
         if (methodDeclaration is null)
@@ -1416,7 +1348,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified method return type is <see cref="void"/>.
     /// </summary>
-    /// <param name="methodDeclaration"></param>
     public static bool ReturnsVoid(this MethodDeclarationSyntax methodDeclaration)
     {
         return methodDeclaration?.ReturnType?.IsVoid() == true;
@@ -1451,7 +1382,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns method body or an expression body if the body is null.
     /// </summary>
-    /// <param name="methodDeclaration"></param>
     public static CSharpSyntaxNode? BodyOrExpressionBody(this MethodDeclarationSyntax methodDeclaration)
     {
         if (methodDeclaration is null)
@@ -1465,8 +1395,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="NamespaceDeclarationSyntax"/> with the members updated.
     /// </summary>
-    /// <param name="namespaceDeclaration"></param>
-    /// <param name="member"></param>
     public static NamespaceDeclarationSyntax WithMembers(
         this NamespaceDeclarationSyntax namespaceDeclaration,
         MemberDeclarationSyntax member)
@@ -1480,8 +1408,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="NamespaceDeclarationSyntax"/> with the members updated.
     /// </summary>
-    /// <param name="namespaceDeclaration"></param>
-    /// <param name="members"></param>
     public static NamespaceDeclarationSyntax WithMembers(
         this NamespaceDeclarationSyntax namespaceDeclaration,
         IEnumerable<MemberDeclarationSyntax> members)
@@ -1495,7 +1421,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// The absolute span of the braces, not including leading and trailing trivia.
     /// </summary>
-    /// <param name="namespaceDeclaration"></param>
     public static TextSpan BracesSpan(this NamespaceDeclarationSyntax namespaceDeclaration)
     {
         if (namespaceDeclaration is null)
@@ -1511,7 +1436,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns operator body or an expression body if the body is null.
     /// </summary>
-    /// <param name="operatorDeclaration"></param>
     public static CSharpSyntaxNode? BodyOrExpressionBody(this OperatorDeclarationSyntax operatorDeclaration)
     {
         if (operatorDeclaration is null)
@@ -1550,7 +1474,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified parameter has "params" modifier.
     /// </summary>
-    /// <param name="parameter"></param>
     public static bool IsParams(this ParameterSyntax parameter)
     {
         return parameter?.Modifiers.Contains(SyntaxKind.ParamsKeyword) == true;
@@ -1585,7 +1508,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns property get accessor, if any.
     /// </summary>
-    /// <param name="propertyDeclaration"></param>
     public static AccessorDeclarationSyntax? Getter(this PropertyDeclarationSyntax propertyDeclaration)
     {
         if (propertyDeclaration is null)
@@ -1597,7 +1519,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns property set accessor, if any.
     /// </summary>
-    /// <param name="propertyDeclaration"></param>
     public static AccessorDeclarationSyntax? Setter(this PropertyDeclarationSyntax propertyDeclaration)
     {
         if (propertyDeclaration is null)
@@ -1621,8 +1542,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="RecordDeclarationSyntax"/> with the members updated.
     /// </summary>
-    /// <param name="recordDeclaration"></param>
-    /// <param name="member"></param>
     public static RecordDeclarationSyntax WithMembers(
         this RecordDeclarationSyntax recordDeclaration,
         MemberDeclarationSyntax member)
@@ -1636,8 +1555,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="RecordDeclarationSyntax"/> with the members updated.
     /// </summary>
-    /// <param name="recordDeclaration"></param>
-    /// <param name="members"></param>
     public static RecordDeclarationSyntax WithMembers(
         this RecordDeclarationSyntax recordDeclaration,
         IEnumerable<MemberDeclarationSyntax> members)
@@ -1651,7 +1568,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// The absolute span of the braces, not including its leading and trailing trivia.
     /// </summary>
-    /// <param name="recordDeclaration"></param>
     public static TextSpan BracesSpan(this RecordDeclarationSyntax recordDeclaration)
     {
         if (recordDeclaration is null)
@@ -1667,7 +1583,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns endregion directive that is related to the specified region directive. Returns null if no matching endregion directive is found.
     /// </summary>
-    /// <param name="regionDirective"></param>
     public static EndRegionDirectiveTriviaSyntax? GetEndRegionDirective(this RegionDirectiveTriviaSyntax regionDirective)
     {
         if (regionDirective is null)
@@ -1681,7 +1596,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Gets preprocessing message for the specified region directive if such message exists.
     /// </summary>
-    /// <param name="regionDirective"></param>
     public static SyntaxTrivia GetPreprocessingMessageTrivia(this RegionDirectiveTriviaSyntax regionDirective)
     {
         if (regionDirective is null)
@@ -1705,7 +1619,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true the specified region directive has preprocessing message trivia.
     /// </summary>
-    /// <param name="regionDirective"></param>
     internal static bool HasPreprocessingMessageTrivia(this RegionDirectiveTriviaSyntax regionDirective)
     {
         return GetPreprocessingMessageTrivia(regionDirective).IsKind(SyntaxKind.PreprocessingMessageTrivia);
@@ -1716,9 +1629,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Searches for a node of the specified kind and returns the zero-based index of the last occurrence within the entire <see cref="SeparatedSyntaxList{TNode}"/>.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
-    /// <param name="kind"></param>
     public static int LastIndexOf<TNode>(this SeparatedSyntaxList<TNode> list, SyntaxKind kind) where TNode : SyntaxNode
     {
         return list.LastIndexOf(f => f.IsKind(kind));
@@ -1727,9 +1637,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Searches for a node of the specified kind and returns the zero-based index of the first occurrence within the entire <see cref="SeparatedSyntaxList{TNode}"/>.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
-    /// <param name="kind"></param>
     public static bool Contains<TNode>(this SeparatedSyntaxList<TNode> list, SyntaxKind kind) where TNode : SyntaxNode
     {
         return list.IndexOf(kind) != -1;
@@ -1738,9 +1645,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Searches for a node of the specified kind and returns the first occurrence within the entire <see cref="SeparatedSyntaxList{TNode}"/>.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
-    /// <param name="kind"></param>
     public static TNode? Find<TNode>(this SeparatedSyntaxList<TNode> list, SyntaxKind kind) where TNode : SyntaxNode
     {
         int index = list.IndexOf(kind);
@@ -1805,11 +1709,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new list with the elements in the specified range replaced with new node.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
-    /// <param name="index"></param>
-    /// <param name="count"></param>
-    /// <param name="newNode"></param>
     public static SeparatedSyntaxList<TNode> ReplaceRange<TNode>(
         this SeparatedSyntaxList<TNode> list,
         int index,
@@ -1825,11 +1724,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new list with the elements in the specified range replaced with new nodes.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
-    /// <param name="index"></param>
-    /// <param name="count"></param>
-    /// <param name="newNodes"></param>
     public static SeparatedSyntaxList<TNode> ReplaceRange<TNode>(
         this SeparatedSyntaxList<TNode> list,
         int index,
@@ -1885,8 +1779,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new list with elements in the specified range removed.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
     /// <param name="index">An index of the first element to remove.</param>
     /// <param name="count">A number of elements to remove.</param>
     public static SeparatedSyntaxList<TNode> RemoveRange<TNode>(
@@ -1902,8 +1794,6 @@ public static class SyntaxExtensions
     /// and all trailing whitespace from the trailing trivia of the last node in a list and returns a new list with the new trivia.
     /// <see cref="SyntaxKind.WhitespaceTrivia"/> and <see cref="SyntaxKind.EndOfLineTrivia"/> is considered to be a whitespace.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
     public static SeparatedSyntaxList<TNode> TrimTrivia<TNode>(this SeparatedSyntaxList<TNode> list) where TNode : SyntaxNode
     {
         int count = list.Count;
@@ -1966,6 +1856,38 @@ public static class SyntaxExtensions
 
         return -1;
     }
+
+    //TODO: make public
+    internal static SeparatedSyntaxList<TResult> ForEach<TSource, TResult>(this SeparatedSyntaxList<TSource> list, Func<TSource, TResult> selector)
+        where TSource : SyntaxNode
+        where TResult : SyntaxNode
+    {
+        int count = list.Count + list.SeparatorCount;
+        var items = new List<SyntaxNodeOrToken>(count);
+
+        int i = 0;
+        while (i < count)
+        {
+            items.Add(default);
+            i++;
+        }
+
+        i = 0;
+        while (i < list.Count)
+        {
+            items[i * 2] = selector(list[i]);
+            i++;
+        }
+
+        i = 0;
+        foreach (SyntaxToken separator in list.GetSeparators())
+        {
+            items[(i * 2) + 1] = separator;
+            i++;
+        }
+
+        return SeparatedList<TResult>(items);
+    }
     #endregion SeparatedSyntaxList<T>
 
     #region StatementSyntax
@@ -1973,7 +1895,6 @@ public static class SyntaxExtensions
     /// Gets the previous statement of the specified statement.
     /// If the specified statement is not contained in the list, or if there is no previous statement, then this method returns null.
     /// </summary>
-    /// <param name="statement"></param>
     public static StatementSyntax? PreviousStatement(this StatementSyntax statement)
     {
         if (statement is null)
@@ -1996,7 +1917,6 @@ public static class SyntaxExtensions
     /// Gets the next statement of the specified statement.
     /// If the specified statement is not contained in the list, or if there is no next statement, then this method returns null.
     /// </summary>
-    /// <param name="statement"></param>
     public static StatementSyntax? NextStatement(this StatementSyntax statement)
     {
         if (statement is null)
@@ -2019,8 +1939,6 @@ public static class SyntaxExtensions
     /// Gets a list the specified statement is contained in.
     /// This method succeeds if the statement is in a block's statements or a switch section's statements.
     /// </summary>
-    /// <param name="statement"></param>
-    /// <param name="statements"></param>
     /// <returns>True if the statement is contained in the list; otherwise, false.</returns>
     public static bool TryGetContainingList(this StatementSyntax statement, out SyntaxList<StatementSyntax> statements)
     {
@@ -2039,7 +1957,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified statement is an embedded statement.
     /// </summary>
-    /// <param name="statement"></param>
     /// <param name="canBeBlock">Block can be considered as embedded statement</param>
     /// <param name="canBeIfInsideElse">If statement that is a child of an else statement can be considered as an embedded statement.</param>
     /// <param name="canBeUsingInsideUsing">Using statement that is a child of an using statement can be considered as en embedded statement.</param>
@@ -2084,8 +2001,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="StructDeclarationSyntax"/> with the members updated.
     /// </summary>
-    /// <param name="structDeclaration"></param>
-    /// <param name="member"></param>
     public static StructDeclarationSyntax WithMembers(
         this StructDeclarationSyntax structDeclaration,
         MemberDeclarationSyntax member)
@@ -2099,8 +2014,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new <see cref="StructDeclarationSyntax"/> with the members updated.
     /// </summary>
-    /// <param name="structDeclaration"></param>
-    /// <param name="members"></param>
     public static StructDeclarationSyntax WithMembers(
         this StructDeclarationSyntax structDeclaration,
         IEnumerable<MemberDeclarationSyntax> members)
@@ -2114,7 +2027,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// The absolute span of the braces, not including its leading and trailing trivia.
     /// </summary>
-    /// <param name="structDeclaration"></param>
     public static TextSpan BracesSpan(this StructDeclarationSyntax structDeclaration)
     {
         if (structDeclaration is null)
@@ -2130,7 +2042,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified switch section contains default switch label.
     /// </summary>
-    /// <param name="switchSection"></param>
     public static bool ContainsDefaultLabel(this SwitchSectionSyntax switchSection)
     {
         return switchSection?.Labels.Any(f => f.IsKind(SyntaxKind.DefaultSwitchLabel)) == true;
@@ -2153,7 +2064,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns a section that contains default label, or null if the specified switch statement does not contains section with default label.
     /// </summary>
-    /// <param name="switchStatement"></param>
     public static SwitchSectionSyntax? DefaultSection(this SwitchStatementSyntax switchStatement)
     {
         if (switchStatement is null)
@@ -2173,9 +2083,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Searches for a node of the specified kind and returns the zero-based index of the last occurrence within the entire <see cref="SyntaxList{TNode}"/>.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
-    /// <param name="kind"></param>
     public static int LastIndexOf<TNode>(this SyntaxList<TNode> list, SyntaxKind kind) where TNode : SyntaxNode
     {
         return list.LastIndexOf(f => f.IsKind(kind));
@@ -2184,9 +2091,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node of the specified kind is in the <see cref="SyntaxList{TNode}"/>.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
-    /// <param name="kind"></param>
     public static bool Contains<TNode>(this SyntaxList<TNode> list, SyntaxKind kind) where TNode : SyntaxNode
     {
         return list.IndexOf(kind) != -1;
@@ -2195,9 +2099,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Searches for a node of the specified kind and returns the first occurrence within the entire <see cref="SyntaxList{TNode}"/>.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
-    /// <param name="kind"></param>
     public static TNode? Find<TNode>(this SyntaxList<TNode> list, SyntaxKind kind) where TNode : SyntaxNode
     {
         int index = list.IndexOf(kind);
@@ -2269,8 +2170,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified statement is a last statement in the list.
     /// </summary>
-    /// <param name="statements"></param>
-    /// <param name="statement"></param>
     /// <param name="ignoreLocalFunctions">Ignore local function statements at the end of the list.</param>
     public static bool IsLast(
         this SyntaxList<StatementSyntax> statements,
@@ -2294,8 +2193,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new list with the specified node added or inserted.
     /// </summary>
-    /// <param name="statements"></param>
-    /// <param name="statement"></param>
     /// <param name="ignoreLocalFunctions">Insert statement before local function statements at the end of the list.</param>
     public static SyntaxList<StatementSyntax> Add(
         this SyntaxList<StatementSyntax> statements,
@@ -2324,11 +2221,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new list with the elements in the specified range replaced with new node.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
-    /// <param name="index"></param>
-    /// <param name="count"></param>
-    /// <param name="newNode"></param>
     public static SyntaxList<TNode> ReplaceRange<TNode>(
         this SyntaxList<TNode> list,
         int index,
@@ -2344,11 +2236,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new list with the elements in the specified range replaced with new nodes.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
-    /// <param name="index"></param>
-    /// <param name="count"></param>
-    /// <param name="newNodes"></param>
     public static SyntaxList<TNode> ReplaceRange<TNode>(
         this SyntaxList<TNode> list,
         int index,
@@ -2404,8 +2291,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new list with elements in the specified range removed.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
     /// <param name="index">An index of the first element to remove.</param>
     /// <param name="count">A number of elements to remove.</param>
     public static SyntaxList<TNode> RemoveRange<TNode>(
@@ -2441,8 +2326,6 @@ public static class SyntaxExtensions
     /// and all trailing whitespace from the trailing trivia of the last node in a list and returns a new list with the new trivia.
     /// <see cref="SyntaxKind.WhitespaceTrivia"/> and <see cref="SyntaxKind.EndOfLineTrivia"/> is considered to be a whitespace.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="list"></param>
     public static SyntaxList<TNode> TrimTrivia<TNode>(this SyntaxList<TNode> list) where TNode : SyntaxNode
     {
         int count = list.Count;
@@ -2485,9 +2368,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node is a descendant of a node with the specified kind.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind"></param>
-    /// <param name="ascendOutOfTrivia"></param>
     public static bool IsDescendantOf(this SyntaxNode node, SyntaxKind kind, bool ascendOutOfTrivia = true)
     {
         if (node is null)
@@ -2499,9 +2379,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
     public static bool IsKind(this SyntaxNode? node, SyntaxKind kind1, SyntaxKind kind2)
     {
         if (node is null)
@@ -2516,10 +2393,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
     public static bool IsKind(this SyntaxNode? node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3)
     {
         if (node is null)
@@ -2535,11 +2408,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
     public static bool IsKind(this SyntaxNode? node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4)
     {
         if (node is null)
@@ -2556,12 +2424,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
-    /// <param name="kind5"></param>
     public static bool IsKind(this SyntaxNode? node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5)
     {
         if (node is null)
@@ -2579,13 +2441,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
-    /// <param name="kind5"></param>
-    /// <param name="kind6"></param>
     public static bool IsKind(this SyntaxNode? node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5, SyntaxKind kind6)
     {
         if (node is null)
@@ -2604,8 +2459,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node parent's kind is the specified kind.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind"></param>
     public static bool IsParentKind(this SyntaxNode? node, SyntaxKind kind)
     {
         return node?.Parent.IsKind(kind) == true;
@@ -2614,9 +2467,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node parent's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
     public static bool IsParentKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2)
     {
         return IsKind(node?.Parent, kind1, kind2);
@@ -2625,10 +2475,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node parent's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
     public static bool IsParentKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3)
     {
         return IsKind(node?.Parent, kind1, kind2, kind3);
@@ -2637,11 +2483,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node parent's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
     public static bool IsParentKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4)
     {
         return IsKind(node?.Parent, kind1, kind2, kind3, kind4);
@@ -2650,12 +2491,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node parent's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
-    /// <param name="kind5"></param>
     public static bool IsParentKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5)
     {
         return IsKind(node?.Parent, kind1, kind2, kind3, kind4, kind5);
@@ -2664,13 +2499,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a node parent's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
-    /// <param name="kind5"></param>
-    /// <param name="kind6"></param>
     public static bool IsParentKind(this SyntaxNode node, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5, SyntaxKind kind6)
     {
         return IsKind(node?.Parent, kind1, kind2, kind3, kind4, kind5, kind6);
@@ -2783,8 +2611,6 @@ public static class SyntaxExtensions
     /// <see cref="SyntaxKind.WhitespaceTrivia"/> and <see cref="SyntaxKind.EndOfLineTrivia"/> is considered to be a whitespace.
     /// Returns the same node if there is nothing to trim.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
     public static TNode TrimLeadingTrivia<TNode>(this TNode node) where TNode : SyntaxNode
     {
         if (node is null)
@@ -2810,8 +2636,6 @@ public static class SyntaxExtensions
     /// <see cref="SyntaxKind.WhitespaceTrivia"/> and <see cref="SyntaxKind.EndOfLineTrivia"/> is considered to be a whitespace.
     /// Returns the same node if there is nothing to trim.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
     public static TNode TrimTrailingTrivia<TNode>(this TNode node) where TNode : SyntaxNode
     {
         if (node is null)
@@ -2837,8 +2661,6 @@ public static class SyntaxExtensions
     /// <see cref="SyntaxKind.WhitespaceTrivia"/> and <see cref="SyntaxKind.EndOfLineTrivia"/> is considered to be a whitespace.
     /// Returns the same node if there is nothing to trim.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
     public static TNode TrimTrivia<TNode>(this TNode node) where TNode : SyntaxNode
     {
         if (node is null)
@@ -2862,9 +2684,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Gets the first ancestor of the specified kind.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind"></param>
-    /// <param name="ascendOutOfTrivia"></param>
     public static SyntaxNode? FirstAncestor(
         this SyntaxNode node,
         SyntaxKind kind,
@@ -2876,10 +2695,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Gets the first ancestor of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="ascendOutOfTrivia"></param>
     public static SyntaxNode? FirstAncestor(
         this SyntaxNode node,
         SyntaxKind kind1,
@@ -2892,11 +2707,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Gets the first ancestor of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="ascendOutOfTrivia"></param>
     public static SyntaxNode? FirstAncestor(
         this SyntaxNode node,
         SyntaxKind kind1,
@@ -2910,9 +2720,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Gets the first ancestor that matches the predicate.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="predicate"></param>
-    /// <param name="ascendOutOfTrivia"></param>
     public static SyntaxNode? FirstAncestor(this SyntaxNode node, Func<SyntaxNode, bool> predicate, bool ascendOutOfTrivia = true)
     {
         if (node is null)
@@ -2936,9 +2743,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Gets the first ancestor of the specified kind.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind"></param>
-    /// <param name="ascendOutOfTrivia"></param>
     public static SyntaxNode? FirstAncestorOrSelf(
         this SyntaxNode node,
         SyntaxKind kind,
@@ -2950,10 +2754,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Gets the first ancestor of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="ascendOutOfTrivia"></param>
     public static SyntaxNode? FirstAncestorOrSelf(
         this SyntaxNode node,
         SyntaxKind kind1,
@@ -2966,11 +2766,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Gets the first ancestor of the specified kinds.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="ascendOutOfTrivia"></param>
     public static SyntaxNode? FirstAncestorOrSelf(
         this SyntaxNode node,
         SyntaxKind kind1,
@@ -2984,9 +2779,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Gets the first ancestor that matches the predicate.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="predicate"></param>
-    /// <param name="ascendOutOfTrivia"></param>
     public static SyntaxNode? FirstAncestorOrSelf(this SyntaxNode node, Func<SyntaxNode, bool> predicate, bool ascendOutOfTrivia = true)
     {
         if (node is null)
@@ -3047,9 +2839,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new node with the trivia removed.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
-    /// <param name="span"></param>
     public static TNode RemoveTrivia<TNode>(this TNode node, TextSpan? span = null) where TNode : SyntaxNode
     {
         if (node is null)
@@ -3061,9 +2850,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new node with the whitespace removed.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
-    /// <param name="span"></param>
     public static TNode RemoveWhitespace<TNode>(this TNode node, TextSpan? span = null) where TNode : SyntaxNode
     {
         if (node is null)
@@ -3075,10 +2861,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new node with the whitespace replaced.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
-    /// <param name="replacement"></param>
-    /// <param name="span"></param>
     public static TNode ReplaceWhitespace<TNode>(this TNode node, SyntaxTrivia replacement, TextSpan? span = null) where TNode : SyntaxNode
     {
         if (node is null)
@@ -3108,9 +2890,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Determines if the specified node is contained in an expression tree.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="semanticModel"></param>
-    /// <param name="cancellationToken"></param>
     public static bool IsInExpressionTree(
         this SyntaxNode node,
         SemanticModel semanticModel,
@@ -3122,47 +2901,47 @@ public static class SyntaxExtensions
             {
                 case SyntaxKind.SimpleLambdaExpression:
                 case SyntaxKind.ParenthesizedLambdaExpression:
+                {
+                    if (semanticModel
+                        .GetTypeInfo(current, cancellationToken)
+                        .ConvertedType?
+                        .OriginalDefinition
+                        .HasMetadataName(MetadataNames.System_Linq_Expressions_Expression_T) == true)
                     {
-                        if (semanticModel
-                            .GetTypeInfo(current, cancellationToken)
-                            .ConvertedType?
-                            .OriginalDefinition
-                            .HasMetadataName(MetadataNames.System_Linq_Expressions_Expression_T) == true)
-                        {
-                            return true;
-                        }
-
-                        break;
+                        return true;
                     }
+
+                    break;
+                }
                 case SyntaxKind.AscendingOrdering:
                 case SyntaxKind.DescendingOrdering:
                 case SyntaxKind.GroupClause:
                 case SyntaxKind.SelectClause:
-                    {
-                        SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(current, cancellationToken);
+                {
+                    SymbolInfo symbolInfo = semanticModel.GetSymbolInfo(current, cancellationToken);
 
-                        if (IsMethodThatAcceptsExpressionAsFirstParameter(symbolInfo))
-                            return true;
+                    if (IsMethodThatAcceptsExpressionAsFirstParameter(symbolInfo))
+                        return true;
 
-                        break;
-                    }
+                    break;
+                }
                 case SyntaxKind.FromClause:
                 case SyntaxKind.JoinClause:
                 case SyntaxKind.JoinIntoClause:
                 case SyntaxKind.LetClause:
                 case SyntaxKind.OrderByClause:
                 case SyntaxKind.WhereClause:
+                {
+                    QueryClauseInfo clauseInfo = semanticModel.GetQueryClauseInfo((QueryClauseSyntax)current, cancellationToken);
+
+                    if (IsMethodThatAcceptsExpressionAsFirstParameter(clauseInfo.CastInfo)
+                        || IsMethodThatAcceptsExpressionAsFirstParameter(clauseInfo.OperationInfo))
                     {
-                        QueryClauseInfo clauseInfo = semanticModel.GetQueryClauseInfo((QueryClauseSyntax)current, cancellationToken);
-
-                        if (IsMethodThatAcceptsExpressionAsFirstParameter(clauseInfo.CastInfo)
-                            || IsMethodThatAcceptsExpressionAsFirstParameter(clauseInfo.OperationInfo))
-                        {
-                            return true;
-                        }
-
-                        break;
+                        return true;
                     }
+
+                    break;
+                }
                 case SyntaxKind.AddAccessorDeclaration:
                 case SyntaxKind.ArrowExpressionClause:
                 case SyntaxKind.Block:
@@ -3209,7 +2988,9 @@ public static class SyntaxExtensions
                 case SyntaxKind.ReturnStatement:
                 case SyntaxKind.SetAccessorDeclaration:
                 case SyntaxKind.StructDeclaration:
+#if ROSLYN_4_0
                 case SyntaxKind.RecordStructDeclaration:
+#endif
                 case SyntaxKind.SwitchStatement:
                 case SyntaxKind.ThrowStatement:
                 case SyntaxKind.TryStatement:
@@ -3225,9 +3006,9 @@ public static class SyntaxExtensions
                 case SyntaxKind.WhenClause:
                 case SyntaxKind.BaseConstructorInitializer:
                 case SyntaxKind.ThisConstructorInitializer:
-                    {
-                        return false;
-                    }
+                {
+                    return false;
+                }
 #if DEBUG
                 case SyntaxKind.Argument:
                 case SyntaxKind.ArgumentList:
@@ -3240,14 +3021,14 @@ public static class SyntaxExtensions
                 case SyntaxKind.VariableDeclarator:
                 case SyntaxKind.QueryBody:
                 case SyntaxKind.AnonymousObjectMemberDeclarator:
-                    {
-                        break;
-                    }
+                {
+                    break;
+                }
                 default:
-                    {
-                        SyntaxDebug.Assert(current is ExpressionSyntax, current);
-                        break;
-                    }
+                {
+                    SyntaxDebug.Assert(current is ExpressionSyntax, current);
+                    break;
+                }
 #endif
             }
         }
@@ -3285,7 +3066,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified node contains <c>#if</c> directive but it does not contain related <c>#endif</c> directive.
     /// </summary>
-    /// <param name="node"></param>
     public static bool ContainsUnbalancedIfElseDirectives(this SyntaxNode node)
     {
         return ContainsUnbalancedIfElseDirectives(node, node.FullSpan);
@@ -3294,8 +3074,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified node contains <c>#if</c> directive but it does not contain related <c>#endif</c> directive.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="span"></param>
     public static bool ContainsUnbalancedIfElseDirectives(this SyntaxNode node, TextSpan span)
     {
         if (node is null)
@@ -3343,9 +3121,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Gets the first directive of the tree rooted by this node.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="span"></param>
-    /// <param name="predicate"></param>
     public static DirectiveTriviaSyntax? GetFirstDirective(this SyntaxNode node, TextSpan span, Func<DirectiveTriviaSyntax, bool>? predicate = null)
     {
         DirectiveTriviaSyntax? directive = node.GetFirstDirective(predicate);
@@ -3393,9 +3168,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
     public static bool IsKind(this SyntaxToken token, SyntaxKind kind1, SyntaxKind kind2)
     {
         SyntaxKind kind = token.Kind();
@@ -3407,10 +3179,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
     public static bool IsKind(this SyntaxToken token, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3)
     {
         SyntaxKind kind = token.Kind();
@@ -3423,11 +3191,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
     public static bool IsKind(this SyntaxToken token, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4)
     {
         SyntaxKind kind = token.Kind();
@@ -3441,12 +3204,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
-    /// <param name="kind5"></param>
     public static bool IsKind(this SyntaxToken token, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5)
     {
         SyntaxKind kind = token.Kind();
@@ -3461,13 +3218,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
-    /// <param name="kind5"></param>
-    /// <param name="kind6"></param>
     public static bool IsKind(this SyntaxToken token, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5, SyntaxKind kind6)
     {
         SyntaxKind kind = token.Kind();
@@ -3485,7 +3235,6 @@ public static class SyntaxExtensions
     /// <see cref="SyntaxKind.WhitespaceTrivia"/> and <see cref="SyntaxKind.EndOfLineTrivia"/> is considered to be a whitespace.
     /// Returns the same token if there is nothing to trim.
     /// </summary>
-    /// <param name="token"></param>
     public static SyntaxToken TrimLeadingTrivia(this SyntaxToken token)
     {
         SyntaxTriviaList trivia = token.LeadingTrivia;
@@ -3508,7 +3257,6 @@ public static class SyntaxExtensions
     /// <see cref="SyntaxKind.WhitespaceTrivia"/> and <see cref="SyntaxKind.EndOfLineTrivia"/> is considered to be a whitespace.
     /// Returns the same token if there is nothing to trim.
     /// </summary>
-    /// <param name="token"></param>
     public static SyntaxToken TrimTrailingTrivia(this SyntaxToken token)
     {
         SyntaxTriviaList trivia = token.TrailingTrivia;
@@ -3531,7 +3279,6 @@ public static class SyntaxExtensions
     /// <see cref="SyntaxKind.WhitespaceTrivia"/> and <see cref="SyntaxKind.EndOfLineTrivia"/> is considered to be a whitespace.
     /// Returns the same token if there is nothing to trim.
     /// </summary>
-    /// <param name="token"></param>
     public static SyntaxToken TrimTrivia(this SyntaxToken token)
     {
         return token
@@ -3542,8 +3289,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token of the specified kind is in the <see cref="SyntaxTokenList"/>.
     /// </summary>
-    /// <param name="tokenList"></param>
-    /// <param name="kind"></param>
     public static bool Contains(this SyntaxTokenList tokenList, SyntaxKind kind)
     {
         return tokenList.IndexOf(kind) != -1;
@@ -3552,9 +3297,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token of the specified kinds is in the <see cref="SyntaxTokenList"/>.
     /// </summary>
-    /// <param name="tokenList"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
     public static bool ContainsAny(this SyntaxTokenList tokenList, SyntaxKind kind1, SyntaxKind kind2)
     {
         return ContainsAny(tokenList, (int)kind1, (int)kind2);
@@ -3563,10 +3305,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token of the specified kinds is in the <see cref="SyntaxTokenList"/>.
     /// </summary>
-    /// <param name="tokenList"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
     public static bool ContainsAny(this SyntaxTokenList tokenList, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3)
     {
         return ContainsAny(tokenList, (int)kind1, (int)kind2, (int)kind3);
@@ -3575,11 +3313,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token of the specified kinds is in the <see cref="SyntaxTokenList"/>.
     /// </summary>
-    /// <param name="tokenList"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
     public static bool ContainsAny(this SyntaxTokenList tokenList, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4)
     {
         return ContainsAny(tokenList, (int)kind1, (int)kind2, (int)kind3, (int)kind4);
@@ -3588,12 +3321,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token of the specified kinds is in the <see cref="SyntaxTokenList"/>.
     /// </summary>
-    /// <param name="tokenList"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
-    /// <param name="kind5"></param>
     public static bool ContainsAny(this SyntaxTokenList tokenList, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5)
     {
         return ContainsAny(tokenList, (int)kind1, (int)kind2, (int)kind3, (int)kind4, (int)kind5);
@@ -3672,8 +3399,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token parent's kind is the specified kind.
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="kind"></param>
     public static bool IsParentKind(this SyntaxToken token, SyntaxKind kind)
     {
         return token.Parent.IsKind(kind);
@@ -3682,9 +3407,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token parent's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
     public static bool IsParentKind(this SyntaxToken token, SyntaxKind kind1, SyntaxKind kind2)
     {
         return IsKind(token.Parent, kind1, kind2);
@@ -3693,10 +3415,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token parent's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
     public static bool IsParentKind(this SyntaxToken token, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3)
     {
         return IsKind(token.Parent, kind1, kind2, kind3);
@@ -3705,11 +3423,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token parent's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
     public static bool IsParentKind(this SyntaxToken token, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4)
     {
         return IsKind(token.Parent, kind1, kind2, kind3, kind4);
@@ -3718,12 +3431,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token parent's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
-    /// <param name="kind5"></param>
     public static bool IsParentKind(this SyntaxToken token, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5)
     {
         return IsKind(token.Parent, kind1, kind2, kind3, kind4, kind5);
@@ -3732,13 +3439,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token parent's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="token"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
-    /// <param name="kind5"></param>
-    /// <param name="kind6"></param>
     public static bool IsParentKind(this SyntaxToken token, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5, SyntaxKind kind6)
     {
         return IsKind(token.Parent, kind1, kind2, kind3, kind4, kind5, kind6);
@@ -3749,8 +3449,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Searches for a token of the specified kind and returns the first occurrence within the entire <see cref="SyntaxTokenList"/>.
     /// </summary>
-    /// <param name="tokenList"></param>
-    /// <param name="kind"></param>
     public static SyntaxToken Find(this SyntaxTokenList tokenList, SyntaxKind kind)
     {
         foreach (SyntaxToken token in tokenList)
@@ -3779,7 +3477,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new list with tokens in the specified range removed.
     /// </summary>
-    /// <param name="list"></param>
     /// <param name="index">An index of the first element to remove.</param>
     /// <param name="count">A number of elements to remove.</param>
     public static SyntaxTokenList RemoveRange(
@@ -3793,10 +3490,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new list with the tokens in the specified range replaced with new tokens.
     /// </summary>
-    /// <param name="list"></param>
-    /// <param name="index"></param>
-    /// <param name="count"></param>
-    /// <param name="newTokens"></param>
     public static SyntaxTokenList ReplaceRange(
         this SyntaxTokenList list,
         int index,
@@ -3854,9 +3547,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a trivia's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="trivia"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
     public static bool IsKind(this SyntaxTrivia trivia, SyntaxKind kind1, SyntaxKind kind2)
     {
         SyntaxKind kind = trivia.Kind();
@@ -3868,10 +3558,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="trivia"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
     public static bool IsKind(this SyntaxTrivia trivia, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3)
     {
         SyntaxKind kind = trivia.Kind();
@@ -3884,11 +3570,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="trivia"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
     public static bool IsKind(this SyntaxTrivia trivia, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4)
     {
         SyntaxKind kind = trivia.Kind();
@@ -3902,12 +3583,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="trivia"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
-    /// <param name="kind5"></param>
     public static bool IsKind(this SyntaxTrivia trivia, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5)
     {
         SyntaxKind kind = trivia.Kind();
@@ -3922,13 +3597,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a token's kind is one of the specified kinds.
     /// </summary>
-    /// <param name="trivia"></param>
-    /// <param name="kind1"></param>
-    /// <param name="kind2"></param>
-    /// <param name="kind3"></param>
-    /// <param name="kind4"></param>
-    /// <param name="kind5"></param>
-    /// <param name="kind6"></param>
     public static bool IsKind(this SyntaxTrivia trivia, SyntaxKind kind1, SyntaxKind kind2, SyntaxKind kind3, SyntaxKind kind4, SyntaxKind kind5, SyntaxKind kind6)
     {
         SyntaxKind kind = trivia.Kind();
@@ -3944,7 +3612,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the trivia is <see cref="SyntaxKind.WhitespaceTrivia"/>.
     /// </summary>
-    /// <param name="trivia"></param>
     public static bool IsWhitespaceTrivia(this SyntaxTrivia trivia)
     {
         return trivia.IsKind(SyntaxKind.WhitespaceTrivia);
@@ -3953,7 +3620,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the trivia is <see cref="SyntaxKind.EndOfLineTrivia"/>.
     /// </summary>
-    /// <param name="trivia"></param>
     public static bool IsEndOfLineTrivia(this SyntaxTrivia trivia)
     {
         return trivia.IsKind(SyntaxKind.EndOfLineTrivia);
@@ -3962,7 +3628,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the trivia is either <see cref="SyntaxKind.WhitespaceTrivia"/> or <see cref="SyntaxKind.EndOfLineTrivia"/>.
     /// </summary>
-    /// <param name="trivia"></param>
     public static bool IsWhitespaceOrEndOfLineTrivia(this SyntaxTrivia trivia)
     {
         return trivia.IsKind(SyntaxKind.WhitespaceTrivia, SyntaxKind.EndOfLineTrivia);
@@ -3971,7 +3636,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the trivia is a documentation comment trivia.
     /// </summary>
-    /// <param name="trivia"></param>
     internal static bool IsDocumentationCommentTrivia(this SyntaxTrivia trivia)
     {
         return SyntaxFacts.IsDocumentationCommentTrivia(trivia.Kind());
@@ -3989,8 +3653,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Searches for a trivia of the specified kind and returns the zero-based index of the last occurrence within the entire <see cref="SyntaxTriviaList"/>.
     /// </summary>
-    /// <param name="triviaList"></param>
-    /// <param name="kind"></param>
     public static int LastIndexOf(this SyntaxTriviaList triviaList, SyntaxKind kind)
     {
         for (int i = triviaList.Count - 1; i >= 0; i--)
@@ -4005,8 +3667,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if a trivia of the specified kind is in the <see cref="SyntaxTriviaList"/>.
     /// </summary>
-    /// <param name="triviaList"></param>
-    /// <param name="kind"></param>
     public static bool Contains(this SyntaxTriviaList triviaList, SyntaxKind kind)
     {
         return triviaList.IndexOf(kind) != -1;
@@ -4015,8 +3675,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Searches for a trivia of the specified kind and returns the first occurrence within the entire <see cref="SyntaxList{TNode}"/>.
     /// </summary>
-    /// <param name="triviaList"></param>
-    /// <param name="kind"></param>
     public static SyntaxTrivia Find(this SyntaxTriviaList triviaList, SyntaxKind kind)
     {
         foreach (SyntaxTrivia trivia in triviaList)
@@ -4031,7 +3689,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the list of either empty or contains only whitespace (<see cref="SyntaxKind.WhitespaceTrivia"/> or <see cref="SyntaxKind.EndOfLineTrivia"/>).
     /// </summary>
-    /// <param name="triviaList"></param>
     public static bool IsEmptyOrWhitespace(this SyntaxTriviaList triviaList)
     {
         foreach (SyntaxTrivia trivia in triviaList)
@@ -4063,7 +3720,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new list with trivia in the specified range removed.
     /// </summary>
-    /// <param name="list"></param>
     /// <param name="index">An index of the first element to remove.</param>
     /// <param name="count">A number of elements to remove.</param>
     public static SyntaxTriviaList RemoveRange(
@@ -4077,10 +3733,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Creates a new list with the trivia in the specified range replaced with new trivia.
     /// </summary>
-    /// <param name="list"></param>
-    /// <param name="index"></param>
-    /// <param name="count"></param>
-    /// <param name="newTrivia"></param>
     public static SyntaxTriviaList ReplaceRange(
         this SyntaxTriviaList list,
         int index,
@@ -4183,17 +3835,19 @@ public static class SyntaxExtensions
             case SyntaxKind.ClassDeclaration:
                 return ((ClassDeclarationSyntax)typeDeclaration).WithMembers(newMembers);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return ((RecordDeclarationSyntax)typeDeclaration).WithMembers(newMembers);
             case SyntaxKind.StructDeclaration:
                 return ((StructDeclarationSyntax)typeDeclaration).WithMembers(newMembers);
             case SyntaxKind.InterfaceDeclaration:
                 return ((InterfaceDeclarationSyntax)typeDeclaration).WithMembers(newMembers);
             default:
-                {
-                    SyntaxDebug.Fail(typeDeclaration);
-                    return typeDeclaration;
-                }
+            {
+                SyntaxDebug.Fail(typeDeclaration);
+                return typeDeclaration;
+            }
         }
     }
     #endregion TypeDeclarationSyntax
@@ -4202,7 +3856,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the type is <see cref="void"/>.
     /// </summary>
-    /// <param name="type"></param>
     public static bool IsVoid(this TypeSyntax type)
     {
         return type.IsKind(SyntaxKind.PredefinedType)
@@ -4213,7 +3866,7 @@ public static class SyntaxExtensions
     #region UsingDirectiveSyntax
     internal static IdentifierNameSyntax? GetRootNamespace(this UsingDirectiveSyntax usingDirective)
     {
-        NameSyntax name = usingDirective.Name;
+        NameSyntax? name = usingDirective.Name;
 
         if (name is AliasQualifiedNameSyntax aliasQualifiedName)
             name = aliasQualifiedName.Name;
@@ -4251,7 +3904,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns using statement's declaration or an expression if the declaration is null.
     /// </summary>
-    /// <param name="usingStatement"></param>
     public static CSharpSyntaxNode? DeclarationOrExpression(this UsingStatementSyntax usingStatement)
     {
         if (usingStatement is null)
@@ -4307,7 +3959,12 @@ public static class SyntaxExtensions
         return xmlElement.StartTag?.Name?.IsLocalName(localName, comparison) == true;
     }
 
-    internal static string? GetAttributeValue(this XmlElementSyntax element, string attributeName)
+    internal static string? GetAttributeValueText(this XmlElementSyntax element, string attributeName)
+    {
+        return GetAttributeValue(element, attributeName)?.Identifier.ValueText;
+    }
+
+    internal static IdentifierNameSyntax? GetAttributeValue(this XmlElementSyntax element, string attributeName)
     {
         XmlElementStartTagSyntax startTag = element.StartTag;
 
@@ -4318,10 +3975,7 @@ public static class SyntaxExtensions
                 if (attribute is XmlNameAttributeSyntax nameAttribute
                     && nameAttribute.Name?.LocalName.ValueText == attributeName)
                 {
-                    IdentifierNameSyntax identifierName = nameAttribute.Identifier;
-
-                    if (identifierName is not null)
-                        return identifierName.Identifier.ValueText;
+                    return nameAttribute.Identifier;
                 }
             }
         }
@@ -4343,17 +3997,19 @@ public static class SyntaxExtensions
     #endregion XmlElementSyntax
 
     #region XmlEmptyElementSyntax
-    internal static string? GetAttributeValue(this XmlEmptyElementSyntax element, string attributeName)
+    internal static string? GetAttributeValueText(this XmlEmptyElementSyntax element, string attributeName)
+    {
+        return GetAttributeValue(element, attributeName)?.Identifier.ValueText;
+    }
+
+    internal static IdentifierNameSyntax? GetAttributeValue(this XmlEmptyElementSyntax element, string attributeName)
     {
         foreach (XmlAttributeSyntax attribute in element.Attributes)
         {
             if (attribute is XmlNameAttributeSyntax nameAttribute
                 && nameAttribute.Name?.LocalName.ValueText == attributeName)
             {
-                IdentifierNameSyntax identifierName = nameAttribute.Identifier;
-
-                if (identifierName is not null)
-                    return identifierName.Identifier.ValueText;
+                return nameAttribute.Identifier;
             }
         }
 
@@ -4387,7 +4043,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified statement is a yield break statement.
     /// </summary>
-    /// <param name="yieldStatement"></param>
     public static bool IsYieldBreak(this YieldStatementSyntax yieldStatement)
     {
         return yieldStatement.IsKind(SyntaxKind.YieldBreakStatement);
@@ -4396,7 +4051,6 @@ public static class SyntaxExtensions
     /// <summary>
     /// Returns true if the specified statement is a yield return statement.
     /// </summary>
-    /// <param name="yieldStatement"></param>
     public static bool IsYieldReturn(this YieldStatementSyntax yieldStatement)
     {
         return yieldStatement.IsKind(SyntaxKind.YieldReturnStatement);

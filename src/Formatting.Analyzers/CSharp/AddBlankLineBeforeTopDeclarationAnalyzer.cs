@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Text;
 using Roslynator.CSharp;
 
 namespace Roslynator.Formatting.CSharp;
@@ -42,9 +41,6 @@ public sealed class AddBlankLineBeforeTopDeclarationAnalyzer : BaseDiagnosticAna
         if (declaration is null)
             return;
 
-        if (!SyntaxTriviaAnalysis.IsEmptyOrSingleWhitespaceTrivia(declaration.GetLeadingTrivia()))
-            return;
-
         SyntaxNode node = compilationUnit.AttributeLists.LastOrDefault()
             ?? (SyntaxNode)compilationUnit.Usings.LastOrDefault()
             ?? compilationUnit.Externs.LastOrDefault();
@@ -52,12 +48,15 @@ public sealed class AddBlankLineBeforeTopDeclarationAnalyzer : BaseDiagnosticAna
         if (node is null)
             return;
 
-        if (!SyntaxTriviaAnalysis.IsOptionalWhitespaceThenOptionalSingleLineCommentThenEndOfLineTrivia(node.GetTrailingTrivia()))
-            return;
+        TriviaBlock block = TriviaBlock.FromBetween(node, declaration);
 
-        DiagnosticHelpers.ReportDiagnostic(
-            context,
-            DiagnosticRules.AddBlankLineBeforeTopDeclaration,
-            Location.Create(compilationUnit.SyntaxTree, new TextSpan(node.GetTrailingTrivia().Last().SpanStart, 0)));
+        if (block.Kind == TriviaBlockKind.NoNewLine
+            || block.Kind == TriviaBlockKind.NewLine)
+        {
+            DiagnosticHelpers.ReportDiagnostic(
+                context,
+                DiagnosticRules.AddBlankLineBeforeTopDeclaration,
+                block.GetLocation());
+        }
     }
 }

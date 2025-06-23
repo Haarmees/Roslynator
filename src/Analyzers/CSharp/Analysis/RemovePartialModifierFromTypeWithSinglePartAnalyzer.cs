@@ -14,12 +14,12 @@ public sealed class RemovePartialModifierFromTypeWithSinglePartAnalyzer : BaseDi
 {
     private static ImmutableArray<DiagnosticDescriptor> _supportedDiagnostics;
 
-    private static readonly MetadataName[] _metadataNames = new[] {
+    private static readonly MetadataName[] _metadataNames = [
         // ASP.NET Core
         MetadataName.Parse("Microsoft.AspNetCore.Components.ComponentBase"),
         // WPF
         MetadataName.Parse("System.Windows.FrameworkElement"),
-    };
+    ];
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
     {
@@ -61,16 +61,12 @@ public sealed class RemovePartialModifierFromTypeWithSinglePartAnalyzer : BaseDi
 
         foreach (MemberDeclarationSyntax member in typeDeclaration.Members)
         {
-            if (member.IsKind(SyntaxKind.MethodDeclaration))
+            if (member is MethodDeclarationSyntax methodDeclaration
+                && methodDeclaration.Modifiers.Contains(SyntaxKind.PartialKeyword)
+                && methodDeclaration.BodyOrExpressionBody() is null
+                && methodDeclaration.ContainsUnbalancedIfElseDirectives(methodDeclaration.Span))
             {
-                var method = (MethodDeclarationSyntax)member;
-
-                if (method.Modifiers.Contains(SyntaxKind.PartialKeyword)
-                    && method.BodyOrExpressionBody() is null
-                    && method.ContainsUnbalancedIfElseDirectives(method.Span))
-                {
-                    return;
-                }
+                return;
             }
         }
 

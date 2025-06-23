@@ -1,17 +1,12 @@
 ﻿// Copyright (c) .NET Foundation and Contributors. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Composition;
-using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Host;
-using Roslynator.CSharp;
+using Microsoft.CodeAnalysis.Host.Mef;
 
 namespace Roslynator.CSharp;
 
-[Export(typeof(ILanguageService))]
-[ExportMetadata("Language", LanguageNames.CSharp)]
-[ExportMetadata("ServiceType", "Roslynator.ISyntaxFactsService")]
+[ExportLanguageService(typeof(ISyntaxFactsService), LanguageNames.CSharp)]
 internal sealed class CSharpSyntaxFactsService : ISyntaxFactsService
 {
     public static CSharpSyntaxFactsService Instance { get; } = new();
@@ -80,7 +75,9 @@ internal sealed class CSharpSyntaxFactsService : ISyntaxFactsService
             case SyntaxKind.TypeParameter:
             case SyntaxKind.ClassDeclaration:
             case SyntaxKind.StructDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
             case SyntaxKind.InterfaceDeclaration:
             case SyntaxKind.RecordDeclaration:
             case SyntaxKind.EnumDeclaration:
@@ -91,31 +88,31 @@ internal sealed class CSharpSyntaxFactsService : ISyntaxFactsService
             case SyntaxKind.EventDeclaration:
             case SyntaxKind.Parameter:
             case SyntaxKind.ForEachStatement:
-                {
-                    return parent;
-                }
+            {
+                return parent;
+            }
             case SyntaxKind.IdentifierName:
+            {
+                parent = parent.Parent;
+
+                if (parent.IsKind(SyntaxKind.NameEquals))
                 {
                     parent = parent.Parent;
 
-                    if (parent.IsKind(SyntaxKind.NameEquals))
+                    if (parent.IsKind(
+                        SyntaxKind.UsingDirective,
+                        SyntaxKind.AnonymousObjectMemberDeclarator))
                     {
-                        parent = parent.Parent;
-
-                        if (parent.IsKind(
-                            SyntaxKind.UsingDirective,
-                            SyntaxKind.AnonymousObjectMemberDeclarator))
-                        {
-                            return parent;
-                        }
-
-                        SyntaxDebug.Fail(parent);
-
-                        return null;
+                        return parent;
                     }
 
-                    return parent;
+                    SyntaxDebug.Fail(parent);
+
+                    return null;
                 }
+
+                return parent;
+            }
         }
 
         SyntaxDebug.Fail(parent);

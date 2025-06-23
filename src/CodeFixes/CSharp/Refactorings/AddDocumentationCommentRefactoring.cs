@@ -14,7 +14,7 @@ namespace Roslynator.CSharp.Refactorings;
 
 internal static class AddDocumentationCommentRefactoring
 {
-    private static readonly string[] _tagSeparator = new[] { "," };
+    private static readonly string[] _tagSeparator = [","];
 
     public static async Task<Document> RefactorAsync(
         Document document,
@@ -43,7 +43,7 @@ internal static class AddDocumentationCommentRefactoring
 
         if (document.TryGetAnalyzerOptionValue(
             memberDeclaration,
-            CodeFixOptions.CS1591_MissingXmlCommentForPubliclyVisibleTypeOrMember_IgnoredTags,
+            CodeFixOptions.CS1591_MissingXmlCommentForPubliclyVisibleTypeOrMember_IgnoredTags.Key,
             out string value))
         {
             ImmutableArray<string> ignoredTags = value

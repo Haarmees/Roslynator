@@ -181,6 +181,58 @@ class C
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.OptimizeLinqMethodCall)]
+    public async Task Test_SelectAndAverage()
+    {
+        await VerifyDiagnosticAndFixAsync(@"
+using System.Linq;
+
+class C
+{
+    void M()
+    {
+        double max = Enumerable.Empty<int>().[|Select(f => f).Average()|];
+    }
+}
+", @"
+using System.Linq;
+
+class C
+{
+    void M()
+    {
+        double max = Enumerable.Empty<int>().Average(f => f);
+    }
+}
+");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.OptimizeLinqMethodCall)]
+    public async Task Test_SelectAndSum()
+    {
+        await VerifyDiagnosticAndFixAsync(@"
+using System.Linq;
+
+class C
+{
+    void M()
+    {
+        int max = Enumerable.Empty<int>().[|Select(f => f).Sum()|];
+    }
+}
+", @"
+using System.Linq;
+
+class C
+{
+    void M()
+    {
+        int max = Enumerable.Empty<int>().Sum(f => f);
+    }
+}
+");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.OptimizeLinqMethodCall)]
     public async Task Test_SelectAndMin_ImmutableArray()
     {
         await VerifyDiagnosticAndFixAsync(@"
@@ -627,7 +679,7 @@ class C
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.OptimizeLinqMethodCall)]
     public async Task Test_CallFindInsteadOfFirstOrDefault_List()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyNoDiagnosticAsync(@"
 using System.Collections.Generic;
 using System.Linq;
 
@@ -637,20 +689,26 @@ class C
     {
         var items = new List<object>();
 
-        var x = items.[|FirstOrDefault|](_ => true);
+        var x = items.FirstOrDefault(_ => true);
     }
 }
-", @"
+");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.OptimizeLinqMethodCall)]
+    public async Task Test_CallFindInsteadOfFirstOrDefault_DerivedFromList()
+    {
+        await VerifyNoDiagnosticAsync(@"
 using System.Collections.Generic;
 using System.Linq;
 
-class C
+class C : List<object>
 {
     void M()
     {
-        var items = new List<object>();
+        var items = new C();
 
-        var x = items.Find(_ => true);
+        var x = items.FirstOrDefault(_ => true);
     }
 }
 ");
@@ -659,7 +717,7 @@ class C
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.OptimizeLinqMethodCall)]
     public async Task Test_CallFindInsteadOfFirstOrDefault_Array()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyNoDiagnosticAsync(@"
 using System;
 using System.Linq;
 
@@ -669,20 +727,7 @@ class C
     {
         var items = new object[0];
 
-        var x = items.[|FirstOrDefault|](_ => true);
-    }
-}
-", @"
-using System;
-using System.Linq;
-
-class C
-{
-    void M()
-    {
-        var items = new object[0];
-
-        var x = Array.Find(items, _ => true);
+        var x = items.FirstOrDefault(_ => true);
     }
 }
 ");
@@ -869,7 +914,7 @@ class C
     {
         IEnumerable<object> x = null;
 
-        x = x.[|OrderBy(f => f).Reverse()|];
+        x = x.[|OrderBy(f => { return f; }).Reverse()|];
     }
 }
 ", @"
@@ -882,7 +927,42 @@ class C
     {
         IEnumerable<object> x = null;
 
-        x = x.OrderByDescending(f => f);
+        x = x.OrderByDescending(f => { return f; });
+    }
+}
+");
+    }
+
+    [Theory, Trait(Traits.Analyzer, DiagnosticIdentifiers.OptimizeLinqMethodCall)]
+    [InlineData("OrderBy(f => f)")]
+    [InlineData("OrderBy(_ => _)")]
+    [InlineData("OrderBy(@int => @int)")]
+    public async Task Test_CallOrderInsteadOfOrderByIdentity(string test)
+    {
+        await VerifyDiagnosticAndFixAsync($@"
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{{
+    void M()
+    {{
+        IEnumerable<object> x = null;
+
+        x = x.[|{test}|];
+    }}
+}}
+", @"
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M()
+    {
+        IEnumerable<object> x = null;
+
+        x = x.Order();
     }
 }
 ");
@@ -901,7 +981,7 @@ class C
     {
         IEnumerable<object> x = null;
 
-        x = x.[|OrderBy(f => f).Where(_ => true)|];
+        x = x.[|OrderBy(f => { return f; }).Where(_ => true)|];
     }
 }
 ", @"
@@ -914,7 +994,7 @@ class C
     {
         IEnumerable<object> x = null;
 
-        x = x.Where(_ => true).OrderBy(f => f);
+        x = x.Where(_ => true).OrderBy(f => { return f; });
     }
 }
 ");
@@ -965,7 +1045,7 @@ class C
     {
         IEnumerable<object> x = null;
 
-        x = x.[|OrderByDescending(f => f).Where(_ => true)|];
+        x = x.[|OrderByDescending(f => { return f; }).Where(_ => true)|];
     }
 }
 ", @"
@@ -978,7 +1058,7 @@ class C
     {
         IEnumerable<object> x = null;
 
-        x = x.Where(_ => true).OrderByDescending(f => f);
+        x = x.Where(_ => true).OrderByDescending(f => { return f; });
     }
 }
 ");
@@ -1192,7 +1272,7 @@ class C
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.OptimizeLinqMethodCall)]
     public async Task TestNoDiagnostic_CombineWhereAndAny()
     {
-        await VerifyNoDiagnosticAsync(@"
+        await VerifyNoDiagnosticAsync("""
 using System.Collections.Generic;
 using System.Linq;
 
@@ -1202,10 +1282,10 @@ class C
     {
         var items = new List<string>();
 
-        if (items.Where(f => f.StartsWith(""a"")).Any(g => g.StartsWith(""b""))) { }
+        if (items.Where(f => f.StartsWith("a")).Any(g => g.StartsWith("b"))) { }
     }
 }
-");
+""");
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.OptimizeLinqMethodCall)]
@@ -1431,6 +1511,45 @@ class C
     }
 
     Func<string, IEnumerable<string>> M2() => null;
+}
+");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.OptimizeLinqMethodCall)]
+    public async Task TestNoDiagnostic_CannotConvertFuncToPredicate()
+    {
+        await VerifyNoDiagnosticAsync(@"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class C
+{
+    void M()
+    {
+        var list = new List<string>();
+
+        Func<string, bool> predicate = null;
+
+        list.FirstOrDefault(predicate);
+    }
+}
+");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.OptimizeLinqMethodCall)]
+    public async Task TestNoDiagnostic_OrderByToOrder_IQueryable()
+    {
+        await VerifyNoDiagnosticAsync(@"
+using System.Linq;
+
+class C
+{
+    void M()
+    {
+        IQueryable<string> q = null;
+        var x = q.OrderBy(f => f);
+    }
 }
 ");
     }

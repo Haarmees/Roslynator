@@ -37,7 +37,7 @@ internal static class ParseHelpers
                 return false;
             }
 
-            if (!TryReadAllText(filePath, out filePath, ex => WriteError(ex)))
+            if (!TryReadAllText(filePath, out filePath, ex => WriteCriticalError(ex)))
                 return false;
 
             return DelegateFactory.TryCreateFromSourceText(filePath, returnType, parameterType, out func);
@@ -207,30 +207,30 @@ internal static class ParseHelpers
         switch (value)
         {
             case "q":
-                {
-                    verbosity = Verbosity.Quiet;
-                    return true;
-                }
+            {
+                verbosity = Verbosity.Quiet;
+                return true;
+            }
             case "m":
-                {
-                    verbosity = Verbosity.Minimal;
-                    return true;
-                }
+            {
+                verbosity = Verbosity.Minimal;
+                return true;
+            }
             case "n":
-                {
-                    verbosity = Verbosity.Normal;
-                    return true;
-                }
+            {
+                verbosity = Verbosity.Normal;
+                return true;
+            }
             case "d":
-                {
-                    verbosity = Verbosity.Detailed;
-                    return true;
-                }
+            {
+                verbosity = Verbosity.Detailed;
+                return true;
+            }
             case "diag":
-                {
-                    verbosity = Verbosity.Diagnostic;
-                    return true;
-                }
+            {
+                verbosity = Verbosity.Diagnostic;
+                return true;
+            }
         }
 
         if (Enum.TryParse(value, ignoreCase: true, out verbosity))
@@ -246,16 +246,16 @@ internal static class ParseHelpers
         {
             case "cs":
             case "csharp":
-                {
-                    language = LanguageNames.CSharp;
-                    return true;
-                }
+            {
+                language = LanguageNames.CSharp;
+                return true;
+            }
             case "vb":
             case "visual-basic":
-                {
-                    language = LanguageNames.VisualBasic;
-                    return true;
-                }
+            {
+                language = LanguageNames.VisualBasic;
+                return true;
+            }
         }
 
         WriteLine($"Unknown language '{value}'.", Verbosity.Quiet);
@@ -319,10 +319,7 @@ internal static class ParseHelpers
     {
         try
         {
-            if (!Path.IsPathRooted(path))
-                path = Path.GetFullPath(path);
-
-            result = path;
+            result = Path.GetFullPath(path);
             return true;
         }
         catch (ArgumentException ex)
@@ -351,5 +348,28 @@ internal static class ParseHelpers
             content = null;
             return false;
         }
+    }
+
+    public static bool TryParseOutputFormat(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            // Default to XML if no value is provided
+            return true;
+        }
+
+        bool valid = value.Trim().ToLowerInvariant() switch
+        {
+            "gitlab" => true,
+            "xml" => true,
+            _ => false
+        };
+
+        if (!valid)
+        {
+            WriteLine($"Unknown output format '{value}'.", Verbosity.Quiet);
+        }
+
+        return valid;
     }
 }

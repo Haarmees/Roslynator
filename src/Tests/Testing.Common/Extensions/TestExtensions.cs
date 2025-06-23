@@ -2,9 +2,11 @@
 
 using System;
 using System.Collections.Immutable;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.Formatting;
 using Microsoft.CodeAnalysis.Simplification;
 using Microsoft.CodeAnalysis.Text;
@@ -13,6 +15,18 @@ namespace Roslynator;
 
 internal static class TestExtensions
 {
+    public static ImmutableArray<CodeAction> GetNestedActions(this CodeAction codeAction)
+    {
+        Type type = codeAction.GetType();
+        if (type.Name == "CodeActionWithNestedActions")
+        {
+            PropertyInfo propertyInfo = type.GetProperty("NestedCodeActions", BindingFlags.NonPublic | BindingFlags.Instance);
+            return (ImmutableArray<CodeAction>)propertyInfo.GetValue(codeAction);
+        }
+
+        return ImmutableArray<CodeAction>.Empty;
+    }
+
     public static async Task<SyntaxNode?> GetSyntaxRootAsync(
         this Document document,
         bool simplify,
@@ -69,35 +83,35 @@ internal static class TestExtensions
                         switch (s[i])
                         {
                             case '\n':
+                            {
+                                if (i == startIndex
+                                    && i > 0
+                                    && s[i - 1] == '\r')
                                 {
-                                    if (i == startIndex
-                                        && i > 0
-                                        && s[i - 1] == '\r')
-                                    {
-                                        throw new InvalidOperationException("Span cannot start of end between '\r' and '\n'.");
-                                    }
-
-                                    if (i > startIndex
-                                        && s[i - 1] == '\r')
-                                    {
-                                        i--;
-                                    }
-
-                                    line++;
-                                    break;
+                                    throw new InvalidOperationException("Span cannot start of end between '\r' and '\n'.");
                                 }
+
+                                if (i > startIndex
+                                    && s[i - 1] == '\r')
+                                {
+                                    i--;
+                                }
+
+                                line++;
+                                break;
+                            }
                             case '\r':
+                            {
+                                if (i == endIndex - 1
+                                    && i < length - 1
+                                    && s[i + 1] == '\n')
                                 {
-                                    if (i == endIndex - 1
-                                        && i < length - 1
-                                        && s[i + 1] == '\n')
-                                    {
-                                        throw new InvalidOperationException("Span cannot start of end between '\r' and '\n'.");
-                                    }
-
-                                    line++;
-                                    break;
+                                    throw new InvalidOperationException("Span cannot start of end between '\r' and '\n'.");
                                 }
+
+                                line++;
+                                break;
+                            }
                         }
 
                         i--;

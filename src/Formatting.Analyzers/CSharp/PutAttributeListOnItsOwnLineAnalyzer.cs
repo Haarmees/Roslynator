@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Text;
 using Roslynator.CSharp;
 
 namespace Roslynator.Formatting.CSharp;
@@ -34,7 +33,11 @@ public sealed class PutAttributeListOnItsOwnLineAnalyzer : BaseDiagnosticAnalyze
         context.RegisterSyntaxNodeAction(f => AnalyzeEnumDeclaration(f), SyntaxKind.EnumDeclaration);
         context.RegisterSyntaxNodeAction(f => AnalyzeInterfaceDeclaration(f), SyntaxKind.InterfaceDeclaration);
         context.RegisterSyntaxNodeAction(f => AnalyzeStructDeclaration(f), SyntaxKind.StructDeclaration);
+#if ROSLYN_4_0
         context.RegisterSyntaxNodeAction(f => AnalyzeRecordDeclaration(f), SyntaxKind.RecordDeclaration, SyntaxKind.RecordStructDeclaration);
+#else
+        context.RegisterSyntaxNodeAction(f => AnalyzeRecordDeclaration(f), SyntaxKind.RecordDeclaration);
+#endif
         context.RegisterSyntaxNodeAction(f => AnalyzeDelegateDeclaration(f), SyntaxKind.DelegateDeclaration);
         context.RegisterSyntaxNodeAction(f => AnalyzeEventFieldDeclaration(f), SyntaxKind.EventFieldDeclaration);
         context.RegisterSyntaxNodeAction(f => AnalyzeFieldDeclaration(f), SyntaxKind.FieldDeclaration);
@@ -309,12 +312,14 @@ public sealed class PutAttributeListOnItsOwnLineAnalyzer : BaseDiagnosticAnalyze
 
     private static void Analyze(SyntaxNodeAnalysisContext context, AttributeListSyntax attributeList, SyntaxNodeOrToken nodeOrToken)
     {
-        if (attributeList.SyntaxTree.IsSingleLineSpan(TextSpan.FromBounds(attributeList.Span.End, nodeOrToken.SpanStart)))
+        TriviaBlock block = TriviaBlock.FromBetween(attributeList, nodeOrToken);
+
+        if (block.Kind == TriviaBlockKind.NoNewLine)
         {
             DiagnosticHelpers.ReportDiagnostic(
                 context,
                 DiagnosticRules.PutAttributeListOnItsOwnLine,
-                Location.Create(nodeOrToken.SyntaxTree, nodeOrToken.Span.WithLength(0)));
+                block.GetLocation());
         }
     }
 }

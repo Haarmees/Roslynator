@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Roslynator.CSharp.Analysis;
@@ -66,63 +67,108 @@ public sealed class StaticMemberInGenericTypeShouldUseTypeParameterAnalyzer : Ba
             switch (member.Kind)
             {
                 case SymbolKind.Event:
-                    {
-                        var eventSymbol = (IEventSymbol)member;
+                {
+                    var eventSymbol = (IEventSymbol)member;
 
-                        if (typeParameters.IsDefault)
-                            typeParameters = namedType.TypeParameters;
+                    if (typeParameters.IsDefault)
+                        typeParameters = namedType.TypeParameters;
 
-                        if (!ContainsAnyTypeParameter(typeParameters, eventSymbol.Type))
-                            ReportDiagnostic(context, eventSymbol);
+                    if (!ContainsAnyTypeParameter(typeParameters, eventSymbol.Type))
+                        ReportDiagnostic(context, eventSymbol);
 
-                        break;
-                    }
+                    break;
+                }
                 case SymbolKind.Field:
-                    {
-                        var fieldSymbol = (IFieldSymbol)member;
+                {
+                    var fieldSymbol = (IFieldSymbol)member;
 
+                    if (typeParameters.IsDefault)
+                        typeParameters = namedType.TypeParameters;
+
+                    if (!ContainsAnyTypeParameter(typeParameters, fieldSymbol.Type)
+                        && !IsTypeParameterReferenced(
+                            typeParameters,
+                            (fieldSymbol.GetSyntax(context.CancellationToken) as VariableDeclaratorSyntax)?.Initializer?.Value))
+                    {
+                        ReportDiagnostic(context, fieldSymbol);
+                    }
+
+                    break;
+                }
+                case SymbolKind.Method:
+                {
+                    var methodSymbol = (IMethodSymbol)member;
+
+                    if (methodSymbol.MethodKind == MethodKind.Ordinary)
+                    {
                         if (typeParameters.IsDefault)
                             typeParameters = namedType.TypeParameters;
 
-                        if (!ContainsAnyTypeParameter(typeParameters, fieldSymbol.Type))
-                            ReportDiagnostic(context, fieldSymbol);
-
-                        break;
-                    }
-                case SymbolKind.Method:
-                    {
-                        var methodSymbol = (IMethodSymbol)member;
-
-                        if (methodSymbol.MethodKind == MethodKind.Ordinary)
+                        if (!ContainsAnyTypeParameter(typeParameters, methodSymbol.ReturnType)
+                            && !ContainsAnyTypeParameter(typeParameters, methodSymbol.Parameters))
                         {
-                            if (typeParameters.IsDefault)
-                                typeParameters = namedType.TypeParameters;
-
-                            if (!ContainsAnyTypeParameter(typeParameters, methodSymbol.ReturnType)
-                                && !ContainsAnyTypeParameter(typeParameters, methodSymbol.Parameters))
-                            {
-                                ReportDiagnostic(context, methodSymbol);
-                            }
+                            ReportDiagnostic(context, methodSymbol);
                         }
-
-                        break;
                     }
+
+                    break;
+                }
                 case SymbolKind.Property:
+                {
+                    var propertySymbol = (IPropertySymbol)member;
+
+                    if (!propertySymbol.IsIndexer)
                     {
-                        var propertySymbol = (IPropertySymbol)member;
+                        if (typeParameters.IsDefault)
+                            typeParameters = namedType.TypeParameters;
 
-                        if (!propertySymbol.IsIndexer)
+                        if (!ContainsAnyTypeParameter(typeParameters, propertySymbol.Type)
+                            && !IsTypeParameterReferenced(
+                                typeParameters,
+                                (propertySymbol.GetSyntax(context.CancellationToken) as PropertyDeclarationSyntax)?.Initializer?.Value))
                         {
-                            if (typeParameters.IsDefault)
-                                typeParameters = namedType.TypeParameters;
-
-                            if (!ContainsAnyTypeParameter(typeParameters, propertySymbol.Type))
-                                ReportDiagnostic(context, propertySymbol);
+                            ReportDiagnostic(context, propertySymbol);
                         }
-
-                        break;
                     }
+
+                    break;
+                }
             }
+        }
+    }
+
+    private static bool IsTypeParameterReferenced(ImmutableArray<ITypeParameterSymbol> typeParameters, ExpressionSyntax value)
+    {
+        if (value.IsKind(SyntaxKind.SimpleMemberAccessExpression))
+        {
+            var memberAccess = (MemberAccessExpressionSyntax)value;
+
+            if (memberAccess.Expression is IdentifierNameSyntax identifierName)
+            {
+                if (IsTypeParameter(identifierName, typeParameters))
+                    return true;
+            }
+            else if (memberAccess.Expression is TypeOfExpressionSyntax typeOfExpression)
+            {
+                if (typeOfExpression.Type is IdentifierNameSyntax identifierName2
+                    && IsTypeParameter(identifierName2, typeParameters))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+
+        static bool IsTypeParameter(IdentifierNameSyntax identifierName, ImmutableArray<ITypeParameterSymbol> typeParameters)
+        {
+            foreach (ITypeParameterSymbol typeParameter in typeParameters)
+            {
+                if (typeParameter.Name == identifierName.Identifier.ValueText)
+                    return true;
+            }
+
+            return false;
         }
     }
 
@@ -144,23 +190,23 @@ public sealed class StaticMemberInGenericTypeShouldUseTypeParameterAnalyzer : Ba
         switch (typeSymbol.Kind)
         {
             case SymbolKind.TypeParameter:
+            {
+                foreach (ITypeParameterSymbol typeParameter in typeParameters)
                 {
-                    foreach (ITypeParameterSymbol typeParameter in typeParameters)
-                    {
-                        if (SymbolEqualityComparer.Default.Equals(typeParameter, typeSymbol))
-                            return true;
-                    }
+                    if (SymbolEqualityComparer.Default.Equals(typeParameter, typeSymbol))
+                        return true;
+                }
 
-                    return false;
-                }
+                return false;
+            }
             case SymbolKind.ArrayType:
-                {
-                    return ContainsAnyTypeParameter(typeParameters, ((IArrayTypeSymbol)typeSymbol).ElementType);
-                }
+            {
+                return ContainsAnyTypeParameter(typeParameters, ((IArrayTypeSymbol)typeSymbol).ElementType);
+            }
             case SymbolKind.NamedType:
-                {
-                    return ContainsAnyTypeParameter(typeParameters, ((INamedTypeSymbol)typeSymbol).TypeArguments);
-                }
+            {
+                return ContainsAnyTypeParameter(typeParameters, ((INamedTypeSymbol)typeSymbol).TypeArguments);
+            }
         }
 
         Debug.Assert(typeSymbol.Kind == SymbolKind.ErrorType, typeSymbol.Kind.ToString());

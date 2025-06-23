@@ -55,9 +55,10 @@ public sealed class UseAsyncAwaitAnalyzer : BaseDiagnosticAnalyzer
         if (!body.Statements.Any())
             return;
 
-        IMethodSymbol methodSymbol = context.SemanticModel.GetDeclaredSymbol(methodDeclaration, context.CancellationToken);
+        if (context.SemanticModel.GetDeclaredSymbol(methodDeclaration, context.CancellationToken) is not IMethodSymbol methodSymbol)
+            return;
 
-        if (!SymbolUtility.IsAwaitable(methodSymbol.ReturnType))
+        if (!methodSymbol.ReturnType.IsAwaitableTaskType(context.SemanticModel, body.SpanStart))
             return;
 
         if (IsFixable(body, context))
@@ -79,9 +80,10 @@ public sealed class UseAsyncAwaitAnalyzer : BaseDiagnosticAnalyzer
         if (!body.Statements.Any())
             return;
 
-        IMethodSymbol methodSymbol = context.SemanticModel.GetDeclaredSymbol(localFunction, context.CancellationToken);
+        if (context.SemanticModel.GetDeclaredSymbol(localFunction, context.CancellationToken) is not IMethodSymbol methodSymbol)
+            return;
 
-        if (!SymbolUtility.IsAwaitable(methodSymbol.ReturnType))
+        if (!methodSymbol.ReturnType.IsAwaitableTaskType(context.SemanticModel, body.SpanStart))
             return;
 
         if (IsFixable(body, context))
@@ -101,7 +103,7 @@ public sealed class UseAsyncAwaitAnalyzer : BaseDiagnosticAnalyzer
         if (context.SemanticModel.GetSymbol(simpleLambda, context.CancellationToken) is not IMethodSymbol methodSymbol)
             return;
 
-        if (!SymbolUtility.IsAwaitable(methodSymbol.ReturnType))
+        if (!methodSymbol.ReturnType.IsAwaitableTaskType(context.SemanticModel, body.SpanStart))
             return;
 
         if (IsFixable(body, context))
@@ -121,7 +123,7 @@ public sealed class UseAsyncAwaitAnalyzer : BaseDiagnosticAnalyzer
         if (context.SemanticModel.GetSymbol(parenthesizedLambda, context.CancellationToken) is not IMethodSymbol methodSymbol)
             return;
 
-        if (!SymbolUtility.IsAwaitable(methodSymbol.ReturnType))
+        if (!methodSymbol.ReturnType.IsAwaitableTaskType(context.SemanticModel, body.SpanStart))
             return;
 
         if (IsFixable(body, context))
@@ -143,7 +145,7 @@ public sealed class UseAsyncAwaitAnalyzer : BaseDiagnosticAnalyzer
         if (context.SemanticModel.GetSymbol(anonymousMethod, context.CancellationToken) is not IMethodSymbol methodSymbol)
             return;
 
-        if (!SymbolUtility.IsAwaitable(methodSymbol.ReturnType))
+        if (!methodSymbol.ReturnType.IsAwaitableTaskType(context.SemanticModel, body.SpanStart))
             return;
 
         if (IsFixable(body, context))
@@ -176,7 +178,7 @@ public sealed class UseAsyncAwaitAnalyzer : BaseDiagnosticAnalyzer
 
         private int _usingOrTryStatementDepth;
         private bool _shouldVisit = true;
-        private readonly List<int> _usingDeclarations = new();
+        private readonly List<int> _usingDeclarations = [];
 
         public override bool ShouldVisit => _shouldVisit;
 
@@ -274,7 +276,7 @@ public sealed class UseAsyncAwaitAnalyzer : BaseDiagnosticAnalyzer
 
                 return string.Equals(simpleMemberAccess.Name.Identifier.ValueText, "CompletedTask", StringComparison.Ordinal)
                     && SemanticModel.GetSymbol(expression, CancellationToken) is IPropertySymbol propertySymbol
-                    && IsTaskOrTaskOrT(propertySymbol.ContainingType);
+                    && IsTaskOrTaskOfT(propertySymbol.ContainingType);
             }
             else
             {
@@ -287,17 +289,17 @@ public sealed class UseAsyncAwaitAnalyzer : BaseDiagnosticAnalyzer
                         case "FromCanceled":
                         case "FromException":
                         case "FromResult":
+                        {
+                            if (SemanticModel.GetSymbol(expression, CancellationToken) is IMethodSymbol methodSymbol
+                                && (methodSymbol.Arity == 0 || methodSymbol.Arity == 1)
+                                && methodSymbol.Parameters.Length == 1
+                                && IsTaskOrTaskOfT(methodSymbol.ContainingType))
                             {
-                                if (SemanticModel.GetSymbol(expression, CancellationToken) is IMethodSymbol methodSymbol
-                                    && (methodSymbol.Arity == 0 || methodSymbol.Arity == 1)
-                                    && methodSymbol.Parameters.Length == 1
-                                    && IsTaskOrTaskOrT(methodSymbol.ContainingType))
-                                {
-                                    return true;
-                                }
-
-                                break;
+                                return true;
                             }
+
+                            break;
+                        }
                     }
                 }
             }
@@ -305,10 +307,10 @@ public sealed class UseAsyncAwaitAnalyzer : BaseDiagnosticAnalyzer
             return false;
         }
 
-        private static bool IsTaskOrTaskOrT(INamedTypeSymbol typeSymbol)
+        private static bool IsTaskOrTaskOfT(INamedTypeSymbol typeSymbol)
         {
-            return typeSymbol.HasMetadataName(MetadataNames.System_Threading_Tasks_Task)
-                || typeSymbol.HasMetadataName(MetadataNames.System_Threading_Tasks_Task_T);
+            return typeSymbol.ContainingNamespace.HasMetadataName(MetadataNames.System_Threading_Tasks)
+                && typeSymbol.MetadataName is "Task" or "Task`1" or "ValueTask" or "ValueTask`1";
         }
 
         public override void VisitLocalFunctionStatement(LocalFunctionStatementSyntax node)

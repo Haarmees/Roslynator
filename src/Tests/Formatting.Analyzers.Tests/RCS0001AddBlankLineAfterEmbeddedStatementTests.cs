@@ -23,8 +23,8 @@ class C
         bool f = false;
 
         if (f)
-            M();[||]
-        M();
+            M();[|
+|]        M();
     }
 }
 ", @"
@@ -56,8 +56,8 @@ class C
         if (f)
             M();
         else if (f)
-            M();[||]
-        M();
+            M();[|
+|]        M();
     }
 }
 ", @"
@@ -91,8 +91,8 @@ class C
         if (f)
             M();
         else
-            M();[||]
-        M();
+            M();[|
+|]        M();
     }
 }
 ", @"
@@ -127,8 +127,8 @@ class C
         var items = new List<object>();
 
         foreach (object item in items)
-            M();[||]
-        M();
+            M();[|
+|]        M();
     }
 }
 ", @"
@@ -164,8 +164,8 @@ class C
         var items = new List<object>();
 
         foreach ((int a, int b) in new[] { (0, 0) })
-            M();[||]
-        M();
+            M();[|
+|]        M();
     }
 }
 ", @"
@@ -201,8 +201,8 @@ class C
         var items = new List<object>();
 
         for (int i = 0; i < items.Count; i++)
-            M();[||]
-        M();
+            M();[|
+|]        M();
     }
 }
 ", @"
@@ -237,8 +237,8 @@ class C
         bool f = false;
 
         using ((IDisposable)null)
-            M();[||]
-        M();
+            M();[|
+|]        M();
     }
 }
 ", @"
@@ -270,8 +270,8 @@ class C
         bool f = false;
 
         while (f)
-            M();[||]
-        M();
+            M();[|
+|]        M();
     }
 }
 ", @"
@@ -301,8 +301,8 @@ class C
         bool f = false;
 
         lock (null)
-            M();[||]
-        M();
+            M();[|
+|]        M();
     }
 }
 ", @"
@@ -324,7 +324,7 @@ class C
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.AddBlankLineAfterEmbeddedStatement)]
     public async Task Test_Fixed()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyDiagnosticAndFixAsync("""
 class C
 {
     void M()
@@ -333,13 +333,13 @@ class C
 
         unsafe
         {
-            fixed (char* p = """")
-                M();[||]
-            M();
+            fixed (char* p = "")
+                M();[|
+|]            M();
         }
     }
 }
-", @"
+""", """
 class C
 {
     void M()
@@ -348,14 +348,14 @@ class C
 
         unsafe
         {
-            fixed (char* p = """")
+            fixed (char* p = "")
                 M();
 
             M();
         }
     }
 }
-", options: Options.WithAllowUnsafe(true));
+""", options: Options.WithAllowUnsafe(true));
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.AddBlankLineAfterEmbeddedStatement)]
@@ -373,8 +373,8 @@ class C
         {
             case null:
                 if (f)
-                    M();[||]
-                break;
+                    M();[|
+|]                break;
         }
     }
 }
@@ -402,7 +402,7 @@ class C
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.AddBlankLineAfterEmbeddedStatement)]
     public async Task TestNoDiagnostic_EmbeddedStatement()
     {
-        await VerifyNoDiagnosticAsync(@"
+        await VerifyNoDiagnosticAsync("""
 using System;
 using System.Collections.Generic;
 
@@ -428,17 +428,17 @@ class C
         lock (null) M();
         unsafe
         {
-            fixed (char* p = """") M();
+            fixed (char* p = "") M();
         }
     }
 }
-", options: Options.WithAllowUnsafe(true));
+""", options: Options.WithAllowUnsafe(true));
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.AddBlankLineAfterEmbeddedStatement)]
     public async Task TestNoDiagnostic_NoEmbeddedStatement()
     {
-        await VerifyNoDiagnosticAsync(@"
+        await VerifyNoDiagnosticAsync("""
 using System;
 using System.Collections.Generic;
 
@@ -496,13 +496,13 @@ class C
 
         unsafe
         {
-            fixed (char* p = """")
+            fixed (char* p = "")
             {
                 M();
             }
         }
     }
 }
-", options: Options.WithAllowUnsafe(true));
+""", options: Options.WithAllowUnsafe(true));
     }
 }

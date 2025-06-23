@@ -17,7 +17,6 @@ public static class SyntaxAccessibility
     /// <summary>
     /// Returns a default accessibility of the specified declaration.
     /// </summary>
-    /// <param name="declaration"></param>
     public static Accessibility GetDefaultAccessibility(SyntaxNode declaration)
     {
         if (declaration is null)
@@ -48,7 +47,9 @@ public static class SyntaxAccessibility
             case SyntaxKind.ClassDeclaration:
                 return SyntaxAccessibility<ClassDeclarationSyntax>.Instance.GetDefaultAccessibility((ClassDeclarationSyntax)declaration);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return SyntaxAccessibility<RecordDeclarationSyntax>.Instance.GetDefaultAccessibility((RecordDeclarationSyntax)declaration);
             case SyntaxKind.StructDeclaration:
                 return SyntaxAccessibility<StructDeclarationSyntax>.Instance.GetDefaultAccessibility((StructDeclarationSyntax)declaration);
@@ -62,6 +63,10 @@ public static class SyntaxAccessibility
                 return SyntaxAccessibility<EnumMemberDeclarationSyntax>.Instance.GetDefaultAccessibility((EnumMemberDeclarationSyntax)declaration);
             case SyntaxKind.NamespaceDeclaration:
                 return SyntaxAccessibility<NamespaceDeclarationSyntax>.Instance.GetDefaultAccessibility((NamespaceDeclarationSyntax)declaration);
+#if ROSLYN_4_0
+            case SyntaxKind.FileScopedNamespaceDeclaration:
+                return SyntaxAccessibility<FileScopedNamespaceDeclarationSyntax>.Instance.GetDefaultAccessibility((FileScopedNamespaceDeclarationSyntax)declaration);
+#endif
             case SyntaxKind.GetAccessorDeclaration:
             case SyntaxKind.SetAccessorDeclaration:
             case SyntaxKind.AddAccessorDeclaration:
@@ -80,7 +85,6 @@ public static class SyntaxAccessibility
     /// <summary>
     /// Returns a default explicit accessibility of the specified declaration.
     /// </summary>
-    /// <param name="declaration"></param>
     public static Accessibility GetDefaultExplicitAccessibility(SyntaxNode declaration)
     {
         if (declaration is null)
@@ -111,7 +115,9 @@ public static class SyntaxAccessibility
             case SyntaxKind.ClassDeclaration:
                 return SyntaxAccessibility<ClassDeclarationSyntax>.Instance.GetDefaultExplicitAccessibility((ClassDeclarationSyntax)declaration);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return SyntaxAccessibility<RecordDeclarationSyntax>.Instance.GetDefaultExplicitAccessibility((RecordDeclarationSyntax)declaration);
             case SyntaxKind.StructDeclaration:
                 return SyntaxAccessibility<StructDeclarationSyntax>.Instance.GetDefaultExplicitAccessibility((StructDeclarationSyntax)declaration);
@@ -125,6 +131,10 @@ public static class SyntaxAccessibility
                 return SyntaxAccessibility<EnumMemberDeclarationSyntax>.Instance.GetDefaultExplicitAccessibility((EnumMemberDeclarationSyntax)declaration);
             case SyntaxKind.NamespaceDeclaration:
                 return SyntaxAccessibility<NamespaceDeclarationSyntax>.Instance.GetDefaultExplicitAccessibility((NamespaceDeclarationSyntax)declaration);
+#if ROSLYN_4_0
+            case SyntaxKind.FileScopedNamespaceDeclaration:
+                return SyntaxAccessibility<FileScopedNamespaceDeclarationSyntax>.Instance.GetDefaultExplicitAccessibility((FileScopedNamespaceDeclarationSyntax)declaration);
+#endif
             case SyntaxKind.GetAccessorDeclaration:
             case SyntaxKind.SetAccessorDeclaration:
             case SyntaxKind.AddAccessorDeclaration:
@@ -143,7 +153,6 @@ public static class SyntaxAccessibility
     /// <summary>
     /// Returns an accessibility of the specified declaration.
     /// </summary>
-    /// <param name="declaration"></param>
     public static Accessibility GetAccessibility(SyntaxNode declaration)
     {
         if (declaration is null)
@@ -174,7 +183,9 @@ public static class SyntaxAccessibility
             case SyntaxKind.ClassDeclaration:
                 return SyntaxAccessibility<ClassDeclarationSyntax>.Instance.GetAccessibility((ClassDeclarationSyntax)declaration);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return SyntaxAccessibility<RecordDeclarationSyntax>.Instance.GetAccessibility((RecordDeclarationSyntax)declaration);
             case SyntaxKind.StructDeclaration:
                 return SyntaxAccessibility<StructDeclarationSyntax>.Instance.GetAccessibility((StructDeclarationSyntax)declaration);
@@ -188,6 +199,10 @@ public static class SyntaxAccessibility
                 return SyntaxAccessibility<EnumMemberDeclarationSyntax>.Instance.GetAccessibility((EnumMemberDeclarationSyntax)declaration);
             case SyntaxKind.NamespaceDeclaration:
                 return SyntaxAccessibility<NamespaceDeclarationSyntax>.Instance.GetAccessibility((NamespaceDeclarationSyntax)declaration);
+#if ROSLYN_4_0
+            case SyntaxKind.FileScopedNamespaceDeclaration:
+                return SyntaxAccessibility<FileScopedNamespaceDeclarationSyntax>.Instance.GetAccessibility((FileScopedNamespaceDeclarationSyntax)declaration);
+#endif
             case SyntaxKind.GetAccessorDeclaration:
             case SyntaxKind.SetAccessorDeclaration:
             case SyntaxKind.AddAccessorDeclaration:
@@ -206,7 +221,6 @@ public static class SyntaxAccessibility
     /// <summary>
     /// Returns an explicit accessibility of the specified declaration.
     /// </summary>
-    /// <param name="declaration"></param>
     public static Accessibility GetExplicitAccessibility(SyntaxNode declaration)
     {
         if (declaration is null)
@@ -237,7 +251,9 @@ public static class SyntaxAccessibility
             case SyntaxKind.ClassDeclaration:
                 return SyntaxAccessibility<ClassDeclarationSyntax>.Instance.GetExplicitAccessibility((ClassDeclarationSyntax)declaration);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return SyntaxAccessibility<RecordDeclarationSyntax>.Instance.GetExplicitAccessibility((RecordDeclarationSyntax)declaration);
             case SyntaxKind.StructDeclaration:
                 return SyntaxAccessibility<StructDeclarationSyntax>.Instance.GetExplicitAccessibility((StructDeclarationSyntax)declaration);
@@ -251,6 +267,10 @@ public static class SyntaxAccessibility
                 return SyntaxAccessibility<EnumMemberDeclarationSyntax>.Instance.GetExplicitAccessibility((EnumMemberDeclarationSyntax)declaration);
             case SyntaxKind.NamespaceDeclaration:
                 return SyntaxAccessibility<NamespaceDeclarationSyntax>.Instance.GetExplicitAccessibility((NamespaceDeclarationSyntax)declaration);
+#if ROSLYN_4_0
+            case SyntaxKind.FileScopedNamespaceDeclaration:
+                return SyntaxAccessibility<FileScopedNamespaceDeclarationSyntax>.Instance.GetExplicitAccessibility((FileScopedNamespaceDeclarationSyntax)declaration);
+#endif
             case SyntaxKind.GetAccessorDeclaration:
             case SyntaxKind.SetAccessorDeclaration:
             case SyntaxKind.AddAccessorDeclaration:
@@ -269,7 +289,6 @@ public static class SyntaxAccessibility
     /// <summary>
     /// Returns an explicit accessibility of the specified modifiers.
     /// </summary>
-    /// <param name="modifiers"></param>
     public static Accessibility GetExplicitAccessibility(SyntaxTokenList modifiers)
     {
         int count = modifiers.Count;
@@ -279,44 +298,44 @@ public static class SyntaxAccessibility
             switch (modifiers[i].Kind())
             {
                 case SyntaxKind.PublicKeyword:
-                    {
-                        return Accessibility.Public;
-                    }
+                {
+                    return Accessibility.Public;
+                }
                 case SyntaxKind.PrivateKeyword:
+                {
+                    for (int j = i + 1; j < count; j++)
                     {
-                        for (int j = i + 1; j < count; j++)
+                        if (modifiers[j].IsKind(SyntaxKind.ProtectedKeyword))
+                            return Accessibility.ProtectedAndInternal;
+                    }
+
+                    return Accessibility.Private;
+                }
+                case SyntaxKind.InternalKeyword:
+                {
+                    for (int j = i + 1; j < count; j++)
+                    {
+                        if (modifiers[j].IsKind(SyntaxKind.ProtectedKeyword))
+                            return Accessibility.ProtectedOrInternal;
+                    }
+
+                    return Accessibility.Internal;
+                }
+                case SyntaxKind.ProtectedKeyword:
+                {
+                    for (int j = i + 1; j < count; j++)
+                    {
+                        switch (modifiers[j].Kind())
                         {
-                            if (modifiers[j].IsKind(SyntaxKind.ProtectedKeyword))
+                            case SyntaxKind.InternalKeyword:
+                                return Accessibility.ProtectedOrInternal;
+                            case SyntaxKind.PrivateKeyword:
                                 return Accessibility.ProtectedAndInternal;
                         }
-
-                        return Accessibility.Private;
                     }
-                case SyntaxKind.InternalKeyword:
-                    {
-                        for (int j = i + 1; j < count; j++)
-                        {
-                            if (modifiers[j].IsKind(SyntaxKind.ProtectedKeyword))
-                                return Accessibility.ProtectedOrInternal;
-                        }
 
-                        return Accessibility.Internal;
-                    }
-                case SyntaxKind.ProtectedKeyword:
-                    {
-                        for (int j = i + 1; j < count; j++)
-                        {
-                            switch (modifiers[j].Kind())
-                            {
-                                case SyntaxKind.InternalKeyword:
-                                    return Accessibility.ProtectedOrInternal;
-                                case SyntaxKind.PrivateKeyword:
-                                    return Accessibility.ProtectedAndInternal;
-                            }
-                        }
-
-                        return Accessibility.Protected;
-                    }
+                    return Accessibility.Protected;
+                }
             }
         }
 
@@ -326,7 +345,6 @@ public static class SyntaxAccessibility
     /// <summary>
     /// Return true if the specified declaration is publicly visible.
     /// </summary>
-    /// <param name="declaration"></param>
     public static bool IsPubliclyVisible(MemberDeclarationSyntax declaration)
     {
         if (declaration is null)
@@ -334,8 +352,13 @@ public static class SyntaxAccessibility
 
         do
         {
+#if ROSLYN_4_0
+            if (declaration.IsKind(SyntaxKind.NamespaceDeclaration, SyntaxKind.FileScopedNamespaceDeclaration))
+                return true;
+#else
             if (declaration.IsKind(SyntaxKind.NamespaceDeclaration))
                 return true;
+#endif
 
             if (!GetAccessibility(declaration).Is(
                 Accessibility.Public,
@@ -365,8 +388,6 @@ public static class SyntaxAccessibility
     /// <summary>
     /// Creates a new node with the explicit accessibility removed.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
     public static TNode WithoutExplicitAccessibility<TNode>(TNode node) where TNode : SyntaxNode
     {
         return WithExplicitAccessibility(node, Accessibility.NotApplicable);
@@ -375,10 +396,6 @@ public static class SyntaxAccessibility
     /// <summary>
     /// Creates a new node with the specified explicit accessibility updated.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
-    /// <param name="newAccessibility"></param>
-    /// <param name="comparer"></param>
     public static TNode WithExplicitAccessibility<TNode>(
         TNode node,
         Accessibility newAccessibility,
@@ -400,8 +417,6 @@ public static class SyntaxAccessibility
     /// <summary>
     /// Returns true if the node can have specified accessibility.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="accessibility"></param>
     /// <param name="ignoreOverride">Ignore "override" modifier.</param>
     public static bool IsValidAccessibility(SyntaxNode node, Accessibility accessibility, bool ignoreOverride = false)
     {
@@ -411,18 +426,23 @@ public static class SyntaxAccessibility
         switch (node.Parent?.Kind())
         {
             case SyntaxKind.NamespaceDeclaration:
+#if ROSLYN_4_0
+            case SyntaxKind.FileScopedNamespaceDeclaration:
+#endif
             case SyntaxKind.CompilationUnit:
-                {
-                    return accessibility.Is(Accessibility.Public, Accessibility.Internal);
-                }
+            {
+                return accessibility.Is(Accessibility.Public, Accessibility.Internal);
+            }
             case SyntaxKind.StructDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
-                {
-                    if (accessibility.ContainsProtected())
-                        return false;
+#endif
+            {
+                if (accessibility.ContainsProtected())
+                    return false;
 
-                    break;
-                }
+                break;
+            }
         }
 
         switch (node.Kind())
@@ -431,106 +451,108 @@ public static class SyntaxAccessibility
             case SyntaxKind.InterfaceDeclaration:
             case SyntaxKind.RecordDeclaration:
             case SyntaxKind.StructDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
             case SyntaxKind.EnumDeclaration:
-                {
-                    return true;
-                }
+            {
+                return true;
+            }
             case SyntaxKind.EventDeclaration:
-                {
-                    var eventDeclaration = (EventDeclarationSyntax)node;
+            {
+                var eventDeclaration = (EventDeclarationSyntax)node;
 
-                    ModifierFilter filter = SyntaxInfo.ModifierListInfo(eventDeclaration).GetFilter();
+                ModifierFilter filter = SyntaxInfo.ModifierListInfo(eventDeclaration).GetFilter();
 
-                    return (ignoreOverride || !filter.HasAnyFlag(ModifierFilter.Override))
-                        && (accessibility != Accessibility.Private || !filter.HasAnyFlag(ModifierFilter.AbstractVirtualOverride))
-                        && CheckProtectedInStaticOrSealedClass(node)
-                        && CheckAccessorAccessibility(eventDeclaration.AccessorList);
-                }
+                return (ignoreOverride || !filter.HasAnyFlag(ModifierFilter.Override))
+                    && (accessibility != Accessibility.Private || !filter.HasAnyFlag(ModifierFilter.AbstractVirtualOverride))
+                    && CheckProtectedInStaticOrSealedClass(node)
+                    && CheckAccessorAccessibility(eventDeclaration.AccessorList);
+            }
             case SyntaxKind.IndexerDeclaration:
-                {
-                    var indexerDeclaration = (IndexerDeclarationSyntax)node;
+            {
+                var indexerDeclaration = (IndexerDeclarationSyntax)node;
 
-                    ModifierFilter filter = SyntaxInfo.ModifierListInfo(indexerDeclaration).GetFilter();
+                ModifierFilter filter = SyntaxInfo.ModifierListInfo(indexerDeclaration).GetFilter();
 
-                    return (ignoreOverride || !filter.HasAnyFlag(ModifierFilter.Override))
-                        && (accessibility != Accessibility.Private || !filter.HasAnyFlag(ModifierFilter.AbstractVirtualOverride))
-                        && CheckProtectedInStaticOrSealedClass(node)
-                        && CheckAccessorAccessibility(indexerDeclaration.AccessorList);
-                }
+                return (ignoreOverride || !filter.HasAnyFlag(ModifierFilter.Override))
+                    && (accessibility != Accessibility.Private || !filter.HasAnyFlag(ModifierFilter.AbstractVirtualOverride))
+                    && CheckProtectedInStaticOrSealedClass(node)
+                    && CheckAccessorAccessibility(indexerDeclaration.AccessorList);
+            }
             case SyntaxKind.PropertyDeclaration:
-                {
-                    var propertyDeclaration = (PropertyDeclarationSyntax)node;
+            {
+                var propertyDeclaration = (PropertyDeclarationSyntax)node;
 
-                    ModifierFilter filter = SyntaxInfo.ModifierListInfo(propertyDeclaration).GetFilter();
+                ModifierFilter filter = SyntaxInfo.ModifierListInfo(propertyDeclaration).GetFilter();
 
-                    return (ignoreOverride || !filter.HasAnyFlag(ModifierFilter.Override))
-                        && (accessibility != Accessibility.Private || !filter.HasAnyFlag(ModifierFilter.AbstractVirtualOverride))
-                        && CheckProtectedInStaticOrSealedClass(node)
-                        && CheckAccessorAccessibility(propertyDeclaration.AccessorList);
-                }
+                return (ignoreOverride || !filter.HasAnyFlag(ModifierFilter.Override))
+                    && (accessibility != Accessibility.Private || !filter.HasAnyFlag(ModifierFilter.AbstractVirtualOverride))
+                    && CheckProtectedInStaticOrSealedClass(node)
+                    && CheckAccessorAccessibility(propertyDeclaration.AccessorList);
+            }
             case SyntaxKind.MethodDeclaration:
-                {
-                    var methodDeclaration = (MethodDeclarationSyntax)node;
+            {
+                var methodDeclaration = (MethodDeclarationSyntax)node;
 
-                    ModifierFilter filter = SyntaxInfo.ModifierListInfo(methodDeclaration).GetFilter();
+                ModifierFilter filter = SyntaxInfo.ModifierListInfo(methodDeclaration).GetFilter();
 
-                    return (ignoreOverride || !filter.HasAnyFlag(ModifierFilter.Override))
-                        && (accessibility != Accessibility.Private || !filter.HasAnyFlag(ModifierFilter.AbstractVirtualOverride))
-                        && CheckProtectedInStaticOrSealedClass(node);
-                }
+                return (ignoreOverride || !filter.HasAnyFlag(ModifierFilter.Override))
+                    && (accessibility != Accessibility.Private || !filter.HasAnyFlag(ModifierFilter.AbstractVirtualOverride))
+                    && CheckProtectedInStaticOrSealedClass(node);
+            }
             case SyntaxKind.EventFieldDeclaration:
-                {
-                    var eventFieldDeclaration = (EventFieldDeclarationSyntax)node;
+            {
+                var eventFieldDeclaration = (EventFieldDeclarationSyntax)node;
 
-                    ModifierFilter filter = SyntaxInfo.ModifierListInfo(eventFieldDeclaration).GetFilter();
+                ModifierFilter filter = SyntaxInfo.ModifierListInfo(eventFieldDeclaration).GetFilter();
 
-                    return (ignoreOverride || !filter.HasAnyFlag(ModifierFilter.Override))
-                        && (accessibility != Accessibility.Private || !filter.HasAnyFlag(ModifierFilter.AbstractVirtualOverride))
-                        && CheckProtectedInStaticOrSealedClass(node);
-                }
+                return (ignoreOverride || !filter.HasAnyFlag(ModifierFilter.Override))
+                    && (accessibility != Accessibility.Private || !filter.HasAnyFlag(ModifierFilter.AbstractVirtualOverride))
+                    && CheckProtectedInStaticOrSealedClass(node);
+            }
             case SyntaxKind.ConstructorDeclaration:
             case SyntaxKind.DelegateDeclaration:
             case SyntaxKind.FieldDeclaration:
             case SyntaxKind.IncompleteMember:
-                {
-                    return CheckProtectedInStaticOrSealedClass(node);
-                }
+            {
+                return CheckProtectedInStaticOrSealedClass(node);
+            }
             case SyntaxKind.OperatorDeclaration:
             case SyntaxKind.ConversionOperatorDeclaration:
-                {
-                    return accessibility == Accessibility.Public;
-                }
+            {
+                return accessibility == Accessibility.Public;
+            }
             case SyntaxKind.GetAccessorDeclaration:
             case SyntaxKind.SetAccessorDeclaration:
             case SyntaxKind.AddAccessorDeclaration:
             case SyntaxKind.RemoveAccessorDeclaration:
             case SyntaxKind.InitAccessorDeclaration:
             case SyntaxKind.UnknownAccessorDeclaration:
+            {
+                var memberDeclaration = node.Parent?.Parent as MemberDeclarationSyntax;
+
+                SyntaxDebug.Assert(memberDeclaration is not null, node);
+
+                if (memberDeclaration is not null)
                 {
-                    var memberDeclaration = node.Parent?.Parent as MemberDeclarationSyntax;
+                    if (!CheckProtectedInStaticOrSealedClass(memberDeclaration))
+                        return false;
 
-                    SyntaxDebug.Assert(memberDeclaration is not null, node);
-
-                    if (memberDeclaration is not null)
-                    {
-                        if (!CheckProtectedInStaticOrSealedClass(memberDeclaration))
-                            return false;
-
-                        return accessibility.IsMoreRestrictiveThan(GetAccessibility(memberDeclaration));
-                    }
-
-                    return false;
+                    return accessibility.IsMoreRestrictiveThan(GetAccessibility(memberDeclaration));
                 }
+
+                return false;
+            }
             case SyntaxKind.LocalFunctionStatement:
-                {
-                    return false;
-                }
+            {
+                return false;
+            }
             default:
-                {
-                    SyntaxDebug.Fail(node);
-                    return false;
-                }
+            {
+                SyntaxDebug.Fail(node);
+                return false;
+            }
         }
 
         bool CheckProtectedInStaticOrSealedClass(SyntaxNode declaration)

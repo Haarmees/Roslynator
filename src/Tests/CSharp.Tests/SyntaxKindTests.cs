@@ -588,22 +588,27 @@ public static class SyntaxKindTests
                 case SyntaxKind.CollectionExpression:
                 case SyntaxKind.ExpressionElement:
                 case SyntaxKind.SpreadElement:
-                    {
-                        break;
-                    }
+                // new in 4.11.0
+                case SyntaxKind.AllowsConstraintClause:
+                case SyntaxKind.AllowsKeyword:
+                case SyntaxKind.RazorContentToken:
+                case SyntaxKind.RefStructConstraint:
+                // new in 4.12.0
+                case SyntaxKind.FieldExpression:
+                {
+                    break;
+                }
                 default:
-                    {
-                        (unknownKinds ??= new List<SyntaxKind>()).Add(value);
-                        break;
-                    }
+                {
+                    (unknownKinds ??= new List<SyntaxKind>()).Add(value);
+                    break;
+                }
             }
         }
 
         if (unknownKinds is not null)
         {
-            Assert.True(
-                false,
-                $"Unknown enum value(s) {string.Join(", ", unknownKinds.Select(f => $"'{f}'"))}.");
+            Assert.Fail($"Unknown enum value(s) {string.Join(", ", unknownKinds.Select(f => $"'{f}'"))}.");
         }
     }
 }

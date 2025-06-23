@@ -65,6 +65,38 @@ class C
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.UseEnumFieldExplicitly)]
+    public async Task Test_Flags_SByte()
+    {
+        await VerifyDiagnosticAndFixAsync(@"
+class C
+{
+    void M()
+    {
+        var enumValue = [|(TestEnum)2|];
+    }
+}
+
+enum TestEnum : sbyte
+{
+    Foo, Bar, Baz
+}
+", @"
+class C
+{
+    void M()
+    {
+        var enumValue = TestEnum.Baz;
+    }
+}
+
+enum TestEnum : sbyte
+{
+    Foo, Bar, Baz
+}
+");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.UseEnumFieldExplicitly)]
     public async Task TestNoDiagnostic_UndefinedValue()
     {
         await VerifyNoDiagnosticAsync(@"
@@ -91,15 +123,22 @@ enum Foo
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.UseEnumFieldExplicitly)]
-    public async Task TestNoDiagnostic_FileAttributes()
+    public async Task TestNoDiagnostic_ZeroNotDefined()
     {
         await VerifyNoDiagnosticAsync(@"
 class C
 {
     void M()
     {
-        var x = (System.IO.FileAttributes)0;
+        var x = (E)0;
     }
+}
+
+[System.Flags]
+enum E
+{
+    A = 1,
+    B = 2,
 }
 ");
     }

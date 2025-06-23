@@ -227,4 +227,47 @@ class C
     #endregion
 ");
     }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.AddBlankLineBeforeEndRegionDirective)]
+    public async Task TestNoDiagnostic_PragmaWarningDirective()
+    {
+        await VerifyNoDiagnosticAsync(@"
+namespace N
+{
+    /// <summary>
+    /// x
+    /// </summary>
+    class C
+    {
+        #region R
+
+#pragma warning disable 1591
+
+        public int P { get; set; }
+
+#pragma warning restore 1591
+
+        #endregion
+    }
+}");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.AddBlankLineBeforeEndRegionDirective)]
+    public async Task TestNoDiagnostic_IfDirectiveInsideRegion()
+    {
+        await VerifyNoDiagnosticAsync("""
+namespace N
+{
+#region Some region
+
+#if DEBUG
+// Some code
+#else
+// Some code
+#endif
+
+#endregion Some region
+}
+""");
+    }
 }

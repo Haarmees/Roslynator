@@ -1,10 +1,7 @@
 ﻿// Copyright (c) .NET Foundation and Contributors. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
@@ -43,6 +40,9 @@ public sealed class RemoveEmptySyntaxCodeFixProvider : BaseCodeFixProvider
                     case SyntaxKind.EmptyStatement:
                     case SyntaxKind.FinallyClause:
                     case SyntaxKind.NamespaceDeclaration:
+#if ROSLYN_4_0
+                    case SyntaxKind.FileScopedNamespaceDeclaration:
+#endif
                     case SyntaxKind.ObjectCreationExpression:
                     case SyntaxKind.RegionDirectiveTrivia:
                         return true;
@@ -60,76 +60,89 @@ public sealed class RemoveEmptySyntaxCodeFixProvider : BaseCodeFixProvider
         switch (node)
         {
             case DestructorDeclarationSyntax destructorDeclaration:
-                {
-                    CodeAction codeAction = CodeActionFactory.RemoveMemberDeclaration(
-                        document,
-                        destructorDeclaration,
-                        title: "Remove empty destructor",
-                        equivalenceKey: GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeActionFactory.RemoveMemberDeclaration(
+                    document,
+                    destructorDeclaration,
+                    title: "Remove empty destructor",
+                    equivalenceKey: GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
             case ElseClauseSyntax elseClause:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        "Remove empty 'else' clause",
-                        ct => ElseClauseCodeFixProvider.RemoveEmptyElseClauseAsync(document, elseClause, ct),
-                        GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Remove empty 'else' clause",
+                    ct => ElseClauseCodeFixProvider.RemoveEmptyElseClauseAsync(document, elseClause, ct),
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
             case FinallyClauseSyntax finallyClause:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        "Remove empty 'finally' clause",
-                        ct => FinallyClauseCodeFixProvider.RemoveEmptyFinallyClauseAsync(document, finallyClause, ct),
-                        equivalenceKey: GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Remove empty 'finally' clause",
+                    ct => FinallyClauseCodeFixProvider.RemoveEmptyFinallyClauseAsync(document, finallyClause, ct),
+                    equivalenceKey: GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
             case ObjectCreationExpressionSyntax objectCreationExpression:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        "Remove empty initializer",
-                        ct => RemoveEmptyInitializerRefactoring.RefactorAsync(document, objectCreationExpression, ct),
-                        GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Remove empty initializer",
+                    ct => RemoveEmptyInitializerRefactoring.RefactorAsync(document, objectCreationExpression, ct),
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
+#if ROSLYN_4_0
+            case BaseNamespaceDeclarationSyntax namespaceDeclaration:
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Remove empty namespace declaration",
+                    ct => document.RemoveNodeAsync(namespaceDeclaration, ct),
+                    GetEquivalenceKey(diagnostic));
+
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
+#else
             case NamespaceDeclarationSyntax namespaceDeclaration:
                 {
                     CodeAction codeAction = CodeAction.Create(
                         "Remove empty namespace declaration",
-                        ct => RemoveEmptyNamespaceDeclarationRefactoring.RefactorAsync(document, namespaceDeclaration, ct),
+                        ct => document.RemoveNodeAsync(namespaceDeclaration, ct),
                         GetEquivalenceKey(diagnostic));
 
                     context.RegisterCodeFix(codeAction, diagnostic);
                     break;
                 }
+#endif
             case RegionDirectiveTriviaSyntax regionDirective:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        "Remove empty region",
-                        ct => RemoveEmptyRegionRefactoring.RefactorAsync(document, SyntaxInfo.RegionInfo(regionDirective), ct),
-                        GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Remove empty region",
+                    ct => RemoveEmptyRegionRefactoring.RefactorAsync(document, SyntaxInfo.RegionInfo(regionDirective), ct),
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
             case EmptyStatementSyntax emptyStatement:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        "Remove empty statement",
-                        ct => RemoveEmptyStatementRefactoring.RefactorAsync(document, emptyStatement, ct),
-                        GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Remove empty statement",
+                    ct => RemoveEmptyStatementRefactoring.RefactorAsync(document, emptyStatement, ct),
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
         }
     }
 }

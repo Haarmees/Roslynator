@@ -1,7 +1,6 @@
 ﻿// Copyright (c) .NET Foundation and Contributors. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Immutable;
-using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -43,11 +42,18 @@ public sealed class BlankLineBetweenDeclarationsAnalyzer : BaseDiagnosticAnalyze
             f => AnalyzeTypeDeclaration(f),
             SyntaxKind.ClassDeclaration,
             SyntaxKind.StructDeclaration,
+#if ROSLYN_4_0
             SyntaxKind.RecordStructDeclaration,
+#endif
             SyntaxKind.InterfaceDeclaration);
 
         context.RegisterSyntaxNodeAction(f => AnalyzeCompilationUnit(f), SyntaxKind.CompilationUnit);
-        context.RegisterSyntaxNodeAction(f => AnalyzeNamespaceDeclaration(f), SyntaxKind.NamespaceDeclaration);
+        context.RegisterSyntaxNodeAction(
+            f => AnalyzeNamespaceDeclaration(f),
+#if ROSLYN_4_0
+            SyntaxKind.FileScopedNamespaceDeclaration,
+#endif
+            SyntaxKind.NamespaceDeclaration);
         context.RegisterSyntaxNodeAction(f => AnalyzeEnumDeclaration(f), SyntaxKind.EnumDeclaration);
     }
 
@@ -60,8 +66,11 @@ public sealed class BlankLineBetweenDeclarationsAnalyzer : BaseDiagnosticAnalyze
 
     private static void AnalyzeNamespaceDeclaration(SyntaxNodeAnalysisContext context)
     {
+#if ROSLYN_4_0
+        var namespaceDeclaration = (BaseNamespaceDeclarationSyntax)context.Node;
+#else
         var namespaceDeclaration = (NamespaceDeclarationSyntax)context.Node;
-
+#endif
         Analyze(context, namespaceDeclaration.Members);
     }
 
@@ -83,7 +92,7 @@ public sealed class BlankLineBetweenDeclarationsAnalyzer : BaseDiagnosticAnalyze
         CancellationToken cancellationToken = context.CancellationToken;
         MemberDeclarationSyntax member;
         MemberDeclarationSyntax previousMember = members[0];
-        bool isPreviousGlobalStatement = previousMember.IsKind(SyntaxKind.GlobalStatement);
+        bool isPreviousSkippable = previousMember.IsKind(SyntaxKind.GlobalStatement, SyntaxKind.IncompleteMember);
         bool? isSingleLine;
         bool? isPreviousSingleLine = null;
 
@@ -92,53 +101,47 @@ public sealed class BlankLineBetweenDeclarationsAnalyzer : BaseDiagnosticAnalyze
             member = members[i];
             isSingleLine = null;
 
-            bool isGlobalStatement = member.IsKind(SyntaxKind.GlobalStatement);
-            bool areGlobalStatements = isPreviousGlobalStatement && isGlobalStatement;
-            isPreviousGlobalStatement = isGlobalStatement;
+            bool isSkippable = member.IsKind(SyntaxKind.GlobalStatement, SyntaxKind.IncompleteMember);
+            bool areSkippable = isPreviousSkippable && isSkippable;
+            isPreviousSkippable = isSkippable;
 
-            if (areGlobalStatements)
+            if (areSkippable)
                 continue;
 
-            SyntaxTriviaList trailingTrivia = previousMember.GetTrailingTrivia();
+            TriviaBlock block = TriviaBlock.FromBetween(previousMember, member);
 
-            if (!SyntaxTriviaAnalysis.IsOptionalWhitespaceThenOptionalSingleLineCommentThenEndOfLineTrivia(trailingTrivia))
-                continue;
+            if (!block.Success)
+                return;
 
-            SyntaxTriviaList leadingTrivia = member.GetLeadingTrivia();
-
-            (bool emptyOrWhitespaceTrivia, bool documentationComment, bool emptyLine) = AnalyzeLeadingTrivia(leadingTrivia);
-
-            if (documentationComment)
+            if (block.Kind != TriviaBlockKind.BlankLine
+                && block.ContainsDocumentationComment)
             {
-                ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenDeclarationAndDocumentationComment, trailingTrivia.Last());
-                continue;
-            }
-
-            if (!emptyOrWhitespaceTrivia
-                && !emptyLine)
-            {
+                ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenDeclarationAndDocumentationComment, block);
                 continue;
             }
 
             if ((isSingleLine ?? (isSingleLine = tree.IsSingleLineSpan(member.Span, cancellationToken)).Value)
                 && (isPreviousSingleLine ?? tree.IsSingleLineSpan(members[i - 1].Span, cancellationToken)))
             {
-                if (emptyLine)
+                if (block.Kind == TriviaBlockKind.BlankLine)
                 {
-                    if (MemberKindEquals(previousMember, member))
-                        ReportDiagnostic(context, DiagnosticRules.RemoveBlankLineBetweenSingleLineDeclarationsOfSameKind, leadingTrivia[0]);
+                    if (!block.ContainsDocumentationComment
+                        && MemberKindEquals(previousMember, member))
+                    {
+                        ReportDiagnostic(context, DiagnosticRules.RemoveBlankLineBetweenSingleLineDeclarationsOfSameKind, block);
+                    }
                 }
-                else if (emptyOrWhitespaceTrivia)
+                else
                 {
-                    ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenSingleLineDeclarations, trailingTrivia.Last());
+                    ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenSingleLineDeclarations, block);
 
                     if (!MemberKindEquals(previousMember, member))
-                        ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenSingleLineDeclarationsOfDifferentKind, trailingTrivia.Last());
+                        ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenSingleLineDeclarationsOfDifferentKind, block);
                 }
             }
-            else if (emptyOrWhitespaceTrivia)
+            else if (block.Kind != TriviaBlockKind.BlankLine)
             {
-                ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenDeclarations, trailingTrivia.Last());
+                ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenDeclarations, block);
             }
         }
     }
@@ -192,87 +195,47 @@ public sealed class BlankLineBetweenDeclarationsAnalyzer : BaseDiagnosticAnalyze
             member = members[i];
             isSingleLine = null;
             SyntaxToken commaToken = members.GetSeparator(i - 1);
-            SyntaxTriviaList trailingTrivia = commaToken.TrailingTrivia;
 
-            if (!SyntaxTriviaAnalysis.IsOptionalWhitespaceThenOptionalSingleLineCommentThenEndOfLineTrivia(trailingTrivia))
-                continue;
+            TriviaBlock block = TriviaBlock.FromBetween(commaToken, member);
 
-            SyntaxTriviaList leadingTrivia = member.GetLeadingTrivia();
+            if (!block.Success)
+                return;
 
-            (bool emptyOrWhitespaceTrivia, bool documentationComment, bool emptyLine) = AnalyzeLeadingTrivia(leadingTrivia);
-
-            if (documentationComment)
+            if (block.Kind != TriviaBlockKind.BlankLine
+                && block.ContainsDocumentationComment)
             {
-                ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenDeclarationAndDocumentationComment, trailingTrivia.Last());
-                continue;
-            }
-
-            if (!emptyOrWhitespaceTrivia
-                && !emptyLine)
-            {
+                ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenDeclarationAndDocumentationComment, block);
                 continue;
             }
 
             if ((isSingleLine ?? (isSingleLine = tree.IsSingleLineSpan(member.Span, cancellationToken)).Value)
                 && (isPreviousSingleLine ?? tree.IsSingleLineSpan(members[i - 1].Span, cancellationToken)))
             {
-                if (emptyLine)
+                if (!block.ContainsDocumentationComment)
                 {
-                    ReportDiagnostic(context, DiagnosticRules.RemoveBlankLineBetweenSingleLineDeclarationsOfSameKind, leadingTrivia[0]);
-                }
-                else if (emptyOrWhitespaceTrivia)
-                {
-                    ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenSingleLineDeclarations, trailingTrivia.Last());
-                }
-            }
-            else if (emptyOrWhitespaceTrivia)
-            {
-                ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenDeclarations, trailingTrivia.Last());
-            }
-        }
-    }
-
-    private static (bool emptyOrWhitespaceTrivia, bool documentationComment, bool emptyLine) AnalyzeLeadingTrivia(SyntaxTriviaList leadingTrivia)
-    {
-        SyntaxTriviaList.Enumerator en = leadingTrivia.GetEnumerator();
-
-        if (!en.MoveNext())
-            return (true, false, false);
-
-        if (en.Current.IsWhitespaceTrivia()
-            && !en.MoveNext())
-        {
-            return (true, false, false);
-        }
-
-        switch (en.Current.Kind())
-        {
-            case SyntaxKind.SingleLineDocumentationCommentTrivia:
-            case SyntaxKind.MultiLineDocumentationCommentTrivia:
-                {
-                    return (false, true, false);
-                }
-            case SyntaxKind.EndOfLineTrivia:
-                {
-                    while (en.MoveNext())
+                    if (block.Kind == TriviaBlockKind.BlankLine)
                     {
-                        if (!en.Current.IsWhitespaceOrEndOfLineTrivia())
-                            return default;
+                        ReportDiagnostic(context, DiagnosticRules.RemoveBlankLineBetweenSingleLineDeclarationsOfSameKind, block);
                     }
-
-                    return (false, false, true);
+                    else
+                    {
+                        ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenSingleLineDeclarations, block);
+                    }
                 }
+            }
+            else if (block.Kind != TriviaBlockKind.BlankLine)
+            {
+                ReportDiagnostic(context, DiagnosticRules.AddBlankLineBetweenDeclarations, block);
+            }
         }
-
-        return default;
     }
 
     private static void ReportDiagnostic(
         SyntaxNodeAnalysisContext context,
         DiagnosticDescriptor descriptor,
-        SyntaxTrivia trivia)
+        TriviaBlock block)
     {
         if (descriptor.IsEffective(context))
-            DiagnosticHelpers.ReportDiagnostic(context, descriptor, Location.Create(context.Node.SyntaxTree, trivia.Span.WithLength(0)));
+            DiagnosticHelpers.ReportDiagnostic(context, descriptor, block.GetLocation());
     }
 }

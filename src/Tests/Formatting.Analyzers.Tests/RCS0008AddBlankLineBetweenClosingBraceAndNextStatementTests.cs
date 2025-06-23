@@ -21,8 +21,8 @@ class C
     void M()
     {
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -50,8 +50,8 @@ class C
         bool x = false;
         while (x)
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -84,8 +84,8 @@ class C
 
         for (int i = 0; i < items.Count; i++)
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -121,8 +121,8 @@ class C
 
         foreach (var item in items)
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -158,8 +158,8 @@ class C
 
         foreach ((int x, int y) in new[] { (0, 0) })
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -193,8 +193,8 @@ class C
     {
         using (default(IDisposable))
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -217,30 +217,30 @@ class C
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.AddBlankLineBetweenClosingBraceAndNextStatement)]
     public async Task Test_Fixed()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyDiagnosticAndFixAsync("""
 class C
 {
     unsafe void M()
     {
-        fixed (char* p = """")
+        fixed (char* p = "")
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
-", @"
+""", """
 class C
 {
     unsafe void M()
     {
-        fixed (char* p = """")
+        fixed (char* p = "")
         {
         }
 
         M();
     }
 }
-", options: Options.WithAllowUnsafe(true));
+""", options: Options.WithAllowUnsafe(true));
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.AddBlankLineBetweenClosingBraceAndNextStatement)]
@@ -253,8 +253,8 @@ class C
     {
         checked
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -282,8 +282,8 @@ class C
     {
         unchecked
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -311,8 +311,8 @@ class C
     {
         unsafe
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -340,8 +340,8 @@ class C
     {
         lock (null)
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -369,8 +369,8 @@ class C
     {
         if (true)
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -403,8 +403,8 @@ class C
         }
         else if (x)
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -440,8 +440,8 @@ class C
         }
         else
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -465,25 +465,25 @@ class C
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.AddBlankLineBetweenClosingBraceAndNextStatement)]
     public async Task Test_Switch()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyDiagnosticAndFixAsync("""
 class C
 {
     void M()
     {
-        switch ("""")
+        switch ("")
         {
             default:
                 break;
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
-", @"
+""", """
 class C
 {
     void M()
     {
-        switch ("""")
+        switch ("")
         {
             default:
                 break;
@@ -492,7 +492,7 @@ class C
         M();
     }
 }
-");
+""");
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.AddBlankLineBetweenClosingBraceAndNextStatement)]
@@ -508,8 +508,8 @@ class C
         }
         catch (System.Exception)
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"
@@ -543,8 +543,8 @@ class C
         }
         finally
         {
-        }[||]
-        M();
+        }[|
+|]        M();
     }
 }
 ", @"

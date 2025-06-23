@@ -22,9 +22,9 @@ public sealed class NamedTypeSymbolAnalyzer : BaseDiagnosticAnalyzer
             {
                 Immutable.InterlockedInitialize(
                     ref _supportedDiagnostics,
-                    DiagnosticRules.UnknownLanguageName,
-                    DiagnosticRules.SpecifyExportCodeFixProviderAttributeName,
-                    DiagnosticRules.SpecifyExportCodeRefactoringProviderAttributeName);
+                    CodeAnalysisDiagnosticRules.UnknownLanguageName,
+                    CodeAnalysisDiagnosticRules.SpecifyExportCodeFixProviderAttributeName,
+                    CodeAnalysisDiagnosticRules.SpecifyExportCodeRefactoringProviderAttributeName);
             }
 
             return _supportedDiagnostics;
@@ -52,35 +52,35 @@ public sealed class NamedTypeSymbolAnalyzer : BaseDiagnosticAnalyzer
             switch (baseType.Name)
             {
                 case "DiagnosticAnalyzer":
+                {
+                    if (baseType.ContainingNamespace.HasMetadataName(RoslynMetadataNames.Microsoft_CodeAnalysis_Diagnostics))
                     {
-                        if (baseType.ContainingNamespace.HasMetadataName(RoslynMetadataNames.Microsoft_CodeAnalysis_Diagnostics))
-                        {
-                            AnalyzeDiagnosticAnalyzer(context, symbol);
-                            return;
-                        }
-
-                        break;
+                        AnalyzeDiagnosticAnalyzer(context, symbol);
+                        return;
                     }
+
+                    break;
+                }
                 case "CodeFixProvider":
+                {
+                    if (baseType.ContainingNamespace.HasMetadataName(RoslynMetadataNames.Microsoft_CodeAnalysis_CodeFixes))
                     {
-                        if (baseType.ContainingNamespace.HasMetadataName(RoslynMetadataNames.Microsoft_CodeAnalysis_CodeFixes))
-                        {
-                            AnalyzeCodeFixProvider(context, symbol);
-                            return;
-                        }
-
-                        break;
+                        AnalyzeCodeFixProvider(context, symbol);
+                        return;
                     }
+
+                    break;
+                }
                 case "CodeRefactoringProvider":
+                {
+                    if (baseType.ContainingNamespace.HasMetadataName(RoslynMetadataNames.Microsoft_CodeAnalysis_CodeRefactorings))
                     {
-                        if (baseType.ContainingNamespace.HasMetadataName(RoslynMetadataNames.Microsoft_CodeAnalysis_CodeRefactorings))
-                        {
-                            AnalyzeCodeRefactoringProvider(context, symbol);
-                            return;
-                        }
-
-                        break;
+                        AnalyzeCodeRefactoringProvider(context, symbol);
+                        return;
                     }
+
+                    break;
+                }
             }
 
             baseType = baseType.BaseType;
@@ -94,7 +94,7 @@ public sealed class NamedTypeSymbolAnalyzer : BaseDiagnosticAnalyzer
         if (attribute is null)
             return;
 
-        if (DiagnosticRules.UnknownLanguageName.IsEffective(context))
+        if (CodeAnalysisDiagnosticRules.UnknownLanguageName.IsEffective(context))
             AnalyzeLanguageName(context, attribute);
     }
 
@@ -105,13 +105,13 @@ public sealed class NamedTypeSymbolAnalyzer : BaseDiagnosticAnalyzer
         if (attribute is null)
             return;
 
-        if (DiagnosticRules.UnknownLanguageName.IsEffective(context))
+        if (CodeAnalysisDiagnosticRules.UnknownLanguageName.IsEffective(context))
             AnalyzeLanguageName(context, attribute);
 
-        if (DiagnosticRules.SpecifyExportCodeFixProviderAttributeName.IsEffective(context)
+        if (CodeAnalysisDiagnosticRules.SpecifyExportCodeFixProviderAttributeName.IsEffective(context)
             && !ContainsNamedArgument(attribute, "Name"))
         {
-            ReportDiagnostic(context, attribute, DiagnosticRules.SpecifyExportCodeFixProviderAttributeName);
+            ReportDiagnostic(context, attribute, CodeAnalysisDiagnosticRules.SpecifyExportCodeFixProviderAttributeName);
         }
     }
 
@@ -122,13 +122,13 @@ public sealed class NamedTypeSymbolAnalyzer : BaseDiagnosticAnalyzer
         if (attribute is null)
             return;
 
-        if (DiagnosticRules.UnknownLanguageName.IsEffective(context))
+        if (CodeAnalysisDiagnosticRules.UnknownLanguageName.IsEffective(context))
             AnalyzeLanguageName(context, attribute);
 
-        if (DiagnosticRules.SpecifyExportCodeRefactoringProviderAttributeName.IsEffective(context)
+        if (CodeAnalysisDiagnosticRules.SpecifyExportCodeRefactoringProviderAttributeName.IsEffective(context)
             && !ContainsNamedArgument(attribute, "Name"))
         {
-            ReportDiagnostic(context, attribute, DiagnosticRules.SpecifyExportCodeRefactoringProviderAttributeName);
+            ReportDiagnostic(context, attribute, CodeAnalysisDiagnosticRules.SpecifyExportCodeRefactoringProviderAttributeName);
         }
     }
 
@@ -141,36 +141,36 @@ public sealed class NamedTypeSymbolAnalyzer : BaseDiagnosticAnalyzer
             switch (constructorArgument.Kind)
             {
                 case TypedConstantKind.Primitive:
+                {
+                    if (constructorArgument.Type.SpecialType == SpecialType.System_String
+                        && !RoslynUtility.WellKnownLanguageNames.Contains((string)constructorArgument.Value))
                     {
-                        if (constructorArgument.Type.SpecialType == SpecialType.System_String
-                            && !RoslynUtility.WellKnownLanguageNames.Contains((string)constructorArgument.Value))
+                        ReportUnknownLanguageName(context, attribute, argumentIndex);
+                    }
+
+                    argumentIndex++;
+                    break;
+                }
+                case TypedConstantKind.Array:
+                {
+                    foreach (TypedConstant typedConstant in constructorArgument.Values)
+                    {
+                        if (typedConstant.Kind == TypedConstantKind.Primitive
+                            && typedConstant.Type.SpecialType == SpecialType.System_String
+                            && !RoslynUtility.WellKnownLanguageNames.Contains((string)typedConstant.Value))
                         {
                             ReportUnknownLanguageName(context, attribute, argumentIndex);
                         }
 
                         argumentIndex++;
-                        break;
                     }
-                case TypedConstantKind.Array:
-                    {
-                        foreach (TypedConstant typedConstant in constructorArgument.Values)
-                        {
-                            if (typedConstant.Kind == TypedConstantKind.Primitive
-                                && typedConstant.Type.SpecialType == SpecialType.System_String
-                                && !RoslynUtility.WellKnownLanguageNames.Contains((string)typedConstant.Value))
-                            {
-                                ReportUnknownLanguageName(context, attribute, argumentIndex);
-                            }
 
-                            argumentIndex++;
-                        }
-
-                        break;
-                    }
+                    break;
+                }
                 default:
-                    {
-                        return;
-                    }
+                {
+                    return;
+                }
             }
         }
     }
@@ -196,7 +196,7 @@ public sealed class NamedTypeSymbolAnalyzer : BaseDiagnosticAnalyzer
         {
             if (argumentIndex == i)
             {
-                DiagnosticHelpers.ReportDiagnostic(context, DiagnosticRules.UnknownLanguageName, arguments[i].Expression);
+                DiagnosticHelpers.ReportDiagnostic(context, CodeAnalysisDiagnosticRules.UnknownLanguageName, arguments[i].Expression);
                 break;
             }
         }

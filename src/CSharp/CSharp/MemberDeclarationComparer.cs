@@ -52,7 +52,9 @@ internal abstract class MemberDeclarationComparer : IComparer<MemberDeclarationS
             case SyntaxKind.EnumDeclaration:
             case SyntaxKind.InterfaceDeclaration:
             case SyntaxKind.StructDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
             case SyntaxKind.ClassDeclaration:
             case SyntaxKind.RecordDeclaration:
             case SyntaxKind.NamespaceDeclaration:
@@ -64,10 +66,10 @@ internal abstract class MemberDeclarationComparer : IComparer<MemberDeclarationS
             case SyntaxKind.IncompleteMember:
                 return false;
             default:
-                {
-                    Debug.Fail($"unknown member '{kind}'");
-                    return false;
-                }
+            {
+                Debug.Fail($"unknown member '{kind}'");
+                return false;
+            }
         }
     }
 
@@ -109,9 +111,9 @@ internal abstract class MemberDeclarationComparer : IComparer<MemberDeclarationS
             switch (member.Kind())
             {
                 case SyntaxKind.FieldDeclaration:
-                    {
-                        return ((FieldDeclarationSyntax)member).Declaration?.Variables.FirstOrDefault()?.Identifier.ValueText;
-                    }
+                {
+                    return ((FieldDeclarationSyntax)member).Declaration?.Variables.FirstOrDefault()?.Identifier.ValueText;
+                }
                 case SyntaxKind.ConstructorDeclaration:
                     return ((ConstructorDeclarationSyntax)member).Identifier.ValueText;
                 case SyntaxKind.DelegateDeclaration:
@@ -133,7 +135,9 @@ internal abstract class MemberDeclarationComparer : IComparer<MemberDeclarationS
                 case SyntaxKind.ClassDeclaration:
                     return ((ClassDeclarationSyntax)member).Identifier.ValueText;
                 case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
                 case SyntaxKind.RecordStructDeclaration:
+#endif
                     return ((RecordDeclarationSyntax)member).Identifier.ValueText;
                 case SyntaxKind.NamespaceDeclaration:
                     return ((NamespaceDeclarationSyntax)member).Name.ToString();
@@ -144,10 +148,10 @@ internal abstract class MemberDeclarationComparer : IComparer<MemberDeclarationS
                 case SyntaxKind.IncompleteMember:
                     return "";
                 default:
-                    {
-                        Debug.Fail($"unknown member '{member.Kind()}'");
-                        return "";
-                    }
+                {
+                    Debug.Fail($"unknown member '{member.Kind()}'");
+                    return "";
+                }
             }
         }
     }

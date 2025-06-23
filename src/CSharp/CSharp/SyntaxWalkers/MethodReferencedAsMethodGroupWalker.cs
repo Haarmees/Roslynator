@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Roslynator.CSharp.SyntaxWalkers;
 
-internal class MethodReferencedAsMethodGroupWalker : CSharpSyntaxNodeWalker
+internal class MethodReferencedAsMethodGroupWalker : BaseCSharpSyntaxWalker
 {
     [ThreadStatic]
     private static MethodReferencedAsMethodGroupWalker? _cachedInstance;
@@ -42,17 +42,17 @@ internal class MethodReferencedAsMethodGroupWalker : CSharpSyntaxNodeWalker
             switch (parent.Kind())
             {
                 case SyntaxKind.InvocationExpression:
-                    {
-                        return true;
-                    }
+                {
+                    return true;
+                }
                 case SyntaxKind.SimpleMemberAccessExpression:
                 case SyntaxKind.MemberBindingExpression:
-                    {
-                        if (parent.IsParentKind(SyntaxKind.InvocationExpression))
-                            return true;
+                {
+                    if (parent.IsParentKind(SyntaxKind.InvocationExpression))
+                        return true;
 
-                        break;
-                    }
+                    break;
+                }
             }
 
             return false;

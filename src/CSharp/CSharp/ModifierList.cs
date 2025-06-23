@@ -17,9 +17,6 @@ public static class ModifierList
     /// <summary>
     /// Returns an index the specified token should be inserted at.
     /// </summary>
-    /// <param name="tokens"></param>
-    /// <param name="token"></param>
-    /// <param name="comparer"></param>
     public static int GetInsertIndex(SyntaxTokenList tokens, SyntaxToken token, IComparer<SyntaxToken>? comparer = null)
     {
         if (comparer is null)
@@ -51,9 +48,6 @@ public static class ModifierList
     /// <summary>
     /// Returns an index a token with the specified kind should be inserted at.
     /// </summary>
-    /// <param name="tokens"></param>
-    /// <param name="kind"></param>
-    /// <param name="comparer"></param>
     public static int GetInsertIndex(SyntaxTokenList tokens, SyntaxKind kind, IComparer<SyntaxKind>? comparer = null)
     {
         if (comparer is null)
@@ -87,33 +81,33 @@ public static class ModifierList
         switch (accessibility)
         {
             case Accessibility.Private:
-                {
-                    return Insert(node, SyntaxKind.PrivateKeyword, comparer);
-                }
+            {
+                return Insert(node, SyntaxKind.PrivateKeyword, comparer);
+            }
             case Accessibility.Protected:
-                {
-                    return Insert(node, SyntaxKind.ProtectedKeyword, comparer);
-                }
+            {
+                return Insert(node, SyntaxKind.ProtectedKeyword, comparer);
+            }
             case Accessibility.ProtectedAndInternal:
-                {
-                    node = Insert(node, SyntaxKind.PrivateKeyword, comparer);
+            {
+                node = Insert(node, SyntaxKind.PrivateKeyword, comparer);
 
-                    return Insert(node, SyntaxKind.ProtectedKeyword, comparer);
-                }
+                return Insert(node, SyntaxKind.ProtectedKeyword, comparer);
+            }
             case Accessibility.Internal:
-                {
-                    return Insert(node, SyntaxKind.InternalKeyword, comparer);
-                }
+            {
+                return Insert(node, SyntaxKind.InternalKeyword, comparer);
+            }
             case Accessibility.Public:
-                {
-                    return Insert(node, SyntaxKind.PublicKeyword, comparer);
-                }
+            {
+                return Insert(node, SyntaxKind.PublicKeyword, comparer);
+            }
             case Accessibility.ProtectedOrInternal:
-                {
-                    node = Insert(node, SyntaxKind.ProtectedKeyword, comparer);
+            {
+                node = Insert(node, SyntaxKind.ProtectedKeyword, comparer);
 
-                    return Insert(node, SyntaxKind.InternalKeyword, comparer);
-                }
+                return Insert(node, SyntaxKind.InternalKeyword, comparer);
+            }
         }
 
         return node;
@@ -122,10 +116,6 @@ public static class ModifierList
     /// <summary>
     /// Creates a new node with a modifier of the specified kind inserted.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
-    /// <param name="kind"></param>
-    /// <param name="comparer"></param>
     public static TNode Insert<TNode>(TNode node, SyntaxKind kind, IComparer<SyntaxKind>? comparer = null) where TNode : SyntaxNode
     {
         switch (node.Kind())
@@ -159,7 +149,9 @@ public static class ModifierList
             case SyntaxKind.PropertyDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<PropertyDeclarationSyntax>.Instance.Insert((PropertyDeclarationSyntax)(SyntaxNode)node, kind, comparer);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return (TNode)(SyntaxNode)ModifierList<RecordDeclarationSyntax>.Instance.Insert((RecordDeclarationSyntax)(SyntaxNode)node, kind, comparer);
             case SyntaxKind.StructDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<StructDeclarationSyntax>.Instance.Insert((StructDeclarationSyntax)(SyntaxNode)node, kind, comparer);
@@ -175,6 +167,11 @@ public static class ModifierList
                 return (TNode)(SyntaxNode)ModifierList<LocalFunctionStatementSyntax>.Instance.Insert((LocalFunctionStatementSyntax)(SyntaxNode)node, kind, comparer);
             case SyntaxKind.Parameter:
                 return (TNode)(SyntaxNode)ModifierList<ParameterSyntax>.Instance.Insert((ParameterSyntax)(SyntaxNode)node, kind, comparer);
+            case SyntaxKind.SimpleLambdaExpression:
+            case SyntaxKind.ParenthesizedLambdaExpression:
+                return (TNode)(SyntaxNode)ModifierList<LambdaExpressionSyntax>.Instance.Insert((LambdaExpressionSyntax)(SyntaxNode)node, kind, comparer);
+            case SyntaxKind.AnonymousMethodExpression:
+                return (TNode)(SyntaxNode)ModifierList<AnonymousMethodExpressionSyntax>.Instance.Insert((AnonymousMethodExpressionSyntax)(SyntaxNode)node, kind, comparer);
             case SyntaxKind.IncompleteMember:
                 return (TNode)(SyntaxNode)ModifierList<IncompleteMemberSyntax>.Instance.Insert((IncompleteMemberSyntax)(SyntaxNode)node, kind, comparer);
         }
@@ -185,10 +182,6 @@ public static class ModifierList
     /// <summary>
     /// Creates a new node with the specified modifier inserted.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
-    /// <param name="modifier"></param>
-    /// <param name="comparer"></param>
     public static TNode Insert<TNode>(TNode node, SyntaxToken modifier, IComparer<SyntaxToken>? comparer = null) where TNode : SyntaxNode
     {
         switch (node.Kind())
@@ -222,7 +215,9 @@ public static class ModifierList
             case SyntaxKind.PropertyDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<PropertyDeclarationSyntax>.Instance.Insert((PropertyDeclarationSyntax)(SyntaxNode)node, modifier, comparer);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return (TNode)(SyntaxNode)ModifierList<RecordDeclarationSyntax>.Instance.Insert((RecordDeclarationSyntax)(SyntaxNode)node, modifier, comparer);
             case SyntaxKind.StructDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<StructDeclarationSyntax>.Instance.Insert((StructDeclarationSyntax)(SyntaxNode)node, modifier, comparer);
@@ -248,9 +243,6 @@ public static class ModifierList
     /// <summary>
     /// Creates a new node with a modifier of the specified kind removed.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
-    /// <param name="kind"></param>
     public static TNode Remove<TNode>(TNode node, SyntaxKind kind) where TNode : SyntaxNode
     {
         switch (node.Kind())
@@ -284,7 +276,9 @@ public static class ModifierList
             case SyntaxKind.PropertyDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<PropertyDeclarationSyntax>.Instance.Remove((PropertyDeclarationSyntax)(SyntaxNode)node, kind);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return (TNode)(SyntaxNode)ModifierList<RecordDeclarationSyntax>.Instance.Remove((RecordDeclarationSyntax)(SyntaxNode)node, kind);
             case SyntaxKind.StructDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<StructDeclarationSyntax>.Instance.Remove((StructDeclarationSyntax)(SyntaxNode)node, kind);
@@ -310,9 +304,6 @@ public static class ModifierList
     /// <summary>
     /// Creates a new node with the specified modifier removed.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
-    /// <param name="modifier"></param>
     public static TNode Remove<TNode>(TNode node, SyntaxToken modifier) where TNode : SyntaxNode
     {
         switch (node.Kind())
@@ -346,7 +337,9 @@ public static class ModifierList
             case SyntaxKind.PropertyDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<PropertyDeclarationSyntax>.Instance.Remove((PropertyDeclarationSyntax)(SyntaxNode)node, modifier);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return (TNode)(SyntaxNode)ModifierList<RecordDeclarationSyntax>.Instance.Remove((RecordDeclarationSyntax)(SyntaxNode)node, modifier);
             case SyntaxKind.StructDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<StructDeclarationSyntax>.Instance.Remove((StructDeclarationSyntax)(SyntaxNode)node, modifier);
@@ -372,9 +365,6 @@ public static class ModifierList
     /// <summary>
     /// Creates a new node with a modifier at the specified index removed.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
-    /// <param name="index"></param>
     public static TNode RemoveAt<TNode>(TNode node, int index) where TNode : SyntaxNode
     {
         switch (node.Kind())
@@ -408,7 +398,9 @@ public static class ModifierList
             case SyntaxKind.PropertyDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<PropertyDeclarationSyntax>.Instance.RemoveAt((PropertyDeclarationSyntax)(SyntaxNode)node, index);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return (TNode)(SyntaxNode)ModifierList<RecordDeclarationSyntax>.Instance.RemoveAt((RecordDeclarationSyntax)(SyntaxNode)node, index);
             case SyntaxKind.StructDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<StructDeclarationSyntax>.Instance.RemoveAt((StructDeclarationSyntax)(SyntaxNode)node, index);
@@ -434,9 +426,6 @@ public static class ModifierList
     /// <summary>
     /// Creates a new node with modifiers that matches the predicate removed.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
-    /// <param name="predicate"></param>
     public static TNode RemoveAll<TNode>(TNode node, Func<SyntaxToken, bool> predicate) where TNode : SyntaxNode
     {
         switch (node.Kind())
@@ -470,7 +459,9 @@ public static class ModifierList
             case SyntaxKind.PropertyDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<PropertyDeclarationSyntax>.Instance.RemoveAll((PropertyDeclarationSyntax)(SyntaxNode)node, predicate);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return (TNode)(SyntaxNode)ModifierList<RecordDeclarationSyntax>.Instance.RemoveAll((RecordDeclarationSyntax)(SyntaxNode)node, predicate);
             case SyntaxKind.StructDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<StructDeclarationSyntax>.Instance.RemoveAll((StructDeclarationSyntax)(SyntaxNode)node, predicate);
@@ -496,8 +487,6 @@ public static class ModifierList
     /// <summary>
     /// Creates a new node with all modifiers removed.
     /// </summary>
-    /// <typeparam name="TNode"></typeparam>
-    /// <param name="node"></param>
     public static TNode RemoveAll<TNode>(TNode node) where TNode : SyntaxNode
     {
         switch (node.Kind())
@@ -531,7 +520,9 @@ public static class ModifierList
             case SyntaxKind.PropertyDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<PropertyDeclarationSyntax>.Instance.RemoveAll((PropertyDeclarationSyntax)(SyntaxNode)node);
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return (TNode)(SyntaxNode)ModifierList<RecordDeclarationSyntax>.Instance.RemoveAll((RecordDeclarationSyntax)(SyntaxNode)node);
             case SyntaxKind.StructDeclaration:
                 return (TNode)(SyntaxNode)ModifierList<StructDeclarationSyntax>.Instance.RemoveAll((StructDeclarationSyntax)(SyntaxNode)node);
@@ -557,9 +548,6 @@ public static class ModifierList
     /// <summary>
     /// Creates a new list of modifiers with the modifier of the specified kind inserted.
     /// </summary>
-    /// <param name="modifiers"></param>
-    /// <param name="kind"></param>
-    /// <param name="comparer"></param>
     public static SyntaxTokenList Insert(SyntaxTokenList modifiers, SyntaxKind kind, IComparer<SyntaxKind>? comparer = null)
     {
         if (!modifiers.Any())
@@ -571,9 +559,6 @@ public static class ModifierList
     /// <summary>
     /// Creates a new list of modifiers with a specified modifier inserted.
     /// </summary>
-    /// <param name="modifiers"></param>
-    /// <param name="modifier"></param>
-    /// <param name="comparer"></param>
     public static SyntaxTokenList Insert(SyntaxTokenList modifiers, SyntaxToken modifier, IComparer<SyntaxToken>? comparer = null)
     {
         if (!modifiers.Any())

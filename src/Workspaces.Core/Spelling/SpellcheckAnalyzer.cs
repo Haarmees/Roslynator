@@ -76,7 +76,7 @@ internal class SpellcheckAnalyzer
 
             if (predicate is null || predicate(project))
             {
-                WriteLine($"Fix '{project.Name}' {$"{i + 1}/{projects.Length}"}", ConsoleColors.Cyan, Verbosity.Minimal);
+                WriteLine($"Analyze '{project.Name}' {$"{i + 1}/{projects.Length}"}", ConsoleColors.Cyan, Verbosity.Minimal);
 
                 ImmutableArray<SpellingFixResult> results2 = await FixProjectAsync(project, cancellationToken).ConfigureAwait(false);
 
@@ -84,19 +84,19 @@ internal class SpellcheckAnalyzer
             }
             else
             {
-                WriteLine($"Skip '{project.Name}' {$"{i + 1}/{projects.Length}"}", ConsoleColors.DarkGray, Verbosity.Minimal);
+                WriteLine($"Skipping '{project.Name}' {$"{i + 1}/{projects.Length}"}", ConsoleColors.DarkGray, Verbosity.Minimal);
             }
 
             TimeSpan elapsed = stopwatch.Elapsed;
 
-            WriteLine($"Done fixing '{project.Name}' in {elapsed - lastElapsed:mm\\:ss\\.ff}", Verbosity.Normal);
+            LogHelpers.WriteElapsedTime($"Analyzed '{project.Name}'", elapsed - lastElapsed, Verbosity.Normal);
 
             lastElapsed = elapsed;
         }
 
         stopwatch.Stop();
 
-        WriteLine($"Done fixing solution '{CurrentSolution.FilePath}' in {stopwatch.Elapsed:mm\\:ss\\.ff}", Verbosity.Minimal);
+        LogHelpers.WriteElapsedTime($"Analyzed solution '{CurrentSolution.FilePath}'", stopwatch.Elapsed, Verbosity.Minimal);
 
         return results.SelectMany(f => f).ToImmutableArray();
     }
@@ -188,6 +188,18 @@ internal class SpellcheckAnalyzer
                 {
                     if (diagnostic.IsAnalyzerExceptionDiagnostic())
                         LogHelpers.WriteDiagnostic(diagnostic, baseDirectoryPath: Path.GetDirectoryName(project.FilePath), formatProvider: FormatProvider, indentation: "  ", verbosity: Verbosity.Detailed);
+
+                    continue;
+                }
+
+                if (diagnostic.Location.Kind == LocationKind.None)
+                {
+                    if (diagnostic.Properties.TryGetValue("FilePath", out string? filePath))
+                    {
+                        Diagnostic diagnostic2 = Diagnostic.Create(diagnostic.Descriptor, Location.Create(filePath!, default, default), diagnostic.AdditionalLocations, diagnostic.Properties, messageArgs: diagnostic.Properties["Value"]);
+
+                        LogHelpers.WriteDiagnostic(diagnostic2, baseDirectoryPath: Path.GetDirectoryName(project.FilePath), formatProvider: FormatProvider, indentation: "  ", omitSpan: true, verbosity: Verbosity.Normal);
+                    }
 
                     continue;
                 }
@@ -486,6 +498,7 @@ internal class SpellcheckAnalyzer
                 try
                 {
                     //TODO: detect naming conflict
+#if ROSLYN_4_4
                     newSolution = await Microsoft.CodeAnalysis.Rename.Renamer.RenameSymbolAsync(
                         CurrentSolution,
                         symbol,
@@ -494,6 +507,15 @@ internal class SpellcheckAnalyzer
                         newName,
                         cancellationToken)
                         .ConfigureAwait(false);
+#else
+                    newSolution = await Microsoft.CodeAnalysis.Rename.Renamer.RenameSymbolAsync(
+                        CurrentSolution,
+                        symbol,
+                        newName,
+                        default(Microsoft.CodeAnalysis.Options.OptionSet),
+                        cancellationToken)
+                        .ConfigureAwait(false);
+#endif
                 }
                 catch (InvalidOperationException
 #if DEBUG

@@ -36,6 +36,7 @@ internal static class MetadataNames
     public static readonly MetadataName System_FormattableString = MetadataName.Parse("System.FormattableString");
     public static readonly MetadataName System_Func_T2 = MetadataName.Parse("System.Func`2");
     public static readonly MetadataName System_Func_T3 = MetadataName.Parse("System.Func`3");
+    public static readonly MetadataName System_IAsyncDisposable = MetadataName.Parse("System.IAsyncDisposable");
     public static readonly MetadataName System_IEquatable_T = MetadataName.Parse("System.IEquatable`1");
     public static readonly MetadataName System_IComparable = MetadataName.Parse("System.IComparable");
     public static readonly MetadataName System_IComparable_T = MetadataName.Parse("System.IComparable`1");
@@ -44,12 +45,17 @@ internal static class MetadataNames
     public static readonly MetadataName System_Linq_ImmutableArrayExtensions = MetadataName.Parse("System.Linq.ImmutableArrayExtensions");
     public static readonly MetadataName System_Linq_IOrderedEnumerable_T = MetadataName.Parse("System.Linq.IOrderedEnumerable`1");
     public static readonly MetadataName System_Linq_IQueryable_T = MetadataName.Parse("System.Linq.IQueryable`1");
+    public static readonly MetadataName System_MemoryExtensions_TryWriteInterpolatedStringHandler = MetadataName.Parse("System.MemoryExtensions+TryWriteInterpolatedStringHandler");
     public static readonly MetadataName System_NonSerializedAttribute = MetadataName.Parse("System.NonSerializedAttribute");
     public static readonly MetadataName System_ObsoleteAttribute = MetadataName.Parse("System.ObsoleteAttribute");
+    public static readonly MetadataName System_ReadOnlySpan_T = MetadataName.Parse("System.ReadOnlySpan`1");
     public static readonly MetadataName System_Reflection = MetadataName.Parse("System.Reflection");
     public static readonly MetadataName System_Runtime_CompilerServices = MetadataName.Parse("System.Runtime.CompilerServices");
+    public static readonly MetadataName System_Runtime_CompilerServices_AsyncMethodBuilderAttribute = MetadataName.Parse("System.Runtime.CompilerServices.AsyncMethodBuilderAttribute");
+    public static readonly MetadataName System_Runtime_CompilerServices_CollectionBuilderAttribute = MetadataName.Parse("System.Runtime.CompilerServices.CollectionBuilderAttribute");
     public static readonly MetadataName System_Runtime_CompilerServices_ConfiguredTaskAwaitable = MetadataName.Parse("System.Runtime.CompilerServices.ConfiguredTaskAwaitable");
     public static readonly MetadataName System_Runtime_CompilerServices_ConfiguredTaskAwaitable_T = MetadataName.Parse("System.Runtime.CompilerServices.ConfiguredTaskAwaitable`1");
+    public static readonly MetadataName System_Runtime_CompilerServices_INotifyCompletion = MetadataName.Parse("System.Runtime.CompilerServices.INotifyCompletion");
     public static readonly MetadataName System_Runtime_InteropServices_LayoutKind = MetadataName.Parse("System.Runtime.InteropServices.LayoutKind");
     public static readonly MetadataName System_Runtime_InteropServices_StructLayoutAttribute = MetadataName.Parse("System.Runtime.InteropServices.StructLayoutAttribute");
     public static readonly MetadataName System_Runtime_Serialization_DataMemberAttribute = MetadataName.Parse("System.Runtime.Serialization.DataMemberAttribute");

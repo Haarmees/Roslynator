@@ -50,7 +50,7 @@ public static class MarkdownGenerator
     public static string CreateRefactoringMarkdown(RefactoringMetadata refactoring, int position)
     {
         MDocument document = Document(
-            CreateFrontMatter(position: position, label: refactoring.Title),
+            CreateFrontMatter(title: $"Refactoring: {refactoring.Title}", position: position, label: refactoring.Title),
             Heading1(refactoring.Title),
             Table(
                 TableRow("Property", "Value"),
@@ -132,11 +132,13 @@ public static class MarkdownGenerator
             .Select(f => InlineCode(f.Key))
             .ToArray();
 
-        string title = analyzer.Title.TrimEnd('.');
+        string title = $"{analyzer.Id}: {analyzer.Title.TrimEnd('.')}";
 
         MDocument document = Document(
-            CreateFrontMatter(label: (string.IsNullOrEmpty(analyzer.ObsoleteMessage)) ? analyzer.Id : $"[deprecated] {analyzer.Id}"),
-            Heading1($"{analyzer.Id}: {title}"),
+            CreateFrontMatter(
+                title: title,
+                label: (string.IsNullOrEmpty(analyzer.ObsoleteMessage)) ? analyzer.Id : $"[deprecated] {analyzer.Id}"),
+            Heading1(title),
             CreateObsoleteWarning(analyzer),
             Heading2("Properties"),
             Table(
@@ -156,7 +158,7 @@ public static class MarkdownGenerator
 
         static IEnumerable<MElement> CreateSamples(AnalyzerMetadata analyzer)
         {
-            IReadOnlyList<SampleMetadata> samples = analyzer.Samples;
+            List<SampleMetadata> samples = analyzer.Samples;
             LegacyAnalyzerOptionKind kind = analyzer.Kind;
 
             if (samples.Count > 0)
@@ -291,7 +293,7 @@ public static class MarkdownGenerator
             while (match.Success)
             {
                 yield return message.Substring(index, match.Index);
-                yield return Link(match.Value, match.Value);
+                yield return Link(match.Value, $"/docs/roslynator/analyzers/{match.Value}");
                 index = match.Index + match.Length;
                 match = match.NextMatch();
             }
@@ -327,11 +329,11 @@ public static class MarkdownGenerator
     public static string CreateCodeFixMarkdown(
         CompilerDiagnosticMetadata diagnostic,
         IEnumerable<CodeFixMetadata> codeFixes,
-        ImmutableArray<CodeFixOption> options,
+        IEnumerable<CodeFixOption> options,
         IComparer<string> comparer)
     {
         MDocument document = Document(
-            CreateFrontMatter(label: diagnostic.Id),
+            CreateFrontMatter(title: $"Code fix for {diagnostic.Id}", label: diagnostic.Id),
             Heading1(diagnostic.Id),
             Table(
                 TableRow("Property", "Value"),
@@ -383,16 +385,10 @@ public static class MarkdownGenerator
         string beforeTitle,
         string afterTitle)
     {
+        int i = 1;
         foreach (SampleMetadata sample in samples)
         {
-            yield return Heading3("Example");
-
-            yield return DocusaurusMarkdownFactory.CodeBlock(sample.Before, LanguageIdentifiers.CSharp, beforeTitle + ".cs");
-
-            if (!string.IsNullOrEmpty(sample.After))
-            {
-                yield return DocusaurusMarkdownFactory.CodeBlock(sample.After, LanguageIdentifiers.CSharp, afterTitle + ".cs");
-            }
+            yield return Heading3($"Example #{i}");
 
             ImmutableArray<(string Key, string Value)>.Enumerator en = sample.ConfigOptions.GetEnumerator();
             if (en.MoveNext())
@@ -426,6 +422,15 @@ public static class MarkdownGenerator
                     "editorconfig",
                     ".editorconfig");
             }
+
+            yield return DocusaurusMarkdownFactory.CodeBlock(sample.Before, LanguageIdentifiers.CSharp, beforeTitle + ".cs");
+
+            if (!string.IsNullOrEmpty(sample.After))
+            {
+                yield return DocusaurusMarkdownFactory.CodeBlock(sample.After, LanguageIdentifiers.CSharp, afterTitle + ".cs");
+            }
+
+            i++;
         }
     }
 
@@ -471,12 +476,15 @@ public static class MarkdownGenerator
         }
     }
 
-    private static MObject CreateFrontMatter(int? position = null, string label = null)
+    private static DocusaurusFrontMatter CreateFrontMatter(string title = null, int? position = null, string label = null)
     {
         return DocusaurusMarkdownFactory.FrontMatter(GetLabels());
 
         IEnumerable<(string, object)> GetLabels()
         {
+            if (title is not null)
+                yield return ("title", title);
+
             if (position is not null)
                 yield return ("sidebar_position", position);
 

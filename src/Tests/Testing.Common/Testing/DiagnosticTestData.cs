@@ -19,15 +19,6 @@ public sealed class DiagnosticTestData
     /// <summary>
     /// Initializes a new instance of <see cref="DiagnosticTestData"/>.
     /// </summary>
-    /// <param name="descriptor"></param>
-    /// <param name="source"></param>
-    /// <param name="spans"></param>
-    /// <param name="additionalSpans"></param>
-    /// <param name="additionalFiles"></param>
-    /// <param name="diagnosticMessage"></param>
-    /// <param name="formatProvider"></param>
-    /// <param name="equivalenceKey"></param>
-    /// <param name="alwaysVerifyAdditionalLocations"></param>
     [Obsolete("This constructor is obsolete and will be removed in future versions.")]
     public DiagnosticTestData(
         DiagnosticDescriptor descriptor,
@@ -38,7 +29,9 @@ public sealed class DiagnosticTestData
         string? diagnosticMessage = null,
         IFormatProvider? formatProvider = null,
         string? equivalenceKey = null,
-        bool alwaysVerifyAdditionalLocations = false)
+        bool alwaysVerifyAdditionalLocations = false,
+        string? directoryPath = null,
+        string? fileName = null)
     {
         Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
         Source = source ?? throw new ArgumentNullException(nameof(source));
@@ -49,6 +42,12 @@ public sealed class DiagnosticTestData
         FormatProvider = formatProvider;
         EquivalenceKey = equivalenceKey;
         AlwaysVerifyAdditionalLocations = alwaysVerifyAdditionalLocations;
+
+        FileSystemVerifier.VerifyDirectoryPath(directoryPath);
+        DirectoryPath = directoryPath;
+
+        FileSystemVerifier.VerifyFileName(fileName);
+        FileName = fileName;
 
         if (Spans.Length > 1
             && !AdditionalSpans.IsEmpty)
@@ -61,14 +60,6 @@ public sealed class DiagnosticTestData
     /// <summary>
     /// Initializes a new instance of <see cref="DiagnosticTestData"/>.
     /// </summary>
-    /// <param name="source"></param>
-    /// <param name="spans"></param>
-    /// <param name="additionalSpans"></param>
-    /// <param name="additionalFiles"></param>
-    /// <param name="diagnosticMessage"></param>
-    /// <param name="formatProvider"></param>
-    /// <param name="equivalenceKey"></param>
-    /// <param name="alwaysVerifyAdditionalLocations"></param>
     public DiagnosticTestData(
         string source,
         IEnumerable<TextSpan>? spans,
@@ -77,7 +68,9 @@ public sealed class DiagnosticTestData
         string? diagnosticMessage = null,
         IFormatProvider? formatProvider = null,
         string? equivalenceKey = null,
-        bool alwaysVerifyAdditionalLocations = false)
+        bool alwaysVerifyAdditionalLocations = false,
+        string? directoryPath = null,
+        string? fileName = null)
     {
         Source = source ?? throw new ArgumentNullException(nameof(source));
         Spans = spans?.ToImmutableArray() ?? ImmutableArray<TextSpan>.Empty;
@@ -87,6 +80,13 @@ public sealed class DiagnosticTestData
         FormatProvider = formatProvider;
         EquivalenceKey = equivalenceKey;
         AlwaysVerifyAdditionalLocations = alwaysVerifyAdditionalLocations;
+
+        FileSystemVerifier.VerifyDirectoryPath(directoryPath);
+        DirectoryPath = directoryPath;
+
+        FileSystemVerifier.VerifyFileName(fileName);
+        FileName = fileName;
+
         Descriptor = null!;
 
         if (Spans.Length > 1
@@ -106,7 +106,9 @@ public sealed class DiagnosticTestData
             diagnosticMessage: other.DiagnosticMessage,
             formatProvider: other.FormatProvider,
             equivalenceKey: other.EquivalenceKey,
-            alwaysVerifyAdditionalLocations: other.AlwaysVerifyAdditionalLocations)
+            alwaysVerifyAdditionalLocations: other.AlwaysVerifyAdditionalLocations,
+            directoryPath: other.DirectoryPath,
+            fileName: other.FileName)
     {
     }
 #pragma warning restore CS0618 // Type or member is obsolete
@@ -160,6 +162,16 @@ public sealed class DiagnosticTestData
     /// </summary>
     public bool AlwaysVerifyAdditionalLocations { get; }
 
+    /// <summary>
+    /// Gets the relative directory path.
+    /// </summary>
+    public string? DirectoryPath { get; }
+
+    /// <summary>
+    /// Gets the file name.
+    /// </summary>
+    public string? FileName { get; }
+
     internal ImmutableArray<Diagnostic> GetDiagnostics(DiagnosticDescriptor descriptor, SyntaxTree tree)
     {
         if (Spans.IsEmpty)
@@ -192,7 +204,7 @@ public sealed class DiagnosticTestData
         string equivalenceKey,
         bool alwaysVerifyAdditionalLocations)
     {
-        return new DiagnosticTestData(
+        return new(
             descriptor: descriptor,
             source: source,
             spans: spans,

@@ -19,8 +19,8 @@ public class RCS0036RemoveBlankLineBetweenSingleLineDeclarationsOfSameKindTests 
 class C
 {
     string P1 { get; set; }
-[||]
-    string P2 { get; set; }
+[|
+|]    string P2 { get; set; }
 }
 ", @"
 class C
@@ -40,8 +40,8 @@ using System;
 class C
 {
     public event EventHandler E1;
-[||]    
-    
+    [|
+|]    
     public event EventHandler E2;
 }
 ", @"
@@ -96,6 +96,36 @@ class C
     const string K = null;
 
     string F = null;
+}
+");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveBlankLineBetweenSingleLineDeclarationsOfSameKind)]
+    public async Task TestNoDiagnostic_DocCommentBetweenMembers()
+    {
+        await VerifyNoDiagnosticAsync(@"
+class C
+{
+    string P1 { get; set; }
+    
+    /// <summary>
+    /// </summary>
+    string P2 { get; set; }
+}
+");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveBlankLineBetweenSingleLineDeclarationsOfSameKind)]
+    public async Task TestNoDiagnostic_DocCommentBetweenEnumMembers()
+    {
+        await VerifyNoDiagnosticAsync(@"
+enum C
+{
+    A,
+
+    /// <summary>
+    /// </summary>
+    B,
 }
 ");
     }

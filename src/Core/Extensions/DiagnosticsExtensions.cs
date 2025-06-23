@@ -18,10 +18,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="ISymbol"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="node"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SymbolAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -41,10 +37,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="ISymbol"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="token"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SymbolAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -61,10 +53,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="ISymbol"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="trivia"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SymbolAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -81,10 +69,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="ISymbol"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="location"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SymbolAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -100,11 +84,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="ISymbol"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="location"></param>
-    /// <param name="additionalLocations"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SymbolAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -122,11 +101,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="ISymbol"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="location"></param>
-    /// <param name="properties"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SymbolAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -144,12 +118,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="ISymbol"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="location"></param>
-    /// <param name="additionalLocations"></param>
-    /// <param name="properties"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SymbolAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -171,10 +139,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxNode"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="node"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxNodeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -194,10 +158,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxNode"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="token"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxNodeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -214,10 +174,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxNode"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="trivia"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxNodeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -234,10 +190,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxNode"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="location"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxNodeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -253,11 +205,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxNode"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="location"></param>
-    /// <param name="additionalLocations"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxNodeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -275,11 +222,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxNode"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="location"></param>
-    /// <param name="properties"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxNodeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -297,12 +239,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxNode"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="location"></param>
-    /// <param name="additionalLocations"></param>
-    /// <param name="properties"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxNodeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -324,10 +260,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxTree"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="node"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxTreeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -347,10 +279,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxTree"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="token"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxTreeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -367,10 +295,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxTree"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="trivia"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxTreeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -387,10 +311,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxTree"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="location"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxTreeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -406,11 +326,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxTree"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="location"></param>
-    /// <param name="additionalLocations"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxTreeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -428,11 +343,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxTree"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="location"></param>
-    /// <param name="properties"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxTreeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -450,12 +360,6 @@ public static class DiagnosticsExtensions
     /// <summary>
     /// Report a <see cref="Diagnostic"/> about a <see cref="SyntaxTree"/>.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="descriptor"></param>
-    /// <param name="location"></param>
-    /// <param name="additionalLocations"></param>
-    /// <param name="properties"></param>
-    /// <param name="messageArgs"></param>
     public static void ReportDiagnostic(
         this SyntaxTreeAnalysisContext context,
         DiagnosticDescriptor descriptor,
@@ -580,14 +484,14 @@ public static class DiagnosticsExtensions
             if (syntaxTree is not null
                 && provider?.TryGetDiagnosticValue(syntaxTree, descriptor.Id, cancellationToken, out ReportDiagnostic treeReportDiagnostic) == true)
             {
-                return treeReportDiagnostic;
+                return ReportDiagnosticOrDescriptorDefaultSeverity(treeReportDiagnostic, descriptor);
             }
 
             if (compilationOptions.SpecificDiagnosticOptions.TryGetValue(descriptor.Id, out ReportDiagnostic reportDiagnostic))
-                return reportDiagnostic;
+                return ReportDiagnosticOrDescriptorDefaultSeverity(reportDiagnostic, descriptor);
 
             if (provider?.TryGetGlobalDiagnosticValue(descriptor.Id, cancellationToken, out ReportDiagnostic globalReportDiagnostic) == true)
-                return globalReportDiagnostic;
+                return ReportDiagnosticOrDescriptorDefaultSeverity(globalReportDiagnostic, descriptor);
         }
 
         return (descriptor.IsEnabledByDefault)
@@ -608,5 +512,12 @@ public static class DiagnosticsExtensions
             Microsoft.CodeAnalysis.ReportDiagnostic.Suppress => false,
             _ => true,
         };
+    }
+
+    private static ReportDiagnostic ReportDiagnosticOrDescriptorDefaultSeverity(ReportDiagnostic reportDiagnostic, DiagnosticDescriptor descriptor)
+    {
+        return (reportDiagnostic == Microsoft.CodeAnalysis.ReportDiagnostic.Default)
+                    ? descriptor.DefaultSeverity.ToReportDiagnostic()
+                    : reportDiagnostic;
     }
 }

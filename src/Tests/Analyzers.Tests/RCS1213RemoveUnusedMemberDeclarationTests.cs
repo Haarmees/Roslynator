@@ -366,4 +366,89 @@ namespace UnityEngine
 }
 ", options: Options.AddConfigOption(ConfigOptionKeys.SuppressUnityScriptMethods, true));
     }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnusedMemberDeclaration)]
+    public async Task TestNoDiagnostic_UnityScriptMethods2()
+    {
+        await VerifyNoDiagnosticAsync(@"
+using UnityEngine;
+
+class C : MonoBehaviour
+{
+    private void Awake()
+    {
+    }
+}
+
+namespace UnityEngine
+{
+    class MonoBehaviour
+    {
+    }
+}
+", options: Options.AddConfigOption(ConfigOptionKeys.UnityCodeAnalysisEnabled, true));
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnusedMemberDeclaration)]
+    public async Task TestNoDiagnostic_UnityScriptMethods_Start()
+    {
+        await VerifyNoDiagnosticAsync(@"
+using System.Collections;
+using UnityEngine;
+
+class C : MonoBehaviour
+{
+    private IEnumerator Start()
+    {
+        yield break;
+    }
+}
+
+namespace UnityEngine
+{
+    class MonoBehaviour
+    {
+    }
+}
+", options: Options.AddConfigOption(ConfigOptionKeys.UnityCodeAnalysisEnabled, true));
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnusedMemberDeclaration)]
+    public async Task TestNoDiagnostic_PrimaryConstructor()
+    {
+        await VerifyNoDiagnosticAsync("""
+using System;
+
+class Class([My(Class.Const)] int i)
+{
+    private const string Const = "const";
+}
+
+class MyAttribute : Attribute
+{
+    public MyAttribute(string s)
+    {
+    }
+}
+""", options: Options.AddAllowedCompilerDiagnosticId("CS9113"));
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveUnusedMemberDeclaration)]
+    public async Task TestNoDiagnostic_BaseList()
+    {
+        await VerifyNoDiagnosticAsync(@"
+using System;
+
+internal abstract class B(Action action)
+{
+    public Action Action { get; } = action;
+}
+
+internal sealed class C() : B(Do)
+{
+    private static void Do()
+    {
+    }
+}");
+    }
 }

@@ -85,9 +85,9 @@ internal class SymbolProvider
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => _supportedDiagnostics;
 
-        public ConcurrentBag<ISymbol> Symbols { get; } = new();
+        public ConcurrentBag<ISymbol> Symbols { get; } = [];
 
-        public List<SymbolKind> SymbolKinds { get; } = new();
+        public List<SymbolKind> SymbolKinds { get; } = [];
 
         public bool IncludeGeneratedCode { get; init; }
 
@@ -119,33 +119,33 @@ internal class SymbolProvider
                 case SymbolKind.Field:
                 case SymbolKind.NamedType:
                 case SymbolKind.Property:
-                    {
-                        AddSymbol(symbol);
-                        break;
-                    }
+                {
+                    AddSymbol(symbol);
+                    break;
+                }
                 case SymbolKind.Method:
-                    {
-                        var methodSymbol = (IMethodSymbol)symbol;
+                {
+                    var methodSymbol = (IMethodSymbol)symbol;
 
-                        switch (methodSymbol.MethodKind)
+                    switch (methodSymbol.MethodKind)
+                    {
+                        case MethodKind.Ordinary:
+                        case MethodKind.Constructor:
+                        case MethodKind.UserDefinedOperator:
+                        case MethodKind.Conversion:
                         {
-                            case MethodKind.Ordinary:
-                            case MethodKind.Constructor:
-                            case MethodKind.UserDefinedOperator:
-                            case MethodKind.Conversion:
-                                {
-                                    AddSymbol(methodSymbol);
-                                    break;
-                                }
+                            AddSymbol(methodSymbol);
+                            break;
                         }
+                    }
 
-                        break;
-                    }
+                    break;
+                }
                 default:
-                    {
-                        Debug.Fail(symbol.Kind.ToString());
-                        break;
-                    }
+                {
+                    Debug.Fail(symbol.Kind.ToString());
+                    break;
+                }
             }
         }
 

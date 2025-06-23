@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -14,6 +15,14 @@ namespace Roslynator.CSharp.Analysis.UnusedParameter;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class UnusedParameterAnalyzer : BaseDiagnosticAnalyzer
 {
+    private static readonly MetadataNameSet _attributes = new(new[]
+    {
+        MetadataName.Parse("System.Runtime.Serialization.OnSerializedAttribute"),
+        MetadataName.Parse("System.Runtime.Serialization.OnDeserializedAttribute"),
+        MetadataName.Parse("System.Runtime.Serialization.OnSerializingAttribute"),
+        MetadataName.Parse("System.Runtime.Serialization.OnDeserializingAttribute"),
+    });
+
     private static ImmutableArray<DiagnosticDescriptor> _supportedDiagnostics;
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
@@ -92,8 +101,16 @@ public sealed class UnusedParameterAnalyzer : BaseDiagnosticAnalyzer
         if (methodDeclaration.ContainsDiagnostics)
             return;
 
-        if (!methodDeclaration.IsParentKind(SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.RecordDeclaration, SyntaxKind.RecordStructDeclaration))
+        if (!methodDeclaration.IsParentKind(
+            SyntaxKind.ClassDeclaration,
+            SyntaxKind.StructDeclaration,
+#if ROSLYN_4_0
+            SyntaxKind.RecordStructDeclaration,
+#endif
+            SyntaxKind.RecordDeclaration))
+        {
             return;
+        }
 
         if (methodDeclaration.Modifiers.ContainsAny(
             SyntaxKind.AbstractKeyword,
@@ -134,7 +151,7 @@ public sealed class UnusedParameterAnalyzer : BaseDiagnosticAnalyzer
 
             walker.SetValues(context.SemanticModel, context.CancellationToken);
 
-            FindUnusedNodes(parameterInfo, walker);
+            FindUnusedNodes(parameterInfo, walker, methodSymbol);
 
             if (walker.Nodes.Count > 0
                 && !MethodReferencedAsMethodGroupWalker.IsReferencedAsMethodGroup(methodDeclaration, methodSymbol, context.SemanticModel, context.CancellationToken))
@@ -193,8 +210,16 @@ public sealed class UnusedParameterAnalyzer : BaseDiagnosticAnalyzer
         if (indexerDeclaration.ContainsDiagnostics)
             return;
 
-        if (!indexerDeclaration.IsParentKind(SyntaxKind.ClassDeclaration, SyntaxKind.StructDeclaration, SyntaxKind.RecordDeclaration, SyntaxKind.RecordStructDeclaration))
+        if (!indexerDeclaration.IsParentKind(
+            SyntaxKind.ClassDeclaration,
+            SyntaxKind.StructDeclaration,
+#if ROSLYN_4_0
+            SyntaxKind.RecordStructDeclaration,
+#endif
+            SyntaxKind.RecordDeclaration))
+        {
             return;
+        }
 
         if (indexerDeclaration.Modifiers.ContainsAny(SyntaxKind.AbstractKeyword, SyntaxKind.VirtualKeyword, SyntaxKind.OverrideKeyword))
             return;
@@ -331,19 +356,21 @@ public sealed class UnusedParameterAnalyzer : BaseDiagnosticAnalyzer
         }
     }
 
-    private static void FindUnusedNodes(in ParameterInfo parameterInfo, UnusedParameterWalker walker)
+    private static void FindUnusedNodes(in ParameterInfo parameterInfo, UnusedParameterWalker walker, IMethodSymbol methodSymbol = null)
     {
         if (parameterInfo.Parameter is not null
             && !IsArgListOrDiscard(parameterInfo.Parameter))
         {
-            walker.AddParameter(parameterInfo.Parameter);
+            AddParameter(walker, parameterInfo.Parameter, 0, methodSymbol);
         }
         else
         {
-            foreach (ParameterSyntax parameter in parameterInfo.Parameters)
+            for (int i = 0; i < parameterInfo.Parameters.Count; i++)
             {
+                ParameterSyntax parameter = parameterInfo.Parameters[i];
+
                 if (!IsArgListOrDiscard(parameter))
-                    walker.AddParameter(parameter);
+                    AddParameter(walker, parameter, i, methodSymbol);
             }
         }
 
@@ -355,6 +382,26 @@ public sealed class UnusedParameterAnalyzer : BaseDiagnosticAnalyzer
 
         if (walker.Nodes.Count > 0)
             walker.Visit(parameterInfo.Node);
+    }
+
+    private static void AddParameter(UnusedParameterWalker walker, ParameterSyntax parameter, int index, IMethodSymbol methodSymbol)
+    {
+        if (methodSymbol is not null)
+        {
+            if (index >= methodSymbol.Parameters.Length)
+            {
+                Debug.Fail($"{index} {methodSymbol.Parameters.Length}");
+                return;
+            }
+
+            if (methodSymbol.Parameters[index].Type.HasMetadataName(MetadataNames.System_Runtime_Serialization_StreamingContext)
+                && _attributes.ContainsAny(methodSymbol.GetAttributes()))
+            {
+                return;
+            }
+        }
+
+        walker.AddParameter(parameter);
     }
 
     private static bool IsArgListOrDiscard(ParameterSyntax parameter)
@@ -420,11 +467,11 @@ public sealed class UnusedParameterAnalyzer : BaseDiagnosticAnalyzer
             case SyntaxKind.ArrowExpressionClause:
                 return ContainsOnlyThrowNewExpression((ArrowExpressionClauseSyntax)node);
             case SyntaxKind.AccessorList:
-                {
-                    return ((AccessorListSyntax)node)
-                        .Accessors
-                        .All(f => ContainsOnlyThrowNewExpression(f.BodyOrExpressionBody()));
-                }
+            {
+                return ((AccessorListSyntax)node)
+                    .Accessors
+                    .All(f => ContainsOnlyThrowNewExpression(f.BodyOrExpressionBody()));
+            }
         }
 
         return false;

@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -20,6 +19,11 @@ internal static class Extensions
 {
     public static bool IsMatch(this Matcher matcher, ISymbol symbol, string? rootDirectoryPath)
     {
+        Debug.Assert(!symbol.IsKind(SymbolKind.Namespace), symbol.Kind.ToString());
+
+        if (symbol.IsKind(SymbolKind.Namespace))
+            return true;
+
         foreach (Location location in symbol.Locations)
         {
             SyntaxTree? tree = location.SourceTree;
@@ -27,7 +31,7 @@ internal static class Extensions
             if (tree is not null)
             {
                 PatternMatchingResult result = (rootDirectoryPath is not null)
-                    ? matcher.Match(tree.FilePath, rootDirectoryPath)
+                    ? matcher.Match(rootDirectoryPath, tree.FilePath)
                     : matcher.Match(tree.FilePath);
 
                 if (!result.HasMatches)
@@ -64,62 +68,62 @@ internal static class Extensions
         switch (symbol.Kind)
         {
             case SymbolKind.Event:
-                {
-                    return (((IEventSymbol)symbol).ExplicitInterfaceImplementations.Any())
-                        ? MemberDeclarationKind.ExplicitlyImplementedEvent
-                        : MemberDeclarationKind.Event;
-                }
+            {
+                return (((IEventSymbol)symbol).ExplicitInterfaceImplementations.Any())
+                    ? MemberDeclarationKind.ExplicitlyImplementedEvent
+                    : MemberDeclarationKind.Event;
+            }
             case SymbolKind.Field:
-                {
-                    var fieldSymbol = (IFieldSymbol)symbol;
+            {
+                var fieldSymbol = (IFieldSymbol)symbol;
 
-                    return (fieldSymbol.IsConst)
-                        ? MemberDeclarationKind.Const
-                        : MemberDeclarationKind.Field;
-                }
+                return (fieldSymbol.IsConst)
+                    ? MemberDeclarationKind.Const
+                    : MemberDeclarationKind.Field;
+            }
             case SymbolKind.Method:
+            {
+                var methodSymbol = (IMethodSymbol)symbol;
+
+                switch (methodSymbol.MethodKind)
                 {
-                    var methodSymbol = (IMethodSymbol)symbol;
-
-                    switch (methodSymbol.MethodKind)
-                    {
-                        case MethodKind.Ordinary:
-                            return MemberDeclarationKind.Method;
-                        case MethodKind.ExplicitInterfaceImplementation:
-                            return MemberDeclarationKind.ExplicitlyImplementedMethod;
-                        case MethodKind.Constructor:
-                            return MemberDeclarationKind.Constructor;
-                        case MethodKind.Destructor:
-                            return MemberDeclarationKind.Destructor;
-                        case MethodKind.StaticConstructor:
-                            return MemberDeclarationKind.StaticConstructor;
-                        case MethodKind.Conversion:
-                            return MemberDeclarationKind.ConversionOperator;
-                        case MethodKind.UserDefinedOperator:
-                            return MemberDeclarationKind.Operator;
-                    }
-
-                    break;
+                    case MethodKind.Ordinary:
+                        return MemberDeclarationKind.Method;
+                    case MethodKind.ExplicitInterfaceImplementation:
+                        return MemberDeclarationKind.ExplicitlyImplementedMethod;
+                    case MethodKind.Constructor:
+                        return MemberDeclarationKind.Constructor;
+                    case MethodKind.Destructor:
+                        return MemberDeclarationKind.Destructor;
+                    case MethodKind.StaticConstructor:
+                        return MemberDeclarationKind.StaticConstructor;
+                    case MethodKind.Conversion:
+                        return MemberDeclarationKind.ConversionOperator;
+                    case MethodKind.UserDefinedOperator:
+                        return MemberDeclarationKind.Operator;
                 }
+
+                break;
+            }
             case SymbolKind.Property:
+            {
+                var propertySymbol = (IPropertySymbol)symbol;
+
+                bool explicitlyImplemented = propertySymbol.ExplicitInterfaceImplementations.Any();
+
+                if (propertySymbol.IsIndexer)
                 {
-                    var propertySymbol = (IPropertySymbol)symbol;
-
-                    bool explicitlyImplemented = propertySymbol.ExplicitInterfaceImplementations.Any();
-
-                    if (propertySymbol.IsIndexer)
-                    {
-                        return (explicitlyImplemented)
-                            ? MemberDeclarationKind.ExplicitlyImplementedIndexer
-                            : MemberDeclarationKind.Indexer;
-                    }
-                    else
-                    {
-                        return (explicitlyImplemented)
-                            ? MemberDeclarationKind.ExplicitlyImplementedProperty
-                            : MemberDeclarationKind.Property;
-                    }
+                    return (explicitlyImplemented)
+                        ? MemberDeclarationKind.ExplicitlyImplementedIndexer
+                        : MemberDeclarationKind.Indexer;
                 }
+                else
+                {
+                    return (explicitlyImplemented)
+                        ? MemberDeclarationKind.ExplicitlyImplementedProperty
+                        : MemberDeclarationKind.Property;
+                }
+            }
         }
 
         Debug.Fail(symbol.ToDisplayString(SymbolDisplayFormats.Test));
@@ -132,48 +136,48 @@ internal static class Extensions
         switch (symbol.Kind)
         {
             case SymbolKind.NamedType:
+            {
+                var namedType = (INamedTypeSymbol)symbol;
+
+                switch (namedType.TypeKind)
                 {
-                    var namedType = (INamedTypeSymbol)symbol;
-
-                    switch (namedType.TypeKind)
-                    {
-                        case TypeKind.Class:
-                            return SymbolGroup.Class;
-                        case TypeKind.Module:
-                            return SymbolGroup.Module;
-                        case TypeKind.Delegate:
-                            return SymbolGroup.Delegate;
-                        case TypeKind.Enum:
-                            return SymbolGroup.Enum;
-                        case TypeKind.Interface:
-                            return SymbolGroup.Interface;
-                        case TypeKind.Struct:
-                            return SymbolGroup.Struct;
-                    }
-
-                    Debug.Fail(namedType.TypeKind.ToString());
-                    return SymbolGroup.None;
+                    case TypeKind.Class:
+                        return SymbolGroup.Class;
+                    case TypeKind.Module:
+                        return SymbolGroup.Module;
+                    case TypeKind.Delegate:
+                        return SymbolGroup.Delegate;
+                    case TypeKind.Enum:
+                        return SymbolGroup.Enum;
+                    case TypeKind.Interface:
+                        return SymbolGroup.Interface;
+                    case TypeKind.Struct:
+                        return SymbolGroup.Struct;
                 }
+
+                Debug.Fail(namedType.TypeKind.ToString());
+                return SymbolGroup.None;
+            }
             case SymbolKind.Event:
-                {
-                    return SymbolGroup.Event;
-                }
+            {
+                return SymbolGroup.Event;
+            }
             case SymbolKind.Field:
-                {
-                    return (((IFieldSymbol)symbol).IsConst)
-                        ? SymbolGroup.Const
-                        : SymbolGroup.Field;
-                }
+            {
+                return (((IFieldSymbol)symbol).IsConst)
+                    ? SymbolGroup.Const
+                    : SymbolGroup.Field;
+            }
             case SymbolKind.Method:
-                {
-                    return SymbolGroup.Method;
-                }
+            {
+                return SymbolGroup.Method;
+            }
             case SymbolKind.Property:
-                {
-                    return (((IPropertySymbol)symbol).IsIndexer)
-                        ? SymbolGroup.Indexer
-                        : SymbolGroup.Property;
-                }
+            {
+                return (((IPropertySymbol)symbol).IsIndexer)
+                    ? SymbolGroup.Indexer
+                    : SymbolGroup.Property;
+            }
         }
 
         Debug.Fail(symbol.Kind.ToString());
@@ -310,7 +314,7 @@ internal static class Extensions
 
     public static ConsoleColors GetColors(this DiagnosticSeverity diagnosticSeverity)
     {
-        return new ConsoleColors(GetColor(diagnosticSeverity));
+        return new(GetColor(diagnosticSeverity));
     }
 
     public static async Task<CodeMetricsInfo> CountLinesAsync(
@@ -431,7 +435,7 @@ internal static class Extensions
 
     public static ConsoleColors GetColors(this WorkspaceDiagnosticKind kind)
     {
-        return new ConsoleColors(GetColor(kind));
+        return new(GetColor(kind));
     }
 
     public static bool IsEffective(
@@ -442,9 +446,6 @@ internal static class Extensions
     {
         if (!codeAnalysisOptions.IsSupportedDiagnosticId(diagnostic.Id))
             return false;
-
-        if (diagnostic.Descriptor.CustomTags.Contains(WellKnownDiagnosticTags.Compiler))
-            return true;
 
         SyntaxTree? tree = diagnostic.Location.SourceTree;
 

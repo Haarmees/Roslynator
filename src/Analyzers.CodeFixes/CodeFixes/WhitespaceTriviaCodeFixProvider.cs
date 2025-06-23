@@ -23,7 +23,7 @@ public sealed class WhitespaceTriviaCodeFixProvider : BaseCodeFixProvider
         {
             return ImmutableArray.Create(
                 DiagnosticIdentifiers.RemoveTrailingWhitespace,
-                DiagnosticIdentifiers.RemoveUnnecessaryBlankLine);
+                DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine);
         }
     }
 
@@ -45,25 +45,25 @@ public sealed class WhitespaceTriviaCodeFixProvider : BaseCodeFixProvider
             switch (diagnostic.Id)
             {
                 case DiagnosticIdentifiers.RemoveTrailingWhitespace:
-                    {
-                        CodeAction codeAction = CodeAction.Create(
-                            "Remove trailing white-space",
-                            ct => context.Document.WithTextChangeAsync(span, "", ct),
-                            GetEquivalenceKey(diagnostic));
+                {
+                    CodeAction codeAction = CodeAction.Create(
+                        "Remove trailing white-space",
+                        ct => context.Document.WithTextChangeAsync(span, "", ct),
+                        GetEquivalenceKey(diagnostic));
 
-                        context.RegisterCodeFix(codeAction, diagnostic);
-                        break;
-                    }
-                case DiagnosticIdentifiers.RemoveUnnecessaryBlankLine:
-                    {
-                        CodeAction codeAction = CodeAction.Create(
-                            "Remove blank line",
-                            ct => context.Document.WithTextChangeAsync(span, "", ct),
-                            GetEquivalenceKey(diagnostic));
+                    context.RegisterCodeFix(codeAction, diagnostic);
+                    break;
+                }
+                case DiagnosticIdentifiers.Obsolete_RemoveUnnecessaryBlankLine:
+                {
+                    CodeAction codeAction = CodeAction.Create(
+                        "Remove blank line",
+                        ct => context.Document.WithTextChangeAsync(span, "", ct),
+                        GetEquivalenceKey(diagnostic));
 
-                        context.RegisterCodeFix(codeAction, diagnostic);
-                        break;
-                    }
+                    context.RegisterCodeFix(codeAction, diagnostic);
+                    break;
+                }
             }
         }
     }

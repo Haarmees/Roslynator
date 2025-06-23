@@ -106,10 +106,8 @@ internal static class Program
                     typeof(PhysicalLinesOfCodeCommandLineOptions),
                     typeof(RenameSymbolCommandLineOptions),
                     typeof(SpellcheckCommandLineOptions),
+                    typeof(FindSymbolCommandLineOptions),
                     typeof(SuppressCommandLineOptions),
-#if DEBUG
-                    typeof(FindSymbolsCommandLineOptions),
-#endif
                 });
 
             parserResult.WithNotParsed(e =>
@@ -117,7 +115,7 @@ internal static class Program
                 if (e.Any(f => f.Tag == ErrorType.VersionRequestedError))
                 {
                     Console.WriteLine(typeof(Program).GetTypeInfo().Assembly.GetName().Version);
-                    success = false;
+                    success = true;
                     return;
                 }
 
@@ -194,12 +192,10 @@ internal static class Program
                             return RenameSymbolAsync(renameSymbolCommandLineOptions).Result;
                         case SpellcheckCommandLineOptions spellcheckCommandLineOptions:
                             return SpellcheckAsync(spellcheckCommandLineOptions).Result;
+                        case FindSymbolCommandLineOptions findSymbolCommandLineOptions:
+                            return FindSymbolAsync(findSymbolCommandLineOptions).Result;
                         case SuppressCommandLineOptions suppressCommandLineOptions:
                             return SuppressAsync(suppressCommandLineOptions).Result;
-#if DEBUG
-                        case FindSymbolsCommandLineOptions findSymbolsCommandLineOptions:
-                            return FindSymbolsAsync(findSymbolsCommandLineOptions).Result;
-#endif
                         default:
                             throw new InvalidOperationException();
                     }
@@ -222,7 +218,7 @@ internal static class Program
             || ex is FileNotFoundException
             || ex is InvalidOperationException)
         {
-            WriteError(ex);
+            WriteCriticalError(ex);
         }
         finally
         {
@@ -345,6 +341,9 @@ internal static class Program
         if (!TryParsePaths(options.Paths, out ImmutableArray<PathInfo> paths))
             return ExitCodes.Error;
 
+        if (!options.ValidateOutputFormat())
+            return ExitCodes.Error;
+
         var command = new AnalyzeCommand(options, severityLevel, projectFilter, CreateFileSystemFilter(options));
 
         CommandStatus status = await command.ExecuteAsync(paths, options.MSBuildPath, options.Properties);
@@ -352,28 +351,21 @@ internal static class Program
         return GetExitCode(status);
     }
 
-#if DEBUG
-    private static async Task<int> FindSymbolsAsync(FindSymbolsCommandLineOptions options)
+    private static async Task<int> FindSymbolAsync(FindSymbolCommandLineOptions options)
     {
         if (!options.TryGetProjectFilter(out ProjectFilter projectFilter))
             return ExitCodes.Error;
 
-        if (!TryParseOptionValueAsEnumFlags(options.SymbolGroups, OptionNames.SymbolGroups, out SymbolGroupFilter symbolGroups, SymbolFinderOptions.Default.SymbolGroups))
+        if (!TryParseOptionValueAsEnumFlags(options.SymbolKind, OptionNames.SymbolKind, out SymbolGroupFilter symbolGroups, SymbolFinderOptions.Default.SymbolGroups))
             return ExitCodes.Error;
 
         if (!TryParseOptionValueAsEnumFlags(options.Visibility, OptionNames.Visibility, out VisibilityFilter visibility, SymbolFinderOptions.Default.Visibility))
             return ExitCodes.Error;
 
-        if (!TryParseMetadataNames(options.WithAttributes, out ImmutableArray<MetadataName> withAttributes))
+        if (!TryParseMetadataNames(options.WithAttribute, out ImmutableArray<MetadataName> withAttributes))
             return ExitCodes.Error;
 
-        if (!TryParseMetadataNames(options.WithoutAttributes, out ImmutableArray<MetadataName> withoutAttributes))
-            return ExitCodes.Error;
-
-        if (!TryParseOptionValueAsEnumFlags(options.WithFlags, OptionNames.WithFlags, out SymbolFlags withFlags, SymbolFlags.None))
-            return ExitCodes.Error;
-
-        if (!TryParseOptionValueAsEnumFlags(options.WithoutFlags, OptionNames.WithoutFlags, out SymbolFlags withoutFlags, SymbolFlags.None))
+        if (!TryParseMetadataNames(options.WithoutAttribute, out ImmutableArray<MetadataName> withoutAttributes))
             return ExitCodes.Error;
 
         if (!TryParsePaths(options.Paths, out ImmutableArray<PathInfo> paths))
@@ -382,16 +374,10 @@ internal static class Program
         ImmutableArray<SymbolFilterRule>.Builder rules = ImmutableArray.CreateBuilder<SymbolFilterRule>();
 
         if (withAttributes.Any())
-            rules.Add(new WithAttributeFilterRule(withAttributes));
+            rules.Add(new SymbolWithAttributeFilterRule(withAttributes));
 
         if (withoutAttributes.Any())
-            rules.Add(new WithoutAttributeFilterRule(withoutAttributes));
-
-        if (withFlags != SymbolFlags.None)
-            rules.AddRange(SymbolFilterRuleFactory.FromFlags(withFlags));
-
-        if (withoutFlags != SymbolFlags.None)
-            rules.AddRange(SymbolFilterRuleFactory.FromFlags(withoutFlags, invert: true));
+            rules.Add(new SymbolWithoutAttributeFilterRule(withoutAttributes));
 
         FileSystemFilter fileSystemFilter = CreateFileSystemFilter(options);
 
@@ -401,9 +387,9 @@ internal static class Program
             symbolGroups: symbolGroups,
             rules: rules,
             ignoreGeneratedCode: options.IgnoreGeneratedCode,
-            unusedOnly: options.UnusedOnly);
+            unused: options.Unused);
 
-        var command = new FindSymbolsCommand(
+        var command = new FindSymbolCommand(
             options: options,
             symbolFinderOptions: symbolFinderOptions,
             projectFilter: projectFilter,
@@ -413,7 +399,6 @@ internal static class Program
 
         return GetExitCode(status);
     }
-#endif
 
     private static async Task<int> RenameSymbolAsync(RenameSymbolCommandLineOptions options)
     {
@@ -881,14 +866,25 @@ internal static class Program
 
         if (Console.IsInputRedirected)
         {
-            if (!TryEnsureFullPath(
-                ConsoleHelpers.ReadRedirectedInputAsLines().Where(f => !string.IsNullOrEmpty(f)),
-                out ImmutableArray<string> paths2))
-            {
-                return false;
-            }
+            WriteLine("Reading redirected input...", Verbosity.Diagnostic);
 
-            paths = paths.AddRange(ImmutableArray.CreateRange(paths2, f => new PathInfo(f, PathOrigin.PipedInput)));
+            ImmutableArray<string> lines = ConsoleHelpers.ReadRedirectedInputAsLines();
+
+            if (lines.IsDefault)
+            {
+                WriteLine("Unable to read redirected input", Verbosity.Diagnostic);
+            }
+            else
+            {
+                IEnumerable<string> paths1 = lines.Where(f => !string.IsNullOrEmpty(f));
+
+                WriteLine("Successfully read redirected input:" + Environment.NewLine + "  " + string.Join(Environment.NewLine + "  ", paths1), Verbosity.Diagnostic);
+
+                if (!TryEnsureFullPath(paths1, out ImmutableArray<string> paths2))
+                    return false;
+
+                paths = paths.AddRange(ImmutableArray.CreateRange(paths2, f => new PathInfo(f, PathOrigin.PipedInput)));
+            }
         }
 
         if (!paths.IsEmpty)

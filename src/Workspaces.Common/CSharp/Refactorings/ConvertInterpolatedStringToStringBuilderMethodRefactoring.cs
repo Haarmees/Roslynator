@@ -3,11 +3,11 @@
 using System;
 using System.Collections.Immutable;
 using System.Text;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Roslynator.Text;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-using static Roslynator.CSharp.CSharpFactory;
 
 namespace Roslynator.CSharp.Refactorings;
 
@@ -24,65 +24,87 @@ internal static class ConvertInterpolatedStringToStringBuilderMethodRefactoring
         switch (kind)
         {
             case SyntaxKind.Interpolation:
+            {
+                var interpolation = (InterpolationSyntax)content;
+
+                InterpolationAlignmentClauseSyntax alignmentClause = interpolation.AlignmentClause;
+                InterpolationFormatClauseSyntax formatClause = interpolation.FormatClause;
+
+                if (alignmentClause is not null
+                    || formatClause is not null)
                 {
-                    var interpolation = (InterpolationSyntax)content;
+                    StringBuilder sb = StringBuilderCache.GetInstance();
 
-                    InterpolationAlignmentClauseSyntax alignmentClause = interpolation.AlignmentClause;
-                    InterpolationFormatClauseSyntax formatClause = interpolation.FormatClause;
+                    if (isVerbatim)
+                        sb.Append('@');
 
-                    if (alignmentClause is not null
-                        || formatClause is not null)
+                    sb.Append("\"{0");
+
+                    if (alignmentClause is not null)
                     {
-                        StringBuilder sb = StringBuilderCache.GetInstance();
-
-                        if (isVerbatim)
-                            sb.Append('@');
-
-                        sb.Append("\"{0");
-
-                        if (alignmentClause is not null)
-                        {
-                            sb.Append(',');
-                            sb.Append(alignmentClause.Value.ToString());
-                        }
-
-                        if (formatClause is not null)
-                        {
-                            sb.Append(':');
-                            sb.Append(formatClause.FormatStringToken.Text);
-                        }
-
-                        sb.Append("}\"");
-
-                        ExpressionSyntax expression = ParseExpression(StringBuilderCache.GetStringAndFree(sb));
-
-                        return (kind, "AppendFormat", ImmutableArray.Create(Argument(expression), Argument(interpolation.Expression)));
+                        sb.Append(',');
+                        sb.Append(alignmentClause.Value.ToString());
                     }
-                    else
+
+                    if (formatClause is not null)
                     {
-                        return (kind, "Append", ImmutableArray.Create(Argument(interpolation.Expression)));
+                        sb.Append(':');
+                        sb.Append(formatClause.FormatStringToken.Text);
                     }
+
+                    sb.Append("}\"");
+
+                    ExpressionSyntax expression = ParseExpression(StringBuilderCache.GetStringAndFree(sb));
+
+                    return (kind, "AppendFormat", ImmutableArray.Create(Argument(expression), Argument(interpolation.Expression)));
                 }
+                else
+                {
+                    return (kind, "Append", ImmutableArray.Create(Argument(interpolation.Expression)));
+                }
+            }
             case SyntaxKind.InterpolatedStringText:
+            {
+                var interpolatedStringText = (InterpolatedStringTextSyntax)content;
+
+                string text = interpolatedStringText.TextToken.Text;
+
+                text = StringUtility.ReplaceDoubleBracesWithSingleBrace(text);
+
+#if ROSLYN_4_2
+                if (content.Parent is InterpolatedStringExpressionSyntax interpolatedStringExpression
+                    && interpolatedStringExpression.StringStartToken.IsKind(SyntaxKind.InterpolatedSingleLineRawStringStartToken))
                 {
-                    var interpolatedStringText = (InterpolatedStringTextSyntax)content;
-
-                    string text = interpolatedStringText.TextToken.Text;
-
-                    text = StringUtility.ReplaceDoubleBracesWithSingleBrace(text);
-
-                    text = (isVerbatim)
-                        ? "@\"" + text + "\""
-                        : "\"" + text + "\"";
-
-                    ExpressionSyntax stringLiteral = ParseExpression(text);
-
-                    return (kind, "Append", ImmutableArray.Create(Argument(stringLiteral)));
+                    text = interpolatedStringExpression.StringStartToken.ValueText.Substring(1)
+                        + text
+                        + interpolatedStringExpression.StringEndToken.ValueText;
                 }
+                else if (content.Parent is InterpolatedStringExpressionSyntax interpolatedStringExpression2
+                    && interpolatedStringExpression2.StringStartToken.IsKind(SyntaxKind.InterpolatedMultiLineRawStringStartToken))
+                {
+                    text = interpolatedStringExpression2.StringStartToken.ValueText.Substring(1)
+                        + text
+                        + interpolatedStringExpression2.StringEndToken.ValueText;
+                }
+                else
+#endif
+                if (isVerbatim)
+                {
+                    text = "@\"" + text + "\"";
+                }
+                else
+                {
+                    text = "\"" + text + "\"";
+                }
+
+                ExpressionSyntax stringLiteral = ParseExpression(text).WithTriviaFrom(interpolatedStringText);
+
+                return (kind, "Append", ImmutableArray.Create(Argument(stringLiteral)));
+            }
             default:
-                {
-                    throw new ArgumentException("", nameof(content));
-                }
+            {
+                throw new ArgumentException("", nameof(content));
+            }
         }
     }
 }

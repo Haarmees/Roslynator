@@ -3,7 +3,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Roslynator.CSharp;
 using Roslynator.Documentation;
@@ -97,7 +96,7 @@ public class DiagnosticRulesGenerator
                     useParentProperties)));
     }
 
-    private MemberDeclarationSyntax CreateMember(
+    private FieldDeclarationSyntax CreateMember(
         AnalyzerMetadata analyzer,
         string identifiersClassName,
         string categoryName,
@@ -108,6 +107,11 @@ public class DiagnosticRulesGenerator
         ExpressionSyntax idExpression = SimpleMemberAccessExpression(IdentifierName(identifiersClassName), IdentifierName(parent?.Identifier ?? analyzer.Identifier));
 
         idExpression = ModifyIdExpression(idExpression);
+
+        string title = parent?.Title ?? analyzer.Title;
+
+        if (analyzer.Status == AnalyzerStatus.Obsolete)
+            title = "[deprecated] " + title;
 
         FieldDeclarationSyntax fieldDeclaration = FieldDeclaration(
             (analyzer.Status == AnalyzerStatus.Disabled) ? Modifiers.Internal_Static_ReadOnly() : Modifiers.Public_Static_ReadOnly(),
@@ -122,7 +126,7 @@ public class DiagnosticRulesGenerator
                         idExpression),
                     Argument(
                         NameColon("title"),
-                        StringLiteralExpression(parent?.Title ?? analyzer.Title)),
+                        StringLiteralExpression(title)),
                     Argument(
                         NameColon("messageFormat"),
                         StringLiteralExpression(analyzer.MessageFormat)),
@@ -145,7 +149,7 @@ public class DiagnosticRulesGenerator
                         NameColon("customTags"),
                         (analyzer.SupportsFadeOut)
                             ? SimpleMemberAccessExpression(IdentifierName("WellKnownDiagnosticTags"), IdentifierName(WellKnownDiagnosticTags.Unnecessary))
-                            : ParseExpression("Array.Empty<string>()"))
+                            : CollectionExpression())
                     )))
             .AddObsoleteAttributeIf(analyzer.Status == AnalyzerStatus.Disabled, error: true);
 

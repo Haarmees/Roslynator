@@ -283,14 +283,15 @@ public static class MetadataFile
                 ?? Enumerable.Empty<AnalyzerOptionValueMetadata>();
 
             string defaultValue = element.Element("DefaultValue")?.Value ?? values.FirstOrDefault(f => f.IsDefault).Value;
-            string defaultValuePlaceholder = element.Element("ValuePlaceholder")?.Value ?? string.Join("|", values.Select(f => f.Value).OrderBy(f => f));
+            string defaultValuePlaceholder = element.Element("ValuePlaceholder")?.Value ?? string.Join("|", values.Select(f => f.Value).Order());
 
             var analyzerOption = new AnalyzerOptionMetadata(
                 Id: id,
                 Key: "roslynator_" + key,
                 DefaultValue: defaultValue,
                 DefaultValuePlaceholder: defaultValuePlaceholder,
-                Description: element.Element("Description").Value
+                Description: element.Element("Description").Value,
+                IsObsolete: element.AttributeValueAsBooleanOrDefault("IsObsolete")
             );
 
             analyzerOption.Values.AddRange(values ?? Enumerable.Empty<AnalyzerOptionValueMetadata>());
@@ -439,6 +440,8 @@ public static class MetadataFile
                 }
             }
         }
+
+        doc.Root.ReplaceAll(doc.Root.Elements().OrderBy(f => f.Element("Id").Value));
 
         using (var sw = new StreamWriter(filePath))
         using (XmlWriter xw = XmlWriter.Create(sw, new XmlWriterSettings() { Indent = true, Encoding = Encoding.UTF8 }))

@@ -3,41 +3,49 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 using Roslynator.Spelling;
-using Roslynator.Text;
 using static Roslynator.Logger;
 
 namespace Roslynator;
 
 internal static class LogHelpers
 {
-    private static readonly SymbolDisplayFormat _symbolDefinitionFormat = SymbolDisplayFormat.CSharpErrorMessageFormat.Update(
-        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
-        parameterOptions: SymbolDisplayParameterOptions.IncludeParamsRefOut
-            | SymbolDisplayParameterOptions.IncludeType
-            | SymbolDisplayParameterOptions.IncludeName
-            | SymbolDisplayParameterOptions.IncludeDefaultValue,
-        miscellaneousOptions: SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers
-            | SymbolDisplayMiscellaneousOptions.UseSpecialTypes
-            | SymbolDisplayMiscellaneousOptions.UseErrorTypeSymbolName);
+    public static void WriteElapsedTime(string message, TimeSpan elapsedTime, Verbosity verbosity)
+    {
+        if (!ShouldWrite(verbosity))
+            return;
+
+        Write(message, verbosity);
+        Write(" ", verbosity);
+
+        if (elapsedTime.TotalMilliseconds >= 1000)
+        {
+            double seconds = elapsedTime.TotalMilliseconds / 1000;
+
+            WriteLine($"(in {seconds:n1} s)", verbosity);
+        }
+        else
+        {
+            WriteLine($"(in {elapsedTime.TotalMilliseconds:n0} ms)", verbosity);
+        }
+    }
 
     public static void WriteDiagnostic(
         Diagnostic diagnostic,
         string? baseDirectoryPath = null,
         IFormatProvider? formatProvider = null,
         string? indentation = null,
+        bool omitSpan = false,
         Verbosity verbosity = Verbosity.Diagnostic)
     {
-        string text = DiagnosticFormatter.FormatDiagnostic(diagnostic, baseDirectoryPath, formatProvider);
+        string text = DiagnosticFormatter.FormatDiagnostic(diagnostic, baseDirectoryPath, formatProvider, omitSpan);
 
         Write(indentation, verbosity);
         WriteLine(text, diagnostic.Severity.GetColors(), verbosity);
@@ -61,7 +69,7 @@ internal static class LogHelpers
 
         foreach (Diagnostic diagnostic in diagnostics.OrderBy(f => f, DiagnosticComparer.IdThenFilePathThenSpanStart))
         {
-            WriteDiagnostic(diagnostic, baseDirectoryPath, formatProvider, indentation, verbosity);
+            WriteDiagnostic(diagnostic, baseDirectoryPath, formatProvider, indentation, verbosity: verbosity);
 
             count++;
 
@@ -86,7 +94,7 @@ internal static class LogHelpers
         string indentation,
         Verbosity verbosity)
     {
-        WriteDiagnostic(diagnostic.Diagnostic, baseDirectoryPath, default(IFormatProvider), indentation, verbosity);
+        WriteDiagnostic(diagnostic.Diagnostic, baseDirectoryPath, default(IFormatProvider), indentation, verbosity: verbosity);
 
         TextSpan span = diagnostic.Span;
         TextLineCollection lines = sourceText.Lines;
@@ -364,114 +372,6 @@ internal static class LogHelpers
         WriteLine("  Code action has multiple operations", ConsoleColors.Yellow, Verbosity.Diagnostic);
         WriteLine($"    Title:           {fix.Title}", ConsoleColors.Yellow, Verbosity.Diagnostic);
         WriteLine($"    EquivalenceKey: {fix.EquivalenceKey}", ConsoleColors.Yellow, Verbosity.Diagnostic);
-    }
-
-    public static void WriteSymbolDefinition(
-        ISymbol symbol,
-        string? baseDirectoryPath = null,
-        string? indentation = null,
-        Verbosity verbosity = Verbosity.Diagnostic)
-    {
-        StringBuilder sb = StringBuilderCache.GetInstance();
-
-        sb.Append(indentation);
-        DiagnosticFormatter.FormatLocation(symbol.Locations[0], baseDirectoryPath, ref sb);
-        sb.Append(GetSymbolTitle(symbol));
-
-        if (symbol.IsKind(SymbolKind.Parameter, SymbolKind.TypeParameter))
-        {
-            sb.Append(" '");
-            sb.Append(symbol.Name);
-            sb.Append("': ");
-
-            if (symbol.ContainingSymbol is IMethodSymbol { MethodKind: MethodKind.LambdaMethod })
-            {
-                sb.Append("anonymous function");
-            }
-            else
-            {
-                Debug.Assert(symbol.ContainingSymbol.IsKind(SymbolKind.NamedType, SymbolKind.Method, SymbolKind.Property), symbol.Kind.ToString());
-
-                sb.Append(symbol.ContainingSymbol.ToDisplayString(_symbolDefinitionFormat));
-            }
-        }
-        else
-        {
-            sb.Append(": ");
-            sb.Append(symbol.ToDisplayString(_symbolDefinitionFormat));
-        }
-
-        WriteLine(StringBuilderCache.GetStringAndFree(sb), ConsoleColors.Cyan, verbosity);
-
-        static string GetSymbolTitle(ISymbol symbol)
-        {
-            switch (symbol.Kind)
-            {
-                case SymbolKind.Event:
-                    {
-                        return "event";
-                    }
-                case SymbolKind.Field:
-                    {
-                        return (symbol.ContainingType.TypeKind == TypeKind.Enum) ? "enum field" : "field";
-                    }
-                case SymbolKind.Local:
-                    {
-                        return "local";
-                    }
-                case SymbolKind.Method:
-                    {
-                        var methodSymbol = (IMethodSymbol)symbol;
-
-                        switch (methodSymbol.MethodKind)
-                        {
-                            case MethodKind.Ordinary:
-                                return "method";
-                            case MethodKind.LocalFunction:
-                                return "local function";
-                        }
-
-                        Debug.Fail(methodSymbol.MethodKind.ToString());
-                        break;
-                    }
-                case SymbolKind.NamedType:
-                    {
-                        var typeSymbol = (INamedTypeSymbol)symbol;
-
-                        switch (typeSymbol.TypeKind)
-                        {
-                            case TypeKind.Class:
-                                return "class";
-                            case TypeKind.Delegate:
-                                return "delegate";
-                            case TypeKind.Enum:
-                                return "enum";
-                            case TypeKind.Interface:
-                                return "interface";
-                            case TypeKind.Struct:
-                                return "struct";
-                        }
-
-                        Debug.Fail(typeSymbol.TypeKind.ToString());
-                        break;
-                    }
-                case SymbolKind.Parameter:
-                    {
-                        return "parameter";
-                    }
-                case SymbolKind.Property:
-                    {
-                        return (((IPropertySymbol)symbol).IsIndexer) ? "indexer" : "property";
-                    }
-                case SymbolKind.TypeParameter:
-                    {
-                        return "type parameter";
-                    }
-            }
-
-            Debug.Fail(symbol.Kind.ToString());
-            return symbol.Kind.ToString();
-        }
     }
 
     public static int WriteCompilerErrors(

@@ -46,6 +46,22 @@ public readonly struct XmlElementInfo
         get { return Kind == SyntaxKind.XmlEmptyElement; }
     }
 
+    /// <summary>
+    /// Determines whether the element has any attributes.
+    /// </summary>
+    public bool HasAttributes
+    {
+        get
+        {
+            return Element switch
+            {
+                XmlEmptyElementSyntax xmlEmptyElement => xmlEmptyElement.Attributes.Any(),
+                XmlElementSyntax xmlElement => xmlElement.StartTag.Attributes.Any(),
+                _ => false
+            };
+        }
+    }
+
     internal bool IsContentEmptyOrWhitespace
     {
         get
@@ -114,23 +130,23 @@ public readonly struct XmlElementInfo
         switch (node)
         {
             case XmlElementSyntax element:
-                {
-                    string? localName = element.StartTag?.Name?.LocalName.ValueText;
+            {
+                string? localName = element.StartTag?.Name?.LocalName.ValueText;
 
-                    if (localName is null)
-                        return default;
+                if (localName is null)
+                    return default;
 
-                    return new XmlElementInfo(element, localName);
-                }
+                return new XmlElementInfo(element, localName);
+            }
             case XmlEmptyElementSyntax element:
-                {
-                    string? localName = element.Name?.LocalName.ValueText;
+            {
+                string? localName = element.Name?.LocalName.ValueText;
 
-                    if (localName is null)
-                        return default;
+                if (localName is null)
+                    return default;
 
-                    return new XmlElementInfo(element, localName);
-                }
+                return new XmlElementInfo(element, localName);
+            }
         }
 
         return default;

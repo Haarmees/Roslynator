@@ -40,29 +40,27 @@ public sealed class RemoveRedundantAssignmentCodeFixProvider : BaseCodeFixProvid
             switch (diagnostic.Id)
             {
                 case DiagnosticIdentifiers.RemoveRedundantAssignment:
-                    {
-                        CodeAction codeAction = CodeAction.Create(
-                            "Remove redundant assignment",
-                            ct =>
+                {
+                    CodeAction codeAction = CodeAction.Create(
+                        "Remove redundant assignment",
+                        ct =>
+                        {
+                            if (node is VariableDeclaratorSyntax variableDeclarator)
                             {
-                                if (node.IsKind(SyntaxKind.VariableDeclarator))
-                                {
-                                    var variableDeclarator = (VariableDeclaratorSyntax)node;
+                                return RemoveRedundantAssignmentAfterLocalDeclarationAsync(document, variableDeclarator, ct);
+                            }
+                            else
+                            {
+                                var assignment = (AssignmentExpressionSyntax)node;
 
-                                    return RemoveRedundantAssignmentAfterLocalDeclarationAsync(document, variableDeclarator, ct);
-                                }
-                                else
-                                {
-                                    var assignment = (AssignmentExpressionSyntax)node;
+                                return RemoveRedundantAssignmentBeforeReturnStatementAsync(document, assignment, ct);
+                            }
+                        },
+                        GetEquivalenceKey(diagnostic));
 
-                                    return RemoveRedundantAssignmentBeforeReturnStatementAsync(document, assignment, ct);
-                                }
-                            },
-                            GetEquivalenceKey(diagnostic));
-
-                        context.RegisterCodeFix(codeAction, diagnostic);
-                        break;
-                    }
+                    context.RegisterCodeFix(codeAction, diagnostic);
+                    break;
+                }
             }
         }
     }

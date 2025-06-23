@@ -72,7 +72,7 @@ internal abstract class MSBuildWorkspaceCommand<TCommandResult> where TCommandRe
                 {
                     if (path.Origin == PathOrigin.PipedInput)
                     {
-                        Matcher matcher = (string.Equals(Path.GetExtension(path.Path), ".sln", StringComparison.OrdinalIgnoreCase))
+                        Matcher matcher = (IsSolutionFile(path.Path))
                             ? ProjectFilter.SolutionMatcher
                             : ProjectFilter.Matcher;
 
@@ -97,7 +97,7 @@ internal abstract class MSBuildWorkspaceCommand<TCommandResult> where TCommandRe
                     catch (ProjectOrSolutionLoadException ex)
                     {
                         WriteLine(ex.Message, Colors.Message_Warning, Verbosity.Minimal);
-                        WriteError(ex.InnerException, ConsoleColor.Yellow, Verbosity.Minimal);
+                        WriteError(ex.InnerException);
                         status = CommandStatus.Fail;
                         continue;
                     }
@@ -181,7 +181,11 @@ internal abstract class MSBuildWorkspaceCommand<TCommandResult> where TCommandRe
                 foreach (string moniker in grouping
                     .Select(f => f.Moniker)
                     .Where(f => f is not null)
+#if NETFRAMEWORK
                     .OrderBy(f => f))
+#else
+                    .Order())
+#endif
                 {
                     WriteLine($"    {moniker}", Verbosity.Detailed);
                 }
@@ -225,9 +229,9 @@ internal abstract class MSBuildWorkspaceCommand<TCommandResult> where TCommandRe
         IProgress<ProjectLoadProgress> progress = null,
         CancellationToken cancellationToken = default)
     {
-        bool isSolution = string.Equals(Path.GetExtension(path), ".sln", StringComparison.OrdinalIgnoreCase);
+        bool isSolution = IsSolutionFile(path);
 
-        WriteLine($"Load {((isSolution) ? "solution" : "project")} '{path}'", Verbosity.Minimal);
+        WriteLine($"Loading {((isSolution) ? "solution" : "project")} '{path}'...", Verbosity.Minimal);
 
         ProjectOrSolution projectOrSolution;
 
@@ -246,8 +250,6 @@ internal abstract class MSBuildWorkspaceCommand<TCommandResult> where TCommandRe
         {
             throw new ProjectOrSolutionLoadException($"Error occurred while loading {((isSolution) ? "solution" : "project")} '{path}'", ex);
         }
-
-        WriteLine($"Done loading {((projectOrSolution.IsSolution) ? "solution" : "project")} '{projectOrSolution.FilePath}'", Verbosity.Minimal);
 
         return projectOrSolution;
     }
@@ -379,7 +381,7 @@ internal abstract class MSBuildWorkspaceCommand<TCommandResult> where TCommandRe
 
             Solution solution = projectOrSolution.AsSolution();
 
-            WriteLine($"Compile solution '{solution.FilePath}'", Verbosity.Minimal);
+            WriteLine($"Compiling solution '{solution.FilePath}'", Verbosity.Minimal);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
 
@@ -401,10 +403,18 @@ internal abstract class MSBuildWorkspaceCommand<TCommandResult> where TCommandRe
 
             stopwatch.Stop();
 
-            WriteLine($"Done compiling solution '{solution.FilePath}' in {stopwatch.Elapsed:mm\\:ss\\.ff}", Verbosity.Minimal);
+            LogHelpers.WriteElapsedTime($"Compiled solution '{solution.FilePath}'", stopwatch.Elapsed, Verbosity.Minimal);
 
             return compilations.ToImmutableArray();
         }
+    }
+
+    private static bool IsSolutionFile(string path)
+    {
+        string extension = Path.GetExtension(path);
+
+        return string.Equals(extension, ".sln", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".slnf", StringComparison.OrdinalIgnoreCase);
     }
 
     protected class ConsoleProgressReporter : IProgress<ProjectLoadProgress>

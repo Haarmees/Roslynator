@@ -34,6 +34,9 @@ public sealed class RemoveEmptySyntaxAnalyzer : BaseDiagnosticAnalyzer
         context.RegisterSyntaxNodeAction(f => AnalyzeFinallyClause(f), SyntaxKind.FinallyClause);
         context.RegisterSyntaxNodeAction(f => AnalyzeObjectCreationExpression(f), SyntaxKind.ObjectCreationExpression);
         context.RegisterSyntaxNodeAction(f => AnalyzeNamespaceDeclaration(f), SyntaxKind.NamespaceDeclaration);
+#if ROSLYN_4_0
+        context.RegisterSyntaxNodeAction(f => AnalyzeFileScopedNamespaceDeclaration(f), SyntaxKind.FileScopedNamespaceDeclaration);
+#endif
         context.RegisterSyntaxNodeAction(f => AnalyzeRegionDirective(f), SyntaxKind.RegionDirectiveTrivia);
         context.RegisterSyntaxNodeAction(f => AnalyzeEmptyStatement(f), SyntaxKind.EmptyStatement);
     }
@@ -179,6 +182,18 @@ public sealed class RemoveEmptySyntaxAnalyzer : BaseDiagnosticAnalyzer
 
         ReportDiagnostic(context, declaration, "namespace declaration");
     }
+
+#if ROSLYN_4_0
+    private static void AnalyzeFileScopedNamespaceDeclaration(SyntaxNodeAnalysisContext context)
+    {
+        var declaration = (FileScopedNamespaceDeclarationSyntax)context.Node;
+
+        if (declaration.Members.Any())
+            return;
+
+        ReportDiagnostic(context, declaration, "namespace declaration");
+    }
+#endif
 
     private static void AnalyzeRegionDirective(SyntaxNodeAnalysisContext context)
     {

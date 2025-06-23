@@ -6,12 +6,10 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using DotMarkdown.Docusaurus;
-using Microsoft.CodeAnalysis;
 using Roslynator.CodeGeneration;
 using Roslynator.CodeGeneration.Markdown;
 using Roslynator.Metadata;
@@ -175,15 +173,9 @@ internal static class Program
             MarkdownGenerator.CreateCodeFixesMarkdown(diagnostics, StringComparer.InvariantCulture),
             sidebarLabel: "Code Fixes for Compiler Diagnostics");
 
-        ImmutableArray<CodeFixOption> codeFixOptions = typeof(CodeFixOptions).GetFields()
-            .Select(f =>
-            {
-                var key = (string)f.GetValue(null);
-                string value = f.GetCustomAttribute<CodeFixOptionAttribute>().Value;
-
-                return new CodeFixOption(key, value);
-            })
-            .ToImmutableArray();
+        List<CodeFixOption> codeFixOptions = typeof(CodeFixOptions).GetFields()
+            .Select(f => (CodeFixOption)f.GetValue(null))
+            .ToList();
 
         string fixesDirPath = Path.Combine(destinationPath, "fixes");
         Directory.CreateDirectory(fixesDirPath);

@@ -36,7 +36,7 @@ internal readonly struct MethodChain : IEnumerable<SyntaxNode>
 
     public Enumerator GetEnumerator()
     {
-        return new Enumerator(this);
+        return new(this);
     }
 
     public struct Enumerator
@@ -104,30 +104,30 @@ internal readonly struct MethodChain : IEnumerable<SyntaxNode>
             return null;
         }
 
-        private static SyntaxNode? GetPreviousSibling(SyntaxNode node)
+        private static ExpressionSyntax? GetPreviousSibling(SyntaxNode node)
         {
             SyntaxNode? parent = node.Parent;
 
             switch (parent?.Kind())
             {
                 case SyntaxKind.ConditionalAccessExpression:
-                    {
-                        var conditionalAccess = (ConditionalAccessExpressionSyntax)parent;
+                {
+                    var conditionalAccess = (ConditionalAccessExpressionSyntax)parent;
 
-                        if (conditionalAccess.WhenNotNull == node)
-                            return conditionalAccess.Expression;
+                    if (conditionalAccess.WhenNotNull == node)
+                        return conditionalAccess.Expression;
 
-                        break;
-                    }
+                    break;
+                }
                 case SyntaxKind.SimpleMemberAccessExpression:
-                    {
-                        var memberAccess = (MemberAccessExpressionSyntax)parent;
+                {
+                    var memberAccess = (MemberAccessExpressionSyntax)parent;
 
-                        if (memberAccess.Name == node)
-                            return memberAccess.Expression;
+                    if (memberAccess.Name == node)
+                        return memberAccess.Expression;
 
-                        break;
-                    }
+                    break;
+                }
             }
 
             return null;

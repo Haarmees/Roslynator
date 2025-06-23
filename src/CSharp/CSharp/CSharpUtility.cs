@@ -10,6 +10,56 @@ namespace Roslynator.CSharp;
 
 internal static class CSharpUtility
 {
+    //public static bool CanConvertToCollectionExpression(ImplicitObjectCreationExpressionSyntax implicitObjectCreation, SemanticModel semanticModel, CancellationToken cancellationToken)
+    //{
+    //    return !implicitObjectCreation.WalkUpParentheses().IsParentKind(SyntaxKind.Argument)
+    //        && implicitObjectCreation.ArgumentList?.Arguments.Any() != true
+    //        && SyntaxUtility.CanConvertToCollectionExpression(implicitObjectCreation, semanticModel, cancellationToken);
+    //}
+
+    //public static bool CanConvertToCollectionExpression(ObjectCreationExpressionSyntax objectCreation, SemanticModel semanticModel, CancellationToken cancellationToken)
+    //{
+    //    return !objectCreation.WalkUpParentheses().IsParentKind(SyntaxKind.Argument)
+    //        && objectCreation.ArgumentList?.Arguments.Any() != true
+    //        && SyntaxUtility.CanConvertToCollectionExpression(objectCreation, semanticModel, cancellationToken);
+    //}
+
+    //public static bool CanConvertToCollectionExpression(ArrayCreationExpressionSyntax arrayCreation, SemanticModel semanticModel, CancellationToken cancellationToken)
+    //{
+    //    return CanConvertToCollectionExpression(arrayCreation)
+    //        && SyntaxUtility.CanConvertToCollectionExpression(arrayCreation, semanticModel, cancellationToken);
+    //}
+
+    //public static bool CanConvertToCollectionExpression(ImplicitArrayCreationExpressionSyntax implicitArrayCreation, SemanticModel semanticModel, CancellationToken cancellationToken)
+    //{
+    //    CSharpTypeAnalysis.IsTypeObvious(implicitArrayCreation, semanticModel, cancellationToken);
+    //    return CanConvertToCollectionExpression(implicitArrayCreation)
+    //        && SyntaxUtility.CanConvertToCollectionExpression(implicitArrayCreation, semanticModel, cancellationToken);
+    //}
+
+    //private static bool CanConvertToCollectionExpression(ExpressionSyntax expression)
+    //{
+    //    expression = expression.WalkUpParentheses();
+
+    //    if (expression.IsParentKind(
+    //        SyntaxKind.Argument,
+    //        SyntaxKind.ForEachStatement,
+    //        SyntaxKind.ForEachVariableStatement))
+    //    {
+    //        return false;
+    //    }
+
+    //    if (expression.Parent.IsKind(SyntaxKind.EqualsValueClause)
+    //        && expression.Parent.Parent.IsKind(SyntaxKind.VariableDeclarator)
+    //        && expression.Parent.Parent.Parent is VariableDeclarationSyntax variableDeclaration
+    //        && variableDeclaration.Type.IsVar)
+    //    {
+    //        return false;
+    //    }
+
+    //    return true;
+    //}
+
     public static bool IsNullableReferenceType(
         TypeSyntax type,
         SemanticModel semanticModel,
@@ -59,22 +109,22 @@ internal static class CSharpUtility
             switch (ancestor)
             {
                 case NamespaceDeclarationSyntax namespaceDeclaration:
+                {
+                    if (IsNamespace(namespaceSymbol, namespaceDeclaration.Name, semanticModel, cancellationToken)
+                        || IsNamespace(namespaceSymbol, namespaceDeclaration.Usings, semanticModel, cancellationToken))
                     {
-                        if (IsNamespace(namespaceSymbol, namespaceDeclaration.Name, semanticModel, cancellationToken)
-                            || IsNamespace(namespaceSymbol, namespaceDeclaration.Usings, semanticModel, cancellationToken))
-                        {
-                            return true;
-                        }
-
-                        break;
+                        return true;
                     }
+
+                    break;
+                }
                 case CompilationUnitSyntax compilationUnit:
-                    {
-                        if (IsNamespace(namespaceSymbol, compilationUnit.Usings, semanticModel, cancellationToken))
-                            return true;
+                {
+                    if (IsNamespace(namespaceSymbol, compilationUnit.Usings, semanticModel, cancellationToken))
+                        return true;
 
-                        break;
-                    }
+                    break;
+                }
             }
         }
 
@@ -102,7 +152,7 @@ internal static class CSharpUtility
 
     private static bool IsNamespace(
         INamespaceSymbol namespaceSymbol,
-        NameSyntax name,
+        NameSyntax? name,
         SemanticModel semanticModel,
         CancellationToken cancellationToken)
     {
@@ -157,7 +207,7 @@ internal static class CSharpUtility
             {
                 if (usingDirective.StaticKeyword.IsKind(SyntaxKind.StaticKeyword))
                 {
-                    NameSyntax name = usingDirective.Name;
+                    NameSyntax? name = usingDirective.Name;
 
                     if (name is not null
                         && SymbolEqualityComparer.Default.Equals(staticClassSymbol, semanticModel.GetSymbol(name, cancellationToken)))
@@ -277,18 +327,18 @@ internal static class CSharpUtility
             switch (left?.Kind())
             {
                 case SyntaxKind.StringLiteralExpression:
-                    {
-                        return true;
-                    }
+                {
+                    return true;
+                }
                 case SyntaxKind.AddExpression:
-                    {
-                        binaryExpression = (BinaryExpressionSyntax)left;
-                        break;
-                    }
+                {
+                    binaryExpression = (BinaryExpressionSyntax)left;
+                    break;
+                }
                 default:
-                    {
-                        return false;
-                    }
+                {
+                    return false;
+                }
             }
         }
     }
@@ -342,8 +392,10 @@ internal static class CSharpUtility
             case SyntaxKind.VariableDeclarator:
                 return ((VariableDeclaratorSyntax)node).Identifier;
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
                 return ((RecordDeclarationSyntax)node).Identifier;
+#endif
             case SyntaxKind.Parameter:
                 return ((ParameterSyntax)node).Identifier;
             case SyntaxKind.TypeParameter:
@@ -410,7 +462,9 @@ internal static class CSharpUtility
                 case SyntaxKind.NamespaceDeclaration:
                 case SyntaxKind.ClassDeclaration:
                 case SyntaxKind.StructDeclaration:
+#if ROSLYN_4_0
                 case SyntaxKind.RecordStructDeclaration:
+#endif
                 case SyntaxKind.InterfaceDeclaration:
                 case SyntaxKind.RecordDeclaration:
                 case SyntaxKind.EnumDeclaration:
@@ -439,31 +493,31 @@ internal static class CSharpUtility
                     return false;
 #if DEBUG
                 default:
-                    {
-                        if (parent is ExpressionSyntax)
-                            break;
-
-                        switch (parent.Kind())
-                        {
-                            case SyntaxKind.Argument:
-                            case SyntaxKind.ArgumentList:
-                            case SyntaxKind.BracketedArgumentList:
-                            case SyntaxKind.EqualsValueClause:
-                            case SyntaxKind.Interpolation:
-                            case SyntaxKind.VariableDeclaration:
-                            case SyntaxKind.VariableDeclarator:
-                                {
-                                    break;
-                                }
-                            default:
-                                {
-                                    SyntaxDebug.Fail(parent);
-                                    break;
-                                }
-                        }
-
+                {
+                    if (parent is ExpressionSyntax)
                         break;
+
+                    switch (parent.Kind())
+                    {
+                        case SyntaxKind.Argument:
+                        case SyntaxKind.ArgumentList:
+                        case SyntaxKind.BracketedArgumentList:
+                        case SyntaxKind.EqualsValueClause:
+                        case SyntaxKind.Interpolation:
+                        case SyntaxKind.VariableDeclaration:
+                        case SyntaxKind.VariableDeclarator:
+                        {
+                            break;
+                        }
+                        default:
+                        {
+                            SyntaxDebug.Fail(parent);
+                            break;
+                        }
                     }
+
+                    break;
+                }
 #endif
             }
         }
@@ -514,20 +568,20 @@ internal static class CSharpUtility
                 case SyntaxKind.SimpleMemberAccessExpression:
                 case SyntaxKind.ElementAccessExpression:
                 case SyntaxKind.InvocationExpression:
-                    {
-                        break;
-                    }
+                {
+                    break;
+                }
                 case SyntaxKind.ConditionalAccessExpression:
-                    {
-                        if (((ConditionalAccessExpressionSyntax)parent).WhenNotNull == prev)
-                            return true;
+                {
+                    if (((ConditionalAccessExpressionSyntax)parent).WhenNotNull == prev)
+                        return true;
 
-                        break;
-                    }
+                    break;
+                }
                 default:
-                    {
-                        return false;
-                    }
+                {
+                    return false;
+                }
             }
 
             prev = parent;
@@ -645,8 +699,16 @@ internal static class CSharpUtility
             case SyntaxKind.LocalFunctionStatement:
                 return ((LocalFunctionStatementSyntax)declaration).ParameterList;
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return ((RecordDeclarationSyntax)declaration).ParameterList;
+#if ROSLYN_4_7
+            case SyntaxKind.ClassDeclaration:
+            case SyntaxKind.StructDeclaration:
+            case SyntaxKind.InterfaceDeclaration:
+                return ((TypeDeclarationSyntax)declaration).ParameterList;
+#endif
             default:
                 return null;
         }
@@ -674,7 +736,9 @@ internal static class CSharpUtility
             case SyntaxKind.LocalFunctionStatement:
                 return ((LocalFunctionStatementSyntax)declaration).TypeParameterList;
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return ((RecordDeclarationSyntax)declaration).TypeParameterList;
             default:
                 return null;

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) .NET Foundation and Contributors. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using System;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -8,6 +9,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Roslynator.CSharp.Analysis;
 
+[Obsolete("Use analyzer 'UseVarOrExplicitTypeAnalyzer' instead.")]
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class UseExplicitTypeInsteadOfVarInForEachAnalyzer : BaseDiagnosticAnalyzer
 {
@@ -52,30 +54,30 @@ public sealed class UseExplicitTypeInsteadOfVarInForEachAnalyzer : BaseDiagnosti
         switch (forEachStatement.Variable)
         {
             case DeclarationExpressionSyntax declarationExpression:
-                {
-                    if (CSharpTypeAnalysis.IsImplicitThatCanBeExplicit(forEachStatement, context.SemanticModel))
-                        ReportDiagnostic(context, declarationExpression.Type);
+            {
+                if (CSharpTypeAnalysis.IsImplicitThatCanBeExplicit(forEachStatement, context.SemanticModel))
+                    ReportDiagnostic(context, declarationExpression.Type);
 
-                    break;
-                }
+                break;
+            }
             case TupleExpressionSyntax tupleExpression:
+            {
+                foreach (ArgumentSyntax argument in tupleExpression.Arguments)
                 {
-                    foreach (ArgumentSyntax argument in tupleExpression.Arguments)
-                    {
-                        if (argument.Expression is not DeclarationExpressionSyntax declarationExpression)
-                            continue;
+                    if (argument.Expression is not DeclarationExpressionSyntax declarationExpression)
+                        continue;
 
-                        if (CSharpTypeAnalysis.IsImplicitThatCanBeExplicit(declarationExpression, context.SemanticModel, context.CancellationToken))
-                            ReportDiagnostic(context, declarationExpression.Type);
-                    }
-
-                    break;
+                    if (CSharpTypeAnalysis.IsImplicitThatCanBeExplicit(declarationExpression, context.SemanticModel, context.CancellationToken))
+                        ReportDiagnostic(context, declarationExpression.Type);
                 }
+
+                break;
+            }
             default:
-                {
-                    SyntaxDebug.Assert(forEachStatement.ContainsDiagnostics, forEachStatement.Variable);
-                    break;
-                }
+            {
+                SyntaxDebug.Assert(forEachStatement.ContainsDiagnostics, forEachStatement.Variable);
+                break;
+            }
         }
     }
 

@@ -70,9 +70,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Create a new document with the specified member declaration removed.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="member"></param>
-    /// <param name="cancellationToken"></param>
     internal static Task<Document> RemoveMemberAsync(
         this Document document,
         MemberDeclarationSyntax member,
@@ -89,49 +86,64 @@ public static class WorkspaceExtensions
         switch (parent?.Kind())
         {
             case SyntaxKind.CompilationUnit:
-                {
-                    var compilationUnit = (CompilationUnitSyntax)parent;
+            {
+                var compilationUnit = (CompilationUnitSyntax)parent;
 
-                    return document.ReplaceNodeAsync(compilationUnit, SyntaxRefactorings.RemoveMember(compilationUnit, member), cancellationToken);
-                }
+                return document.ReplaceNodeAsync(compilationUnit, SyntaxRefactorings.RemoveMember(compilationUnit, member), cancellationToken);
+            }
             case SyntaxKind.NamespaceDeclaration:
+            {
+                var namespaceDeclaration = (NamespaceDeclarationSyntax)parent;
+
+                return document.ReplaceNodeAsync(namespaceDeclaration, SyntaxRefactorings.RemoveMember(namespaceDeclaration, member), cancellationToken);
+            }
+#if ROSLYN_4_0
             case SyntaxKind.FileScopedNamespaceDeclaration:
-                {
-                    var namespaceDeclaration = (BaseNamespaceDeclarationSyntax)parent;
+            {
+                var namespaceDeclaration = (FileScopedNamespaceDeclarationSyntax)parent;
 
-                    return document.ReplaceNodeAsync(namespaceDeclaration, SyntaxRefactorings.RemoveMember(namespaceDeclaration, member), cancellationToken);
-                }
+                return document.ReplaceNodeAsync(namespaceDeclaration, SyntaxRefactorings.RemoveMember(namespaceDeclaration, member), cancellationToken);
+            }
+#endif
             case SyntaxKind.ClassDeclaration:
-                {
-                    var classDeclaration = (ClassDeclarationSyntax)parent;
+            {
+                var classDeclaration = (ClassDeclarationSyntax)parent;
 
-                    return document.ReplaceNodeAsync(classDeclaration, SyntaxRefactorings.RemoveMember(classDeclaration, member), cancellationToken);
-                }
+                return document.ReplaceNodeAsync(classDeclaration, SyntaxRefactorings.RemoveMember(classDeclaration, member), cancellationToken);
+            }
             case SyntaxKind.StructDeclaration:
-                {
-                    var structDeclaration = (StructDeclarationSyntax)parent;
+            {
+                var structDeclaration = (StructDeclarationSyntax)parent;
 
-                    return document.ReplaceNodeAsync(structDeclaration, SyntaxRefactorings.RemoveMember(structDeclaration, member), cancellationToken);
-                }
+                return document.ReplaceNodeAsync(structDeclaration, SyntaxRefactorings.RemoveMember(structDeclaration, member), cancellationToken);
+            }
             case SyntaxKind.InterfaceDeclaration:
-                {
-                    var interfaceDeclaration = (InterfaceDeclarationSyntax)parent;
+            {
+                var interfaceDeclaration = (InterfaceDeclarationSyntax)parent;
 
-                    return document.ReplaceNodeAsync(interfaceDeclaration, SyntaxRefactorings.RemoveMember(interfaceDeclaration, member), cancellationToken);
-                }
+                return document.ReplaceNodeAsync(interfaceDeclaration, SyntaxRefactorings.RemoveMember(interfaceDeclaration, member), cancellationToken);
+            }
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
-                {
-                    var recordDeclaration = (RecordDeclarationSyntax)parent;
+#endif
+            {
+                var recordDeclaration = (RecordDeclarationSyntax)parent;
 
-                    return document.ReplaceNodeAsync(recordDeclaration, SyntaxRefactorings.RemoveMember(recordDeclaration, member), cancellationToken);
-                }
+                return document.ReplaceNodeAsync(recordDeclaration, SyntaxRefactorings.RemoveMember(recordDeclaration, member), cancellationToken);
+            }
+            case SyntaxKind.EnumDeclaration:
+            {
+                var enumDeclaration = (EnumDeclarationSyntax)parent;
+
+                return document.ReplaceNodeAsync(enumDeclaration, SyntaxRefactorings.RemoveMember(enumDeclaration, (EnumMemberDeclarationSyntax)member), cancellationToken);
+            }
             default:
-                {
-                    SyntaxDebug.Assert(parent is null, parent);
+            {
+                SyntaxDebug.Assert(parent is null, parent);
 
-                    return document.RemoveNodeAsync(member, SyntaxRefactorings.DefaultRemoveOptions, cancellationToken);
-                }
+                return document.RemoveNodeAsync(member, SyntaxRefactorings.DefaultRemoveOptions, cancellationToken);
+            }
         }
     }
 
@@ -152,9 +164,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Creates a new document with comments of the specified kind removed.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="comments"></param>
-    /// <param name="cancellationToken"></param>
     public static async Task<Document> RemoveCommentsAsync(
         this Document document,
         CommentFilter comments,
@@ -177,10 +186,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Creates a new document with comments of the specified kind removed.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="span"></param>
-    /// <param name="comments"></param>
-    /// <param name="cancellationToken"></param>
     public static async Task<Document> RemoveCommentsAsync(
         this Document document,
         TextSpan span,
@@ -204,9 +209,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Creates a new document with trivia inside the specified span removed.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="span"></param>
-    /// <param name="cancellationToken"></param>
     public static async Task<Document> RemoveTriviaAsync(
         this Document document,
         TextSpan span,
@@ -228,9 +230,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Creates a new document with preprocessor directives of the specified kind removed.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="directiveFilter"></param>
-    /// <param name="cancellationToken"></param>
     public static async Task<Document> RemovePreprocessorDirectivesAsync(
         this Document document,
         PreprocessorDirectiveFilter directiveFilter,
@@ -254,10 +253,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Creates a new document with preprocessor directives of the specified kind removed.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="span"></param>
-    /// <param name="directiveFilter"></param>
-    /// <param name="cancellationToken"></param>
     public static async Task<Document> RemovePreprocessorDirectivesAsync(
         this Document document,
         TextSpan span,
@@ -416,9 +411,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Creates a new document with the specified region removed.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="region"></param>
-    /// <param name="cancellationToken"></param>
     public static async Task<Document> RemoveRegionAsync(
         this Document document,
         RegionInfo region,
@@ -460,10 +452,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Creates a new document with the specified statements replaced with new statements.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="statementsInfo"></param>
-    /// <param name="newStatements"></param>
-    /// <param name="cancellationToken"></param>
     public static Task<Document> ReplaceStatementsAsync(
         this Document document,
         StatementListInfo statementsInfo,
@@ -476,10 +464,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Creates a new document with the specified statements replaced with new statements.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="statementsInfo"></param>
-    /// <param name="newStatements"></param>
-    /// <param name="cancellationToken"></param>
     public static Task<Document> ReplaceStatementsAsync(
         this Document document,
         StatementListInfo statementsInfo,
@@ -504,10 +488,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Creates a new document with the specified members replaced with new members.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="info"></param>
-    /// <param name="newMembers"></param>
-    /// <param name="cancellationToken"></param>
     public static Task<Document> ReplaceMembersAsync(
         this Document document,
         MemberDeclarationListInfo info,
@@ -526,11 +506,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Creates a new document with the specified members replaced with new members.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="info"></param>
-    /// <param name="newMembers"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     public static Task<Document> ReplaceMembersAsync(
         this Document document,
         MemberDeclarationListInfo info,
@@ -549,11 +524,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Creates a new document with the specified modifiers replaced with new modifiers.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="modifiersInfo"></param>
-    /// <param name="newModifiers"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     public static Task<Document> ReplaceModifiersAsync(
         this Document document,
         ModifierListInfo modifiersInfo,
@@ -566,11 +536,6 @@ public static class WorkspaceExtensions
     /// <summary>
     /// Creates a new document with the specified modifiers replaced with new modifiers.
     /// </summary>
-    /// <param name="document"></param>
-    /// <param name="modifiersInfo"></param>
-    /// <param name="newModifiers"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     public static Task<Document> ReplaceModifiersAsync(
         this Document document,
         ModifierListInfo modifiersInfo,

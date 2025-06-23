@@ -53,26 +53,6 @@ internal static class Program
 
         List<Command> commands = application.Commands.Where(f => !ignoredCommandNames.Contains(f.Name)).ToList();
 
-        string filePath = Path.Combine(destinationDirectoryPath, "cli/commands.md");
-
-        Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-
-        using (var streamWriter = new StreamWriter(filePath, append: false, Encoding.UTF8))
-        using (MarkdownWriter markdownWriter = MarkdownWriter.Create(streamWriter, settings))
-        using (var mw = new DocusaurusMarkdownWriter(markdownWriter))
-        {
-            WriteFrontMatter(mw, position: 0, label: "Commands");
-
-            mw.WriteHeading1("Commands");
-
-            Table(
-                TableRow("Command", "Description"),
-                commands.Select(f => TableRow(Link(f.Name, $"commands/{f.Name}.md"), f.Description)))
-                .WriteTo(mw);
-
-            Console.WriteLine(filePath);
-        }
-
         foreach (Command command in commands)
         {
             string commandFilePath = Path.GetFullPath(Path.Combine(destinationDirectoryPath, "cli/commands", $"{command.Name}.md"));
@@ -102,6 +82,11 @@ internal static class Program
                 string additionalContent = (File.Exists(additionalContentFilePath))
                     ? File.ReadAllText(additionalContentFilePath)
                     : "";
+
+                string summaryContentFilePath = Path.Combine(dataDirectoryPath, command.Name + "_summary.md");
+
+                if (File.Exists(summaryContentFilePath))
+                    dw.WriteRaw(File.ReadAllText(summaryContentFilePath));
 
                 writer.WriteCommandSynopsis(command, application);
                 writer.WriteArguments(command.Arguments);

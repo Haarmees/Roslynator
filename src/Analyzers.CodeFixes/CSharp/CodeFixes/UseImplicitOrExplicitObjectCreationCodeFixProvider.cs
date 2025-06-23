@@ -10,7 +10,9 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Roslynator.CodeFixes;
+using Roslynator.CSharp.Analysis;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static Roslynator.CSharp.SyntaxRefactorings;
 
 namespace Roslynator.CSharp.CodeFixes;
 
@@ -18,6 +20,12 @@ namespace Roslynator.CSharp.CodeFixes;
 [Shared]
 public class UseImplicitOrExplicitObjectCreationCodeFixProvider : BaseCodeFixProvider
 {
+    private const string UseExplicitObjectCreationTitle = "Use explicit type";
+    private const string UseImplicitObjectCreationTitle = "Use implicit type";
+    private const string UseCollectionExpressionTitle = "Use collection expression";
+
+    private const string UseCollectionExpressionEquivalenceKey = "UseCollectionExpression";
+
     public sealed override ImmutableArray<string> FixableDiagnosticIds
     {
         get { return ImmutableArray.Create(DiagnosticIdentifiers.UseImplicitOrExplicitObjectCreation); }
@@ -31,7 +39,13 @@ public class UseImplicitOrExplicitObjectCreationCodeFixProvider : BaseCodeFixPro
             root,
             context.Span,
             out SyntaxNode node,
-            predicate: f => f.IsKind(SyntaxKind.ObjectCreationExpression, SyntaxKind.ImplicitObjectCreationExpression, SyntaxKind.VariableDeclaration)))
+            predicate: f => f.IsKind(
+#if ROSLYN_4_7
+                SyntaxKind.CollectionExpression,
+#endif
+                SyntaxKind.ObjectCreationExpression,
+                SyntaxKind.ImplicitObjectCreationExpression)))
+
         {
             return;
         }
@@ -41,14 +55,35 @@ public class UseImplicitOrExplicitObjectCreationCodeFixProvider : BaseCodeFixPro
 
         if (node is ObjectCreationExpressionSyntax objectCreation)
         {
+#if ROSLYN_4_7
+            bool useCollectionExpression = diagnostic.Properties.ContainsKey(DiagnosticPropertyKeys.ExplicitToCollectionExpression);
+#endif
             CodeAction codeAction = CodeAction.Create(
-                "Use implicit object creation",
+#if ROSLYN_4_7
+                (useCollectionExpression)
+                    ? UseCollectionExpressionTitle
+                    : UseImplicitObjectCreationTitle,
+#else
+                UseImplicitObjectCreationTitle,
+#endif
                 ct =>
                 {
-                    ImplicitObjectCreationExpressionSyntax implicitObjectCreation = ImplicitObjectCreationExpression(
-                        objectCreation.NewKeyword.WithTrailingTrivia(objectCreation.NewKeyword.TrailingTrivia.EmptyIfWhitespace()),
-                        objectCreation.ArgumentList ?? ArgumentList().WithTrailingTrivia(objectCreation.Type.GetTrailingTrivia()),
-                        objectCreation.Initializer);
+                    SyntaxNode newNode;
+#if ROSLYN_4_7
+                    if (useCollectionExpression)
+                    {
+                        newNode = ConvertInitializerToCollectionExpression(objectCreation.Initializer).WithFormatterAnnotation();
+                    }
+                    else
+                    {
+#endif
+                        newNode = ImplicitObjectCreationExpression(
+                            objectCreation.NewKeyword.WithTrailingTrivia(objectCreation.NewKeyword.TrailingTrivia.EmptyIfWhitespace()),
+                            objectCreation.ArgumentList ?? ArgumentList().WithTrailingTrivia(objectCreation.Type.GetTrailingTrivia()),
+                            objectCreation.Initializer);
+#if ROSLYN_4_7
+                    }
+#endif
 
                     if (objectCreation.IsParentKind(SyntaxKind.EqualsValueClause)
                         && objectCreation.Parent.IsParentKind(SyntaxKind.VariableDeclarator)
@@ -56,78 +91,164 @@ public class UseImplicitOrExplicitObjectCreationCodeFixProvider : BaseCodeFixPro
                         && variableDeclaration.Type.IsVar)
                     {
                         VariableDeclarationSyntax newVariableDeclaration = variableDeclaration
-                            .ReplaceNode(objectCreation, implicitObjectCreation)
+                            .ReplaceNode(objectCreation, newNode)
                             .WithType(objectCreation.Type.WithTriviaFrom(variableDeclaration.Type));
 
                         return document.ReplaceNodeAsync(variableDeclaration, newVariableDeclaration, ct);
                     }
                     else
                     {
-                        return document.ReplaceNodeAsync(objectCreation, implicitObjectCreation, ct);
+                        return document.ReplaceNodeAsync(objectCreation, newNode, ct);
                     }
                 },
-                GetEquivalenceKey(diagnostic));
+                GetEquivalenceKey(
+                    diagnostic,
+#if ROSLYN_4_7
+                    (useCollectionExpression) ? UseCollectionExpressionEquivalenceKey : null
+#else
+                    null
+#endif
+                    ));
 
             context.RegisterCodeFix(codeAction, diagnostic);
         }
         else if (node is ImplicitObjectCreationExpressionSyntax implicitObjectCreation)
         {
-            CodeAction codeAction = CodeAction.Create(
-                "Use explicit object creation",
-                async ct =>
-                {
-                    SemanticModel semanticModel = await context.Document.GetSemanticModelAsync(ct).ConfigureAwait(false);
+            if (diagnostic.Properties.ContainsKey(DiagnosticPropertyKeys.VarToExplicit))
+            {
+                VariableDeclarationSyntax variableDeclaration = node.FirstAncestor<VariableDeclarationSyntax>();
 
-                    ITypeSymbol typeSymbol = semanticModel.GetTypeSymbol(implicitObjectCreation, ct);
+                CodeAction codeAction = CodeAction.Create(
+                    UseExplicitObjectCreationTitle,
+                    ct =>
+                    {
+                        var implicitObjectCreation = (ImplicitObjectCreationExpressionSyntax)variableDeclaration.Variables.Single().Initializer.Value;
 
-                    TypeSyntax type = typeSymbol.ToTypeSyntax().WithSimplifierAnnotation();
+                        SyntaxToken newKeyword = implicitObjectCreation.NewKeyword;
 
-                    SyntaxToken newKeyword = implicitObjectCreation.NewKeyword;
+                        if (!newKeyword.TrailingTrivia.Any())
+                            newKeyword = newKeyword.WithTrailingTrivia(ElasticSpace);
 
-                    if (!newKeyword.TrailingTrivia.Any())
-                        newKeyword = newKeyword.WithTrailingTrivia(ElasticSpace);
+                        ObjectCreationExpressionSyntax objectCreation = ObjectCreationExpression(
+                            newKeyword,
+                            variableDeclaration.Type.WithoutTrivia(),
+                            implicitObjectCreation.ArgumentList,
+                            implicitObjectCreation.Initializer);
 
-                    ObjectCreationExpressionSyntax objectCreation = ObjectCreationExpression(
-                        newKeyword,
-                        type,
-                        implicitObjectCreation.ArgumentList,
-                        implicitObjectCreation.Initializer);
+                        VariableDeclarationSyntax newVariableDeclaration = variableDeclaration.ReplaceNode(implicitObjectCreation, objectCreation)
+                            .WithType(CSharpFactory.VarType().WithTriviaFrom(variableDeclaration.Type));
 
-                    return await document.ReplaceNodeAsync(implicitObjectCreation, objectCreation, ct).ConfigureAwait(false);
-                },
-                GetEquivalenceKey(diagnostic));
+                        return document.ReplaceNodeAsync(variableDeclaration, newVariableDeclaration, ct);
+                    },
+                    GetEquivalenceKey(diagnostic));
 
-            context.RegisterCodeFix(codeAction, diagnostic);
+                context.RegisterCodeFix(codeAction, diagnostic);
+            }
+#if ROSLYN_4_7
+            else if (diagnostic.Properties.ContainsKey(DiagnosticPropertyKeys.ImplicitToCollectionExpression))
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    UseCollectionExpressionTitle,
+                    async ct =>
+                    {
+                        CollectionExpressionSyntax collectionExpression = ConvertInitializerToCollectionExpression(implicitObjectCreation.Initializer)
+                            .PrependToLeadingTrivia(implicitObjectCreation.NewKeyword.LeadingTrivia);
+
+                        if (implicitObjectCreation.Initializer is null)
+                            collectionExpression = collectionExpression.WithTrailingTrivia(implicitObjectCreation.ArgumentList.GetTrailingTrivia());
+
+                        collectionExpression = collectionExpression.WithFormatterAnnotation();
+
+                        return await document.ReplaceNodeAsync(implicitObjectCreation, collectionExpression, ct).ConfigureAwait(false);
+                    },
+                    GetEquivalenceKey(diagnostic, UseCollectionExpressionEquivalenceKey));
+
+                context.RegisterCodeFix(codeAction, diagnostic);
+            }
+#endif
+            else
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    UseExplicitObjectCreationTitle,
+                    async ct =>
+                    {
+                        SemanticModel semanticModel = await context.Document.GetSemanticModelAsync(ct).ConfigureAwait(false);
+                        ITypeSymbol typeSymbol = semanticModel.GetTypeSymbol(implicitObjectCreation, ct);
+                        TypeSyntax type = typeSymbol.ToTypeSyntax().WithSimplifierAnnotation();
+
+                        SyntaxToken newKeyword = implicitObjectCreation.NewKeyword;
+
+                        if (!newKeyword.TrailingTrivia.Any())
+                            newKeyword = newKeyword.WithTrailingTrivia(ElasticSpace);
+
+                        ObjectCreationExpressionSyntax objectCreation = ObjectCreationExpression(
+                            newKeyword,
+                            type,
+                            implicitObjectCreation.ArgumentList,
+                            implicitObjectCreation.Initializer);
+
+                        return await document.ReplaceNodeAsync(implicitObjectCreation, objectCreation, ct).ConfigureAwait(false);
+                    },
+                    GetEquivalenceKey(diagnostic));
+
+                context.RegisterCodeFix(codeAction, diagnostic);
+            }
         }
-        else
+#if ROSLYN_4_7
+        else if (node is CollectionExpressionSyntax collectionExpression)
         {
-            var variableDeclaration = (VariableDeclarationSyntax)node;
+            if (diagnostic.Properties.ContainsKey(DiagnosticPropertyKeys.CollectionExpressionToImplicit))
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    UseImplicitObjectCreationTitle,
+                    async ct =>
+                    {
+                        SemanticModel semanticModel = await context.Document.GetSemanticModelAsync(ct).ConfigureAwait(false);
+                        ITypeSymbol typeSymbol = semanticModel.GetTypeInfo(collectionExpression, ct).ConvertedType;
 
-            CodeAction codeAction = CodeAction.Create(
-                "Use explicit object creation",
-                ct =>
-                {
-                    var implicitObjectCreation = (ImplicitObjectCreationExpressionSyntax)variableDeclaration.Variables.Single().Initializer.Value;
+                        ImplicitObjectCreationExpressionSyntax objectCreation = ImplicitObjectCreationExpression(
+                            Token(SyntaxKind.NewKeyword),
+                            ArgumentList(),
+                            ConvertCollectionExpressionToInitializer(
+                                collectionExpression,
+                                SyntaxKind.CollectionInitializerExpression))
+                            .WithTriviaFrom(collectionExpression);
 
-                    SyntaxToken newKeyword = implicitObjectCreation.NewKeyword;
+                        return await document.ReplaceNodeAsync(collectionExpression, objectCreation, ct).ConfigureAwait(false);
+                    },
+                    GetEquivalenceKey(diagnostic));
 
-                    if (!newKeyword.TrailingTrivia.Any())
-                        newKeyword = newKeyword.WithTrailingTrivia(ElasticSpace);
+                context.RegisterCodeFix(codeAction, diagnostic);
+            }
+            else
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    UseExplicitObjectCreationTitle,
+                    async ct =>
+                    {
+                        SemanticModel semanticModel = await context.Document.GetSemanticModelAsync(ct).ConfigureAwait(false);
+                        ITypeSymbol typeSymbol = semanticModel.GetTypeInfo(collectionExpression, ct).ConvertedType;
+                        TypeSyntax type = typeSymbol.ToTypeSyntax().WithSimplifierAnnotation();
 
-                    ObjectCreationExpressionSyntax objectCreation = ObjectCreationExpression(
-                        newKeyword,
-                        variableDeclaration.Type.WithoutTrivia(),
-                        implicitObjectCreation.ArgumentList,
-                        implicitObjectCreation.Initializer);
+                        ObjectCreationExpressionSyntax objectCreation = ObjectCreationExpression(
+                            Token(SyntaxKind.NewKeyword),
+                            type,
+                            ArgumentList(),
+                            ConvertCollectionExpressionToInitializer(
+                                collectionExpression,
+                                SyntaxKind.CollectionInitializerExpression));
 
-                    VariableDeclarationSyntax newVariableDeclaration = variableDeclaration.ReplaceNode(implicitObjectCreation, objectCreation)
-                        .WithType(CSharpFactory.VarType().WithTriviaFrom(variableDeclaration.Type));
+                        objectCreation = objectCreation
+                            .WithLeadingTrivia(collectionExpression.GetLeadingTrivia())
+                            .WithTrailingTrivia(collectionExpression.GetTrailingTrivia());
 
-                    return document.ReplaceNodeAsync(variableDeclaration, newVariableDeclaration, ct);
-                },
-                GetEquivalenceKey(diagnostic));
+                        return await document.ReplaceNodeAsync(collectionExpression, objectCreation, ct).ConfigureAwait(false);
+                    },
+                    GetEquivalenceKey(diagnostic));
 
-            context.RegisterCodeFix(codeAction, diagnostic);
+                context.RegisterCodeFix(codeAction, diagnostic);
+            }
         }
+#endif
     }
 }

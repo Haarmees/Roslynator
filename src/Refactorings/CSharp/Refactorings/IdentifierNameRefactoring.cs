@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Rename;
 using Roslynator.CSharp.Refactorings.InlineDefinition;
 
@@ -81,7 +80,11 @@ internal static class IdentifierNameRefactoring
 
         context.RegisterRefactoring(
             $"Rename '{fieldSymbol.Name}' to '{newName}'",
+#if ROSLYN_4_4
             ct => Renamer.RenameSymbolAsync(context.Solution, fieldSymbol, default(SymbolRenameOptions), newName, ct),
+#else
+            ct => Renamer.RenameSymbolAsync(context.Solution, fieldSymbol, newName, default(Microsoft.CodeAnalysis.Options.OptionSet), ct),
+#endif
             RefactoringDescriptors.SyncPropertyNameAndBackingFieldName);
     }
 

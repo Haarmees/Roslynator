@@ -13,6 +13,7 @@ using Roslynator.CodeFixes;
 
 namespace Roslynator.CSharp.CodeFixes;
 
+[Obsolete("Use code fix provider 'UseVarOrExplicitTypeCodeFixProvider' instead.")]
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(UseExplicitTypeInsteadOfVarInForEachCodeFixProvider))]
 [Shared]
 public sealed class UseExplicitTypeInsteadOfVarInForEachCodeFixProvider : BaseCodeFixProvider
@@ -46,32 +47,32 @@ public sealed class UseExplicitTypeInsteadOfVarInForEachCodeFixProvider : BaseCo
         switch (node)
         {
             case ForEachStatementSyntax forEachStatement:
-                {
-                    type = forEachStatement.Type;
+            {
+                type = forEachStatement.Type;
 
-                    typeSymbol = semanticModel.GetForEachStatementInfo((CommonForEachStatementSyntax)node).ElementType;
-                    break;
-                }
+                typeSymbol = semanticModel.GetForEachStatementInfo((CommonForEachStatementSyntax)node).ElementType;
+                break;
+            }
             case ForEachVariableStatementSyntax forEachVariableStatement:
-                {
-                    var declarationExpression = (DeclarationExpressionSyntax)forEachVariableStatement.Variable;
+            {
+                var declarationExpression = (DeclarationExpressionSyntax)forEachVariableStatement.Variable;
 
-                    type = declarationExpression.Type;
+                type = declarationExpression.Type;
 
-                    typeSymbol = semanticModel.GetForEachStatementInfo((CommonForEachStatementSyntax)node).ElementType;
-                    break;
-                }
+                typeSymbol = semanticModel.GetForEachStatementInfo((CommonForEachStatementSyntax)node).ElementType;
+                break;
+            }
             case DeclarationExpressionSyntax declarationExpression:
-                {
-                    type = declarationExpression.Type;
+            {
+                type = declarationExpression.Type;
 
-                    typeSymbol = semanticModel.GetTypeSymbol(declarationExpression, context.CancellationToken);
-                    break;
-                }
+                typeSymbol = semanticModel.GetTypeSymbol(declarationExpression, context.CancellationToken);
+                break;
+            }
             default:
-                {
-                    throw new InvalidOperationException();
-                }
+            {
+                throw new InvalidOperationException();
+            }
         }
 
         CodeAction codeAction = CodeActionFactory.UseExplicitType(document, type, typeSymbol, semanticModel, equivalenceKey: GetEquivalenceKey(diagnostic));

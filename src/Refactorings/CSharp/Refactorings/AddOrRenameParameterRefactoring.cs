@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Rename;
 
 namespace Roslynator.CSharp.Refactorings;
@@ -41,7 +40,11 @@ internal static class AddOrRenameParameterRefactoring
             {
                 context.RegisterRefactoring(
                     $"Rename '{oldName}' to '{newName}'",
+#if ROSLYN_4_4
                     ct => Renamer.RenameSymbolAsync(context.Solution, parameterSymbol, default(SymbolRenameOptions), newName, ct),
+#else
+                    ct => Renamer.RenameSymbolAsync(context.Solution, parameterSymbol, newName, default(Microsoft.CodeAnalysis.Options.OptionSet), ct),
+#endif
                     RefactoringDescriptors.RenameParameterAccordingToTypeName);
             }
         }

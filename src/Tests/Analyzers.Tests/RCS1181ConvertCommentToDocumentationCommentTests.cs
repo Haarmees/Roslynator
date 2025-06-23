@@ -88,26 +88,26 @@ class C
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.ConvertCommentToDocumentationComment)]
     public async Task Test_TrailingComment2()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyDiagnosticAndFixAsync("""
 class C
 {
     void M<T1, T2>() where T1 : class where T2 : class [|// x|]
     {
     }
 }
-", @"
+""", """
 class C
 {
     /// <summary>
     /// x
     /// </summary>
-    /// <typeparam name=""T1""></typeparam>
-    /// <typeparam name=""T2""></typeparam>
+    /// <typeparam name="T1"></typeparam>
+    /// <typeparam name="T2"></typeparam>
     void M<T1, T2>() where T1 : class where T2 : class
     {
     }
 }
-");
+""");
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.ConvertCommentToDocumentationComment)]
@@ -194,6 +194,37 @@ class C
     }
 }
 ");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.ConvertCommentToDocumentationComment)]
+    public async Task Test_CommentContainsXmlSpecialChars()
+    {
+        await VerifyDiagnosticAndFixAsync("""
+namespace N
+{
+    /// <summary>
+    /// x
+    /// </summary>
+    class C
+    {
+        int P { get; set; } [|// Must be >= 0 & <= 5.|]
+    }
+}
+""", """
+namespace N
+{
+    /// <summary>
+    /// x
+    /// </summary>
+    class C
+    {
+        /// <summary>
+        /// Must be &gt;= 0 &amp; &lt;= 5.
+        /// </summary>
+        int P { get; set; }
+    }
+}
+""");
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.ConvertCommentToDocumentationComment)]
@@ -329,5 +360,17 @@ class C
     }
 }
 ");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.ConvertCommentToDocumentationComment)]
+    public async Task TestNoDiagnostic_NamespaceDeclaration()
+    {
+        await VerifyNoDiagnosticAsync(@"
+namespace N // Some comment
+{
+    class C
+    {
+    }
+}");
     }
 }

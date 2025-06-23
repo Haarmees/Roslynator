@@ -478,7 +478,7 @@ class C
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveRedundantAsyncAwait)]
     public async Task Test_SwitchWithDefaultSection()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyDiagnosticAndFixAsync("""
 using System.Threading.Tasks;
 
 class C
@@ -489,11 +489,11 @@ class C
 
         switch (s)
         {
-            case ""a"":
+            case "a":
                 {
                     return await GetAsync();
                 }
-            case ""b"":
+            case "b":
                 {
                     return await GetAsync();
                 }
@@ -504,7 +504,7 @@ class C
         }
     }
 }
-", @"
+""", """
 using System.Threading.Tasks;
 
 class C
@@ -515,11 +515,11 @@ class C
 
         switch (s)
         {
-            case ""a"":
+            case "a":
                 {
                     return GetAsync();
                 }
-            case ""b"":
+            case "b":
                 {
                     return GetAsync();
                 }
@@ -529,6 +529,78 @@ class C
                 }
         }
     }
+}
+""");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveRedundantAsyncAwait)]
+    public async Task Test_DuckTyped_TaskType()
+    {
+        await VerifyDiagnosticAndFixAsync(@"
+using System;
+using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
+
+class C
+{
+    [|async|] DuckTyped<T> M2<T>()
+    {
+        return await M2<T>();
+    }
+
+    [|async|] DuckTyped<T> MC2<T>()
+    {
+        return await MC2<T>().ConfigureAwait(false);
+    }
+}
+
+[AsyncMethodBuilder(null)]
+class DuckTyped<T>
+{
+    public Awaiter<T> GetAwaiter() => default(Awaiter<T>);
+}
+public struct Awaiter<T> : INotifyCompletion
+{
+    public bool IsCompleted => true;
+    public void OnCompleted(Action continuation) { }
+    public T GetResult() => default(T);
+}
+static class ConfigureAwaitExtensions
+{
+    public static DuckTyped<T> ConfigureAwait<T>(this DuckTyped<T> instance, bool __) => instance;
+}
+", @"
+using System;
+using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
+
+class C
+{
+    DuckTyped<T> M2<T>()
+    {
+        return M2<T>();
+    }
+
+    DuckTyped<T> MC2<T>()
+    {
+        return MC2<T>();
+    }
+}
+
+[AsyncMethodBuilder(null)]
+class DuckTyped<T>
+{
+    public Awaiter<T> GetAwaiter() => default(Awaiter<T>);
+}
+public struct Awaiter<T> : INotifyCompletion
+{
+    public bool IsCompleted => true;
+    public void OnCompleted(Action continuation) { }
+    public T GetResult() => default(T);
+}
+static class ConfigureAwaitExtensions
+{
+    public static DuckTyped<T> ConfigureAwait<T>(this DuckTyped<T> instance, bool __) => instance;
 }
 ");
     }
@@ -734,7 +806,7 @@ class C
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveRedundantAsyncAwait)]
     public async Task TestNoDiagnostic_ReturnTypeAndAwaitTypeDoNotEqual()
     {
-        await VerifyNoDiagnosticAsync(@"
+        await VerifyNoDiagnosticAsync("""
 using System;
 using System.Threading.Tasks;
 
@@ -833,11 +905,11 @@ class C
 
         switch (s)
         {
-            case ""a"":
+            case "a":
                 {
                     return await GetAsync();
                 }
-            case ""b"":
+            case "b":
                 {
                     return await GetAsync();
                 }
@@ -848,13 +920,13 @@ class C
         }
     }
 }
-");
+""");
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveRedundantAsyncAwait)]
     public async Task TestNoDiagnostic_AwaitContainsAwait()
     {
-        await VerifyNoDiagnosticAsync(@"
+        await VerifyNoDiagnosticAsync("""
 using System;
 using System.Threading.Tasks;
 
@@ -936,11 +1008,11 @@ class C
 
         switch (s)
         {
-            case ""a"":
+            case "a":
                 {
                     return await GetAsync(await GetAsync());
                 }
-            case ""b"":
+            case "b":
                 {
                     return await GetAsync(await GetAsync());
                 }
@@ -955,11 +1027,11 @@ class C
 
         switch (s)
         {
-            case ""a"":
+            case "a":
                 {
                     return await GetAsync(await GetAsync());
                 }
-            case ""b"":
+            case "b":
                 {
                     return await GetAsync(await GetAsync());
                 }
@@ -970,13 +1042,13 @@ class C
         }
     }
 }
-");
+""");
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveRedundantAsyncAwait)]
     public async Task TestNoDiagnostic_UsingDeclaration()
     {
-        await VerifyNoDiagnosticAsync(@"
+        await VerifyNoDiagnosticAsync("""
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -985,7 +1057,7 @@ class C
 {
     private async Task<string> M()
     {
-        using var stream = File.OpenRead("""");
+        using var stream = File.OpenRead("");
         return await this.M2(stream);
     }
 
@@ -994,6 +1066,38 @@ class C
         throw new NotImplementedException();
     }
 }
-");
+""");
+    }
+
+    [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.RemoveRedundantAsyncAwait)]
+    public async Task TestNoDiagnostic_Task_Vs_ValueTask()
+    {
+        await VerifyNoDiagnosticAsync("""
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+class C
+{
+    private async Task<bool> IsNotEmptyAsync(string text)
+    {
+        await Task.Delay(1);
+        return !string.IsNullOrEmpty(text);
+    }
+
+    private void Execute()
+    {
+        IAsyncEnumerable<string> texts = null!;
+        var notEmptyTexts = texts.WhereAwait(async t => await this.IsNotEmptyAsync(t));
+        Console.WriteLine(string.Join(", ", notEmptyTexts.ToEnumerable()));
+    }
+}
+
+public static class Extensions
+{
+    public static IAsyncEnumerable<TSource> WhereAwait<TSource>(this IAsyncEnumerable<TSource> source, Func<TSource, ValueTask<bool>> predicate) => default;
+    public static IEnumerable<TSource> ToEnumerable<TSource>(this IAsyncEnumerable<TSource> source) => default;
+}
+""");
     }
 }

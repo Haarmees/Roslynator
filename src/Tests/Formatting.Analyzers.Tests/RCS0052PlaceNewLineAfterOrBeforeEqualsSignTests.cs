@@ -20,8 +20,8 @@ class C
 {
     void M()
     {
-        string s [|=|]
-            null;
+        string s =[|
+|]            null;
     }
 }
 ", @"
@@ -44,8 +44,8 @@ class C
 {
     void M()
     {
-        string s
-            [|=|] null;
+        string s[|
+|]            = null;
     }
 }
 ", @"
@@ -70,8 +70,8 @@ class C
     {
         string s = null;
 
-        s [|=|]
-            null;
+        s =[|
+|]            null;
     }
 }
 ", @"
@@ -98,8 +98,8 @@ class C
     {
         string s = null;
 
-        s
-            [|=|] null;
+        s[|
+|]            = null;
     }
 }
 ", @"
@@ -122,8 +122,8 @@ class C
         await VerifyDiagnosticAndFixAsync(@"
 class C
 {
-    string P { get; } [|=|]
-        null;
+    string P { get; } =[|
+|]        null;
 }
 ", @"
 class C
@@ -140,8 +140,8 @@ class C
         await VerifyDiagnosticAndFixAsync(@"
 class C
 {
-    string P { get; }
-        [|=|] null;
+    string P { get; }[|
+|]        = null;
 }
 ", @"
 class C
@@ -158,8 +158,8 @@ class C
         await VerifyDiagnosticAndFixAsync(@"
 class C
 {
-    string F [|=|]
-        null;
+    string F =[|
+|]        null;
 }
 ", @"
 class C
@@ -176,8 +176,8 @@ class C
         await VerifyDiagnosticAndFixAsync(@"
 class C
 {
-    string F
-        [|=|] null;
+    string F[|
+|]        = null;
 }
 ", @"
 class C
@@ -194,8 +194,8 @@ class C
         await VerifyDiagnosticAndFixAsync(@"
 class C
 {
-    void M(string p [|=|]
-        null)
+    void M(string p =[|
+|]        null)
     {
     }
 }
@@ -216,8 +216,8 @@ class C
         await VerifyDiagnosticAndFixAsync(@"
 class C
 {
-    void M(string p
-        [|=|] null)
+    void M(string p[|
+|]        = null)
     {
     }
 }
@@ -235,7 +235,7 @@ class C
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.PlaceNewLineAfterOrBeforeEqualsToken)]
     public async Task Test_AnonymousType_BeforeInsteadOfAfter()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyDiagnosticAndFixAsync("""
 using System.Linq;
 using System.Collections.Generic;
 
@@ -244,11 +244,11 @@ class C
     void M()
     {
         List<string> list = null;
-        var x = list.Select(f => new { X [|=|]
-            """" });
+        var x = list.Select(f => new { X =[|
+|]            "" });
     }
 }
-", @"
+""", """
 using System.Linq;
 using System.Collections.Generic;
 
@@ -258,16 +258,16 @@ class C
     {
         List<string> list = null;
         var x = list.Select(f => new { X
-            = """" });
+            = "" });
     }
 }
-", options: Options.AddConfigOption(ConfigOptionKeys.EqualsTokenNewLine, "before"));
+""", options: Options.AddConfigOption(ConfigOptionKeys.EqualsTokenNewLine, "before"));
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.PlaceNewLineAfterOrBeforeEqualsToken)]
     public async Task Test_AnonymousType_AfterInsteadOfBefore()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyDiagnosticAndFixAsync("""
 using System.Linq;
 using System.Collections.Generic;
 
@@ -276,11 +276,11 @@ class C
     void M()
     {
         List<string> list = null;
-        var x = list.Select(f => new { X
-            [|=|] """" });
+        var x = list.Select(f => new { X[|
+|]            = "" });
     }
 }
-", @"
+""", """
 using System.Linq;
 using System.Collections.Generic;
 
@@ -290,62 +290,62 @@ class C
     {
         List<string> list = null;
         var x = list.Select(f => new { X =
-            """" });
+            "" });
     }
 }
-", options: Options.AddConfigOption(ConfigOptionKeys.EqualsTokenNewLine, "after"));
+""", options: Options.AddConfigOption(ConfigOptionKeys.EqualsTokenNewLine, "after"));
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.PlaceNewLineAfterOrBeforeEqualsToken)]
     public async Task Test_AttributeArgument_BeforeInsteadOfAfter()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyDiagnosticAndFixAsync("""
 using System.Diagnostics;
 
-[DebuggerDisplay("""", Name [|=|]
-    ""x"")]
+[DebuggerDisplay("", Name =[|
+|]    "x")]
 class C
 {
 }
-", @"
+""", """
 using System.Diagnostics;
 
-[DebuggerDisplay("""", Name
-    = ""x"")]
+[DebuggerDisplay("", Name
+    = "x")]
 class C
 {
 }
-", options: Options.AddConfigOption(ConfigOptionKeys.EqualsTokenNewLine, "before"));
+""", options: Options.AddConfigOption(ConfigOptionKeys.EqualsTokenNewLine, "before"));
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.PlaceNewLineAfterOrBeforeEqualsToken)]
     public async Task Test_AttributeArgument_AfterInsteadOfBefore()
     {
-        await VerifyDiagnosticAndFixAsync(@"
+        await VerifyDiagnosticAndFixAsync("""
 using System.Diagnostics;
 
-[DebuggerDisplay("""", Name
-    [|=|] ""x"")]
+[DebuggerDisplay("", Name[|
+|]    = "x")]
 class C
 {
 }
-", @"
+""", """
 using System.Diagnostics;
 
-[DebuggerDisplay("""", Name =
-    ""x"")]
+[DebuggerDisplay("", Name =
+    "x")]
 class C
 {
 }
-", options: Options.AddConfigOption(ConfigOptionKeys.EqualsTokenNewLine, "after"));
+""", options: Options.AddConfigOption(ConfigOptionKeys.EqualsTokenNewLine, "after"));
     }
 
     [Fact, Trait(Traits.Analyzer, DiagnosticIdentifiers.PlaceNewLineAfterOrBeforeEqualsToken)]
     public async Task Test_AttributeArgument_UsingAlias_Before()
     {
         await VerifyDiagnosticAndFixAsync(@"
-using S [|=|]
-    System.String;
+using S =[|
+|]    System.String;
 
 class C
 {
@@ -364,8 +364,8 @@ class C
     public async Task Test_AttributeArgument_UsingAlias_After()
     {
         await VerifyDiagnosticAndFixAsync(@"
-using S
-    [|=|] System.String;
+using S[|
+|]    = System.String;
 
 class C
 {

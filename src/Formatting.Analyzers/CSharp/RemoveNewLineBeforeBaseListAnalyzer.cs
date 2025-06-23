@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Text;
 using Roslynator.CSharp;
 
 namespace Roslynator.Formatting.CSharp;
@@ -34,7 +33,9 @@ public sealed class RemoveNewLineBeforeBaseListAnalyzer : BaseDiagnosticAnalyzer
             f => AnalyzeTypeDeclaration(f),
             SyntaxKind.ClassDeclaration,
             SyntaxKind.StructDeclaration,
+#if ROSLYN_4_0
             SyntaxKind.RecordStructDeclaration,
+#endif
             SyntaxKind.InterfaceDeclaration);
 
         context.RegisterSyntaxNodeAction(f => AnalyzeEnumDeclaration(f), SyntaxKind.EnumDeclaration);
@@ -74,17 +75,18 @@ public sealed class RemoveNewLineBeforeBaseListAnalyzer : BaseDiagnosticAnalyzer
 
     private static void Analyze(SyntaxNodeAnalysisContext context, BaseListSyntax baseList, SyntaxToken previousToken)
     {
-        SyntaxTriviaList trailingTrivia = previousToken.TrailingTrivia;
+        TriviaBlock block = TriviaBlock.FromBetween(previousToken, baseList);
 
-        if (!SyntaxTriviaAnalysis.IsOptionalWhitespaceThenEndOfLineTrivia(trailingTrivia))
+        if (!block.Success)
             return;
 
-        if (!baseList.ColonToken.LeadingTrivia.IsEmptyOrWhitespace())
-            return;
-
-        DiagnosticHelpers.ReportDiagnostic(
-            context,
-            DiagnosticRules.RemoveNewLineBeforeBaseList,
-            Location.Create(baseList.SyntaxTree, new TextSpan(trailingTrivia.Last().SpanStart, 0)));
+        if (block.Kind != TriviaBlockKind.NoNewLine
+            && !block.ContainsComment)
+        {
+            DiagnosticHelpers.ReportDiagnostic(
+                context,
+                DiagnosticRules.RemoveNewLineBeforeBaseList,
+                block.GetLocation());
+        }
     }
 }

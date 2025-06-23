@@ -9,7 +9,6 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Roslynator.CSharp;
-using Roslynator.Formatting.CSharp;
 
 namespace Roslynator.Formatting.CodeFixes.CSharp;
 
@@ -42,32 +41,32 @@ public sealed class AccessorDeclarationCodeFixProvider : BaseCodeFixProvider
         {
             case DiagnosticIdentifiers.FormatAccessorBraces:
             case DiagnosticIdentifiers.FormatAccessorBracesOnSingleLineWhenExpressionIsOnSingleLine:
-                {
-                    bool isSingleLine = accessorDeclaration.IsSingleLine(includeExteriorTrivia: false);
-                    string title = (isSingleLine)
-                        ? "Format braces on multiple lines"
-                        : "Format braces on a single line";
+            {
+                bool isSingleLine = accessorDeclaration.IsSingleLine(includeExteriorTrivia: false);
+                string title = (isSingleLine)
+                    ? "Format braces on multiple lines"
+                    : "Format braces on a single line";
 
-                    CodeAction codeAction = CodeAction.Create(
-                        title,
-                        ct => (isSingleLine)
-                            ? FormatAccessorBracesOnMultipleLinesAsync(document, accessorDeclaration, ct)
-                            : FormatAccessorBracesOnSingleLineAsync(document, accessorDeclaration, ct),
-                        GetEquivalenceKey(diagnostic));
+                CodeAction codeAction = CodeAction.Create(
+                    title,
+                    ct => (isSingleLine)
+                        ? FormatAccessorBracesOnMultipleLinesAsync(document, accessorDeclaration, ct)
+                        : FormatAccessorBracesOnSingleLineAsync(document, accessorDeclaration, ct),
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
             case DiagnosticIdentifiers.PutFullAccessorOnItsOwnLine:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        "Put accessor on its own line",
-                        ct => PutAccessorOnItsOwnLineAsync(accessorDeclaration, document, ct),
-                        GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Put accessor on its own line",
+                    ct => PutAccessorOnItsOwnLineAsync(accessorDeclaration, document, ct),
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
         }
     }
 

@@ -39,17 +39,14 @@ public sealed class PutConstructorInitializerOnItsOwnLineAnalyzer : BaseDiagnost
 
         SyntaxToken colonToken = constructorInitializer.ColonToken;
 
-        if (colonToken.LeadingTrivia.Any())
-            return;
+        TriviaBlock block = TriviaBlock.FromBetween(colonToken.GetPreviousToken(), colonToken);
 
-        var constructorDeclaration = (ConstructorDeclarationSyntax)constructorInitializer.Parent;
-
-        if (!constructorDeclaration.ParameterList.GetTrailingTrivia().SingleOrDefault(shouldThrow: false).IsWhitespaceTrivia())
-            return;
-
-        DiagnosticHelpers.ReportDiagnostic(
-            context,
-            DiagnosticRules.PutConstructorInitializerOnItsOwnLine,
-            Location.Create(colonToken.SyntaxTree, colonToken.Span.WithLength(0)));
+        if (block.Kind == TriviaBlockKind.NoNewLine)
+        {
+            DiagnosticHelpers.ReportDiagnostic(
+                context,
+                DiagnosticRules.PutConstructorInitializerOnItsOwnLine,
+                block.GetLocation());
+        }
     }
 }

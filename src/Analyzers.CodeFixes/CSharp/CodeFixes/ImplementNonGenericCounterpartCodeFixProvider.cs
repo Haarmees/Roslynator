@@ -26,7 +26,7 @@ public sealed class ImplementNonGenericCounterpartCodeFixProvider : BaseCodeFixP
 
     internal readonly string ExplicitEquivalenceKey;
 
-    private const string IComparableCompareText = @"
+    private const string IComparableCompareText = """
 public int global::System.IComparable.CompareTo(object obj)
 {
     if (obj == null)
@@ -39,11 +39,11 @@ public int global::System.IComparable.CompareTo(object obj)
         return CompareTo(x);
     }
 
-    throw new global::System.ArgumentException("""", nameof(obj));
+    throw new global::System.ArgumentException("", nameof(obj));
 }
-";
+""";
 
-    private const string IComparerCompareText = @"
+    private const string IComparerCompareText = """
 public int global::System.Collections.IComparer.Compare(object x, object y)
 {
     if (x == y)
@@ -67,11 +67,11 @@ public int global::System.Collections.IComparer.Compare(object x, object y)
         return Compare(a, b);
     }
 
-    throw new global::System.ArgumentException("""", nameof(x));
+    throw new global::System.ArgumentException("", nameof(x));
 }
-";
+""";
 
-    private const string IEqualityComparerEqualsText = @"
+    private const string IEqualityComparerEqualsText = """
 new public bool global::System.Collections.IEqualityComparer.Equals(object x, object y)
 {
     if (x == y)
@@ -90,11 +90,11 @@ new public bool global::System.Collections.IEqualityComparer.Equals(object x, ob
         return Equals(a, b);
     }
 
-    throw new global::System.ArgumentException("""", nameof(x));
+    throw new global::System.ArgumentException("", nameof(x));
 }
-";
+""";
 
-    private const string IEqualityComparerGetHashCodeText = @"
+    private const string IEqualityComparerGetHashCodeText = """
 public int global::System.Collections.IEqualityComparer.GetHashCode(object obj)
 {
     if (obj == null)
@@ -107,9 +107,9 @@ public int global::System.Collections.IEqualityComparer.GetHashCode(object obj)
         return GetHashCode(x);
     }
 
-    throw new global::System.ArgumentException("""", nameof(obj));
+    throw new global::System.ArgumentException("", nameof(obj));
 }
-";
+""";
 
     private static readonly Lazy<MethodDeclarationSyntax> _lazyIComparableCompare = new(() => CreateMethodDeclaration(IComparableCompareText, explicitInterfaceImplementation: false));
     private static readonly Lazy<MethodDeclarationSyntax> _lazyIComparerCompare = new(() => CreateMethodDeclaration(IComparerCompareText, explicitInterfaceImplementation: false));
@@ -203,75 +203,75 @@ public int global::System.Collections.IEqualityComparer.GetHashCode(object obj)
         switch (interfaceName)
         {
             case "IComparable":
-                {
-                    TypeSyntax type = interfaces
-                        .First(f => f.HasMetadataName(MetadataNames.System_IComparable_T))
-                        .TypeArguments
-                        .Single()
-                        .ToTypeSyntax()
-                        .WithSimplifierAnnotation();
+            {
+                TypeSyntax type = interfaces
+                    .First(f => f.HasMetadataName(MetadataNames.System_IComparable_T))
+                    .TypeArguments
+                    .Single()
+                    .ToTypeSyntax()
+                    .WithSimplifierAnnotation();
 
-                    var rewriter = new AddTypeNameRewriter(type);
+                var rewriter = new AddTypeNameRewriter(type);
 
-                    MethodDeclarationSyntax methodDeclaration = (explicitImplementation) ? _lazyIComparableCompareExplicit.Value : _lazyIComparableCompare.Value;
+                MethodDeclarationSyntax methodDeclaration = (explicitImplementation) ? _lazyIComparableCompareExplicit.Value : _lazyIComparableCompare.Value;
 
-                    methodDeclaration = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodDeclaration);
+                methodDeclaration = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodDeclaration);
 
-                    newTypeDeclaration = MemberDeclarationInserter.Default.Insert(typeDeclaration, methodDeclaration);
+                newTypeDeclaration = MemberDeclarationInserter.Default.Insert(typeDeclaration, methodDeclaration);
 
-                    interfaceType = SyntaxFactory.ParseTypeName("global::System.IComparable").WithSimplifierAnnotation();
-                    break;
-                }
+                interfaceType = SyntaxFactory.ParseTypeName("global::System.IComparable").WithSimplifierAnnotation();
+                break;
+            }
             case "IComparer":
-                {
-                    TypeSyntax type = interfaces
-                        .First(f => f.HasMetadataName(MetadataNames.System_Collections_Generic_IComparer_T))
-                        .TypeArguments
-                        .Single()
-                        .ToTypeSyntax()
-                        .WithSimplifierAnnotation();
+            {
+                TypeSyntax type = interfaces
+                    .First(f => f.HasMetadataName(MetadataNames.System_Collections_Generic_IComparer_T))
+                    .TypeArguments
+                    .Single()
+                    .ToTypeSyntax()
+                    .WithSimplifierAnnotation();
 
-                    var rewriter = new AddTypeNameRewriter(type);
+                var rewriter = new AddTypeNameRewriter(type);
 
-                    MethodDeclarationSyntax methodDeclaration = (explicitImplementation) ? _lazyIComparerCompareExplicit.Value : _lazyIComparerCompare.Value;
+                MethodDeclarationSyntax methodDeclaration = (explicitImplementation) ? _lazyIComparerCompareExplicit.Value : _lazyIComparerCompare.Value;
 
-                    methodDeclaration = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodDeclaration);
+                methodDeclaration = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(methodDeclaration);
 
-                    newTypeDeclaration = MemberDeclarationInserter.Default.Insert(typeDeclaration, methodDeclaration);
+                newTypeDeclaration = MemberDeclarationInserter.Default.Insert(typeDeclaration, methodDeclaration);
 
-                    interfaceType = SyntaxFactory.ParseTypeName("global::System.Collections.IComparer").WithSimplifierAnnotation();
-                    break;
-                }
+                interfaceType = SyntaxFactory.ParseTypeName("global::System.Collections.IComparer").WithSimplifierAnnotation();
+                break;
+            }
             case "IEqualityComparer":
-                {
-                    TypeSyntax type = interfaces
-                        .First(f => f.HasMetadataName(MetadataNames.System_Collections_Generic_IEqualityComparer_T))
-                        .TypeArguments
-                        .Single()
-                        .ToTypeSyntax()
-                        .WithSimplifierAnnotation();
+            {
+                TypeSyntax type = interfaces
+                    .First(f => f.HasMetadataName(MetadataNames.System_Collections_Generic_IEqualityComparer_T))
+                    .TypeArguments
+                    .Single()
+                    .ToTypeSyntax()
+                    .WithSimplifierAnnotation();
 
-                    var rewriter = new AddTypeNameRewriter(type);
+                var rewriter = new AddTypeNameRewriter(type);
 
-                    MethodDeclarationSyntax equalsMethod = (explicitImplementation) ? _lazyIEqualityComparerEqualsExplicit.Value : _lazyIEqualityComparerEquals.Value;
+                MethodDeclarationSyntax equalsMethod = (explicitImplementation) ? _lazyIEqualityComparerEqualsExplicit.Value : _lazyIEqualityComparerEquals.Value;
 
-                    equalsMethod = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(equalsMethod);
+                equalsMethod = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(equalsMethod);
 
-                    newTypeDeclaration = MemberDeclarationInserter.Default.Insert(typeDeclaration, equalsMethod);
+                newTypeDeclaration = MemberDeclarationInserter.Default.Insert(typeDeclaration, equalsMethod);
 
-                    MethodDeclarationSyntax getHashCodeMethod = (explicitImplementation) ? _lazyIEqualityComparerGetHashCodeExplicit.Value : _lazyIEqualityComparerGetHashCode.Value;
+                MethodDeclarationSyntax getHashCodeMethod = (explicitImplementation) ? _lazyIEqualityComparerGetHashCodeExplicit.Value : _lazyIEqualityComparerGetHashCode.Value;
 
-                    getHashCodeMethod = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(getHashCodeMethod);
+                getHashCodeMethod = (MethodDeclarationSyntax)rewriter.VisitMethodDeclaration(getHashCodeMethod);
 
-                    newTypeDeclaration = MemberDeclarationInserter.Default.Insert(newTypeDeclaration, getHashCodeMethod);
+                newTypeDeclaration = MemberDeclarationInserter.Default.Insert(newTypeDeclaration, getHashCodeMethod);
 
-                    interfaceType = SyntaxFactory.ParseTypeName("global::System.Collections.IEqualityComparer").WithSimplifierAnnotation();
-                    break;
-                }
+                interfaceType = SyntaxFactory.ParseTypeName("global::System.Collections.IEqualityComparer").WithSimplifierAnnotation();
+                break;
+            }
             default:
-                {
-                    throw new InvalidOperationException();
-                }
+            {
+                throw new InvalidOperationException();
+            }
         }
 
         SimpleBaseTypeSyntax baseType = SyntaxFactory.SimpleBaseType(interfaceType);
@@ -303,7 +303,10 @@ public int global::System.Collections.IEqualityComparer.GetHashCode(object obj)
             newTypeDeclaration = recordDeclaration.WithBaseList(baseList.WithTypes(baseTypes));
         }
         else if (kind == SyntaxKind.StructDeclaration
-            || kind == SyntaxKind.RecordStructDeclaration)
+#if ROSLYN_4_0
+            || kind == SyntaxKind.RecordStructDeclaration
+#endif
+            )
         {
             var structDeclaration = (StructDeclarationSyntax)newTypeDeclaration;
 
@@ -344,16 +347,6 @@ public int global::System.Collections.IEqualityComparer.GetHashCode(object obj)
     }
 
     private class AddSimplifierAnnotationRewriter : CSharpSyntaxRewriter
-    {
-        public static AddSimplifierAnnotationRewriter Instance { get; } = new();
-
-        public override SyntaxNode VisitQualifiedName(QualifiedNameSyntax node)
-        {
-            return node.WithSimplifierAnnotation();
-        }
-    }
-
-    private class RemoveExplicitInterfaceSpecifierAddSimplifierAnnotationRewriter : CSharpSyntaxRewriter
     {
         public static AddSimplifierAnnotationRewriter Instance { get; } = new();
 

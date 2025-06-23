@@ -18,6 +18,16 @@ namespace Roslynator.CommandLine.Rename;
 
 internal class CliSymbolRenameState : SymbolRenameState
 {
+    private static readonly SymbolDisplayFormat _symbolDefinitionFormat = SymbolDisplayFormat.CSharpErrorMessageFormat.Update(
+        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+        parameterOptions: SymbolDisplayParameterOptions.IncludeParamsRefOut
+            | SymbolDisplayParameterOptions.IncludeType
+            | SymbolDisplayParameterOptions.IncludeName
+            | SymbolDisplayParameterOptions.IncludeDefaultValue,
+        miscellaneousOptions: SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers
+            | SymbolDisplayMiscellaneousOptions.UseSpecialTypes
+            | SymbolDisplayMiscellaneousOptions.UseErrorTypeSymbolName);
+
     public CliSymbolRenameState(
         Solution solution,
         Func<ISymbol, bool> predicate,
@@ -73,13 +83,13 @@ internal class CliSymbolRenameState : SymbolRenameState
 
                 await AnalyzeProjectAsync(project, renameScopes[i], cancellationToken);
 
-                WriteLine($"  Done renaming {GetScopePluralName(renameScopes[i])} in '{project.Name}' in {stopwatch.Elapsed - lastElapsed:mm\\:ss\\.ff}", Verbosity.Normal);
+                LogHelpers.WriteElapsedTime($"  Renamed {GetScopePluralName(renameScopes[i])} in '{project.Name}'", stopwatch.Elapsed - lastElapsed, Verbosity.Normal);
             }
         }
 
         stopwatch.Stop();
 
-        WriteLine($"Done renaming symbols in solution '{CurrentSolution.FilePath}' in {stopwatch.Elapsed:mm\\:ss\\.ff}", Verbosity.Minimal);
+        LogHelpers.WriteElapsedTime($"Renamed symbols in solution '{CurrentSolution.FilePath}'", stopwatch.Elapsed, Verbosity.Minimal);
     }
 
     public override async Task RenameSymbolsAsync(Project project, CancellationToken cancellationToken = default)
@@ -103,7 +113,9 @@ internal class CliSymbolRenameState : SymbolRenameState
         Document document,
         CancellationToken cancellationToken)
     {
-        LogHelpers.WriteSymbolDefinition(symbol, baseDirectoryPath: Path.GetDirectoryName(document.Project.FilePath), "    ", Verbosity.Normal);
+        string text = DiagnosticFormatter.FormatSymbolDefinition(symbol, baseDirectoryPath: Path.GetDirectoryName(document.Project.FilePath), "    ", _symbolDefinitionFormat);
+
+        WriteLine(text, ConsoleColors.Cyan, Verbosity.Normal);
 
         if (ShouldWrite(Verbosity.Detailed)
             || CodeContext >= 0)
@@ -190,29 +202,29 @@ internal class CliSymbolRenameState : SymbolRenameState
                     {
                         case DialogResult.None:
                         case DialogResult.No:
-                            {
-                                ignoreIds?.Add(symbolId);
-                                return default;
-                            }
+                        {
+                            ignoreIds?.Add(symbolId);
+                            return default;
+                        }
                         case DialogResult.NoToAll:
-                            {
-                                ErrorResolution = CliCompilationErrorResolution.Skip;
-                                ignoreIds?.Add(symbolId);
-                                return default;
-                            }
+                        {
+                            ErrorResolution = CliCompilationErrorResolution.Skip;
+                            ignoreIds?.Add(symbolId);
+                            return default;
+                        }
                         case DialogResult.Yes:
-                            {
-                                break;
-                            }
+                        {
+                            break;
+                        }
                         case DialogResult.YesToAll:
-                            {
-                                ErrorResolution = CliCompilationErrorResolution.None;
-                                break;
-                            }
+                        {
+                            ErrorResolution = CliCompilationErrorResolution.None;
+                            break;
+                        }
                         default:
-                            {
-                                throw new InvalidOperationException();
-                            }
+                        {
+                            throw new InvalidOperationException();
+                        }
                     }
                 }
                 else if (ErrorResolution == CliCompilationErrorResolution.Abort)
@@ -236,29 +248,29 @@ internal class CliSymbolRenameState : SymbolRenameState
             {
                 case DialogResult.None:
                 case DialogResult.No:
-                    {
-                        ignoreIds?.Add(symbolId);
-                        return default;
-                    }
+                {
+                    ignoreIds?.Add(symbolId);
+                    return default;
+                }
                 case DialogResult.NoToAll:
-                    {
-                        DryRun = true;
-                        ignoreIds?.Add(symbolId);
-                        return default;
-                    }
+                {
+                    DryRun = true;
+                    ignoreIds?.Add(symbolId);
+                    return default;
+                }
                 case DialogResult.Yes:
-                    {
-                        break;
-                    }
+                {
+                    break;
+                }
                 case DialogResult.YesToAll:
-                    {
-                        Ask = false;
-                        break;
-                    }
+                {
+                    Ask = false;
+                    break;
+                }
                 default:
-                    {
-                        throw new InvalidOperationException();
-                    }
+                {
+                    throw new InvalidOperationException();
+                }
             }
         }
 

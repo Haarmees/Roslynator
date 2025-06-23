@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Roslynator.CSharp;
-using Roslynator.Formatting.CSharp;
 
 namespace Roslynator.Formatting.CodeFixes.CSharp;
 
@@ -34,15 +33,15 @@ public sealed class InitializerCodeFixProvider : BaseCodeFixProvider
         switch (diagnostic.Id)
         {
             case DiagnosticIdentifiers.PutInitializerOnSingleLine:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        "Put initializer on a single line",
-                        ct => SyntaxFormatter.ToSingleLineAsync(document, initializer, removeTrailingComma: true, ct),
-                        GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Put initializer on a single line",
+                    ct => SyntaxFormatter.ToSingleLineAsync(document, initializer, removeTrailingComma: false, ct),
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
         }
     }
 }

@@ -1,9 +1,11 @@
 ﻿// Copyright (c) .NET Foundation and Contributors. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Roslynator.CSharp.Syntax;
@@ -25,8 +27,10 @@ internal static class AccessModifierRefactoring
         if (node.IsKind(
             SyntaxKind.ClassDeclaration,
             SyntaxKind.InterfaceDeclaration,
-            SyntaxKind.StructDeclaration,
-            SyntaxKind.RecordStructDeclaration))
+#if ROSLYN_4_0
+            SyntaxKind.RecordStructDeclaration,
+#endif
+            SyntaxKind.StructDeclaration))
         {
             SemanticModel semanticModel = await context.GetSemanticModelAsync().ConfigureAwait(false);
 
@@ -36,26 +40,42 @@ internal static class AccessModifierRefactoring
 
             if (syntaxReferences.Length > 1)
             {
-                ImmutableArray<MemberDeclarationSyntax> memberDeclarations = ImmutableArray.CreateRange(
-                    syntaxReferences,
-                    f => (MemberDeclarationSyntax)f.GetSyntax(context.CancellationToken));
+                ImmutableArray<MemberDeclarationSyntax>.Builder memberDeclarations = ImmutableArray.CreateBuilder<MemberDeclarationSyntax>();
+
+                foreach (SyntaxReference syntaxReference in syntaxReferences)
+                {
+                    SyntaxNode declaration = await syntaxReference.GetSyntaxAsync(context.CancellationToken).ConfigureAwait(false);
+
+                    if (node.RawKind != declaration.RawKind)
+                        return;
+
+                    memberDeclarations.Add((MemberDeclarationSyntax)declaration);
+                }
+
+                ImmutableArray<CodeAction>.Builder typeDeclarationActions = ImmutableArray.CreateBuilder<CodeAction>();
 
                 foreach (Accessibility accessibility in AvailableAccessibilities)
                 {
                     if (accessibility != modifiersInfo.ExplicitAccessibility
                         && SyntaxAccessibility.IsValidAccessibility(node, accessibility))
                     {
-                        context.RegisterRefactoring(
-                            GetTitle(accessibility),
-                            ct => RefactorAsync(context.Solution, memberDeclarations, accessibility, ct),
+                        typeDeclarationActions.Add(CodeActionFactory.Create(
+                            SyntaxFacts.GetText(accessibility),
+                            ct => RefactorAsync(context.Solution, memberDeclarations.ToImmutable(), accessibility, ct),
                             RefactoringDescriptors.ChangeAccessibility,
-                            accessibility.ToString());
+                            accessibility.ToString()));
                     }
                 }
+
+                context.RegisterRefactoring(
+                    "Change accessibility to",
+                    typeDeclarationActions.ToImmutable());
 
                 return;
             }
         }
+
+        ImmutableArray<CodeAction>.Builder codeActions = ImmutableArray.CreateBuilder<CodeAction>();
 
         foreach (Accessibility accessibility in AvailableAccessibilities)
         {
@@ -70,22 +90,26 @@ internal static class AccessModifierRefactoring
             {
                 if (SyntaxAccessibility.IsValidAccessibility(node, accessibility, ignoreOverride: true))
                 {
-                    context.RegisterRefactoring(
-                        GetTitle(accessibility),
+                    codeActions.Add(CodeActionFactory.Create(
+                        SyntaxFacts.GetText(accessibility),
                         ct => RefactorAsync(context.Solution, symbol, accessibility, ct),
                         RefactoringDescriptors.ChangeAccessibility,
-                        accessibility.ToString());
+                        accessibility.ToString()));
                 }
             }
             else if (SyntaxAccessibility.IsValidAccessibility(node, accessibility))
             {
-                context.RegisterRefactoring(
-                    GetTitle(accessibility),
+                codeActions.Add(CodeActionFactory.Create(
+                    SyntaxFacts.GetText(accessibility),
                     ct => RefactorAsync(context.Document, node, accessibility, ct),
                     RefactoringDescriptors.ChangeAccessibility,
-                    accessibility.ToString());
+                    accessibility.ToString()));
             }
         }
+
+        context.RegisterRefactoring(
+            "Change accessibility to",
+            codeActions.ToImmutable());
 
         ISymbol GetBaseSymbolOrDefault(SemanticModel semanticModel, CancellationToken cancellationToken)
         {

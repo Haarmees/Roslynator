@@ -78,7 +78,6 @@ public readonly struct GenericInfo
     /// <summary>
     /// Searches for a type parameter with the specified name and returns the first occurrence within the type parameters.
     /// </summary>
-    /// <param name="name"></param>
     public TypeParameterSyntax? FindTypeParameter(string name)
     {
         foreach (TypeParameterSyntax typeParameter in TypeParameters)
@@ -93,7 +92,6 @@ public readonly struct GenericInfo
     /// <summary>
     /// Searches for a constraint clause with the specified type parameter name and returns the first occurrence within the constraint clauses.
     /// </summary>
-    /// <param name="typeParameterName"></param>
     public TypeParameterConstraintClauseSyntax? FindConstraintClause(string typeParameterName)
     {
         foreach (TypeParameterConstraintClauseSyntax constraintClause in ConstraintClauses)
@@ -134,35 +132,37 @@ public readonly struct GenericInfo
             case SyntaxKind.ClassDeclaration:
             case SyntaxKind.InterfaceDeclaration:
             case SyntaxKind.StructDeclaration:
-            case SyntaxKind.RecordStructDeclaration:
             case SyntaxKind.RecordDeclaration:
-                {
-                    return new GenericInfo((TypeDeclarationSyntax)node);
-                }
+#if ROSLYN_4_0
+            case SyntaxKind.RecordStructDeclaration:
+#endif
+            {
+                return new GenericInfo((TypeDeclarationSyntax)node);
+            }
             case SyntaxKind.DelegateDeclaration:
-                {
-                    return new GenericInfo((DelegateDeclarationSyntax)node);
-                }
+            {
+                return new GenericInfo((DelegateDeclarationSyntax)node);
+            }
             case SyntaxKind.LocalFunctionStatement:
-                {
-                    return new GenericInfo((LocalFunctionStatementSyntax)node);
-                }
+            {
+                return new GenericInfo((LocalFunctionStatementSyntax)node);
+            }
             case SyntaxKind.MethodDeclaration:
-                {
-                    return new GenericInfo((MethodDeclarationSyntax)node);
-                }
+            {
+                return new GenericInfo((MethodDeclarationSyntax)node);
+            }
             case SyntaxKind.TypeParameterList:
-                {
-                    return Create((TypeParameterListSyntax)node);
-                }
+            {
+                return Create((TypeParameterListSyntax)node);
+            }
             case SyntaxKind.TypeParameter:
-                {
-                    return Create((TypeParameterSyntax)node);
-                }
+            {
+                return Create((TypeParameterSyntax)node);
+            }
             case SyntaxKind.TypeParameterConstraintClause:
-                {
-                    return Create((TypeParameterConstraintClauseSyntax)node);
-                }
+            {
+                return Create((TypeParameterConstraintClauseSyntax)node);
+            }
         }
 
         if (node is TypeParameterConstraintSyntax typeParameterConstraint)
@@ -226,7 +226,6 @@ public readonly struct GenericInfo
     /// <summary>
     /// Creates a new <see cref="GenericInfo"/> with the type parameter list updated.
     /// </summary>
-    /// <param name="typeParameterList"></param>
     public GenericInfo WithTypeParameterList(TypeParameterListSyntax typeParameterList)
     {
         ThrowInvalidOperationIfNotInitialized();
@@ -244,7 +243,9 @@ public readonly struct GenericInfo
             case SyntaxKind.MethodDeclaration:
                 return new GenericInfo(((MethodDeclarationSyntax)Node).WithTypeParameterList(typeParameterList));
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return new GenericInfo(((RecordDeclarationSyntax)Node).WithTypeParameterList(typeParameterList));
             case SyntaxKind.StructDeclaration:
                 return new GenericInfo(((StructDeclarationSyntax)Node).WithTypeParameterList(typeParameterList));
@@ -257,7 +258,6 @@ public readonly struct GenericInfo
     /// <summary>
     /// Creates a new <see cref="GenericInfo"/> with the specified type parameter removed.
     /// </summary>
-    /// <param name="typeParameter"></param>
     public GenericInfo RemoveTypeParameter(TypeParameterSyntax typeParameter)
     {
         ThrowInvalidOperationIfNotInitialized();
@@ -277,7 +277,9 @@ public readonly struct GenericInfo
             case SyntaxKind.MethodDeclaration:
                 return new GenericInfo(((MethodDeclarationSyntax)self.Node).WithTypeParameterList(RemoveTypeParameter()));
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return new GenericInfo(((RecordDeclarationSyntax)self.Node).WithTypeParameterList(RemoveTypeParameter()));
             case SyntaxKind.StructDeclaration:
                 return new GenericInfo(((StructDeclarationSyntax)self.Node).WithTypeParameterList(RemoveTypeParameter()));
@@ -307,7 +309,6 @@ public readonly struct GenericInfo
     /// <summary>
     /// Creates a new <see cref="GenericInfo"/> with the constraint clauses updated.
     /// </summary>
-    /// <param name="constraintClauses"></param>
     public GenericInfo WithConstraintClauses(SyntaxList<TypeParameterConstraintClauseSyntax> constraintClauses)
     {
         ThrowInvalidOperationIfNotInitialized();
@@ -325,7 +326,9 @@ public readonly struct GenericInfo
             case SyntaxKind.MethodDeclaration:
                 return new GenericInfo(((MethodDeclarationSyntax)Node).WithConstraintClauses(constraintClauses));
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return new GenericInfo(((RecordDeclarationSyntax)Node).WithConstraintClauses(constraintClauses));
             case SyntaxKind.StructDeclaration:
                 return new GenericInfo(((StructDeclarationSyntax)Node).WithConstraintClauses(constraintClauses));
@@ -338,7 +341,6 @@ public readonly struct GenericInfo
     /// <summary>
     /// Creates a new <see cref="GenericInfo"/> with the specified constraint clause removed.
     /// </summary>
-    /// <param name="constraintClause"></param>
     public GenericInfo RemoveConstraintClause(TypeParameterConstraintClauseSyntax constraintClause)
     {
         ThrowInvalidOperationIfNotInitialized();
@@ -356,7 +358,9 @@ public readonly struct GenericInfo
             case SyntaxKind.MethodDeclaration:
                 return new GenericInfo(((MethodDeclarationSyntax)Node).WithConstraintClauses(ConstraintClauses.Remove(constraintClause)));
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return new GenericInfo(((RecordDeclarationSyntax)Node).WithConstraintClauses(ConstraintClauses.Remove(constraintClause)));
             case SyntaxKind.StructDeclaration:
                 return new GenericInfo(((StructDeclarationSyntax)Node).WithConstraintClauses(ConstraintClauses.Remove(constraintClause)));

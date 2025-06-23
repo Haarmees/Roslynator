@@ -1,4 +1,5 @@
-﻿// Copyright (c) .NET Foundation and Contributors. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+﻿#if ROSLYN_4_0
+// Copyright (c) .NET Foundation and Contributors. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -16,8 +17,8 @@ public class RCS0060BlankLineAfterFileScopedNamespaceDeclarationTests : Abstract
     public async Task Test_AddEmptyLine()
     {
         await VerifyDiagnosticAndFixAsync(@"
-namespace A.B;
-[||]class C
+namespace A.B;[|
+|]class C
 {
 }
 ", @"
@@ -33,8 +34,8 @@ class C
     public async Task Test_AddEmptyLine2()
     {
         await VerifyDiagnosticAndFixAsync(@"
-namespace A.B;  
-[||]class C
+namespace A.B;  [|
+|]class C
 {
 }
 ", @"
@@ -50,8 +51,8 @@ class C
     public async Task Test_AddEmptyLine3()
     {
         await VerifyDiagnosticAndFixAsync(@"
-namespace A.B;  //x
-[||]class C
+namespace A.B;  //x[|
+|]class C
 {
 }
 ", @"
@@ -67,8 +68,8 @@ class C
     public async Task Test_AddEmptyLine4()
     {
         await VerifyDiagnosticAndFixAsync(@"
-namespace A.B;//x
-[||]class C
+namespace A.B;//x[|
+|]class C
 {
 }
 ", @"
@@ -84,7 +85,7 @@ class C
     public async Task Test_AddEmptyLine5()
     {
         await VerifyDiagnosticAndFixAsync(@"
-namespace A.B;[||]class C
+namespace A.B;[|c|]lass C
 {
 }
 ", @"
@@ -100,7 +101,7 @@ class C
     public async Task Test_AddEmptyLine6()
     {
         await VerifyDiagnosticAndFixAsync(@"
-namespace A.B;  [||]class C
+namespace A.B;[|  |]class C
 {
 }
 ", @"
@@ -116,8 +117,8 @@ class C
     public async Task Test_AddEmptyLine7()
     {
         await VerifyDiagnosticAndFixAsync(@"
-namespace A.B;
-[||]  class C
+namespace A.B;[|
+|]  class C
 {
 }
 ", @"
@@ -133,8 +134,8 @@ namespace A.B;
     public async Task Test_AddEmptyLine8()
     {
         await VerifyDiagnosticAndFixAsync(@"
-namespace A.B;
-[||]/// <summary>
+namespace A.B;[|
+|]/// <summary>
 /// 
 /// </summary>
 class C
@@ -156,8 +157,8 @@ class C
     public async Task Test_AddEmptyLine9()
     {
         await VerifyDiagnosticAndFixAsync(@"
-namespace A.B;
-[||]// x
+namespace A.B;[|
+|]// x
 class C
 {
 }
@@ -175,8 +176,8 @@ class C
     public async Task Test_RemoveEmptyLine_UsingAfter()
     {
         await VerifyDiagnosticAndFixAsync(@"
-namespace N;
-[||]using System;
+namespace N;[|
+|]using System;
 
 public class C
 {
@@ -197,8 +198,8 @@ public class C
     {
         await VerifyDiagnosticAndFixAsync(@"
 namespace A.B;
-[||]
-class C
+[|
+|]class C
 {
 }
 ", @"
@@ -214,8 +215,8 @@ class C
     {
         await VerifyDiagnosticAndFixAsync(@"
 namespace A.B;  
-[||]
-class C
+[|
+|]class C
 {
 }
 ", @"
@@ -231,8 +232,8 @@ class C
     {
         await VerifyDiagnosticAndFixAsync(@"
 namespace A.B;  //x
-[||]
-class C
+[|
+|]class C
 {
 }
 ", @"
@@ -248,8 +249,8 @@ class C
     {
         await VerifyDiagnosticAndFixAsync(@"
 namespace A.B;//x
-[||]
-class C
+[|
+|]class C
 {
 }
 ", @"
@@ -265,8 +266,8 @@ class C
     {
         await VerifyDiagnosticAndFixAsync(@"
 namespace A.B;
-[||]
-
+[|
+|]
 class C
 {
 }
@@ -295,3 +296,4 @@ namespace A.B;
 // x", options: Options.AddConfigOption(ConfigOptionKeys.BlankLineAfterFileScopedNamespaceDeclaration, true));
     }
 }
+#endif

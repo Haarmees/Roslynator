@@ -45,8 +45,6 @@ internal class FixCommand : MSBuildWorkspaceCommand<FixCommandResult>
 
     public override async Task<FixCommandResult> ExecuteAsync(ProjectOrSolution projectOrSolution, CancellationToken cancellationToken = default)
     {
-        AssemblyResolver.Register();
-
         var codeFixerOptions = new CodeFixerOptions(
             fileSystemFilter: FileSystemFilter,
             severityLevel: SeverityLevel,
@@ -79,10 +77,20 @@ internal class FixCommand : MSBuildWorkspaceCommand<FixCommandResult>
         IFormatProvider formatProvider = null,
         CancellationToken cancellationToken = default)
     {
-        foreach (string id in codeFixerOptions.IgnoredCompilerDiagnosticIds.OrderBy(f => f))
+        foreach (string id in codeFixerOptions.IgnoredCompilerDiagnosticIds
+#if NETFRAMEWORK
+            .OrderBy(f => f))
+#else
+            .Order())
+#endif
             WriteLine($"Ignore compiler diagnostic '{id}'", Verbosity.Diagnostic);
 
-        foreach (string id in codeFixerOptions.IgnoredDiagnosticIds.OrderBy(f => f))
+        foreach (string id in codeFixerOptions.IgnoredDiagnosticIds
+#if NETFRAMEWORK
+            .OrderBy(f => f))
+#else
+            .Order())
+#endif
             WriteLine($"Ignore diagnostic '{id}'", Verbosity.Diagnostic);
 
         ImmutableArray<ProjectFixResult> results;
@@ -95,7 +103,7 @@ internal class FixCommand : MSBuildWorkspaceCommand<FixCommandResult>
 
             CodeFixer codeFixer = GetCodeFixer(solution);
 
-            WriteLine($"Fix '{project.Name}'", ConsoleColors.Cyan, Verbosity.Minimal);
+            WriteLine($"Analyze '{project.Name}'", ConsoleColors.Cyan, Verbosity.Minimal);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
 
@@ -103,7 +111,7 @@ internal class FixCommand : MSBuildWorkspaceCommand<FixCommandResult>
 
             stopwatch.Stop();
 
-            WriteLine($"Done fixing project '{project.FilePath}' in {stopwatch.Elapsed:mm\\:ss\\.ff}", Verbosity.Minimal);
+            LogHelpers.WriteElapsedTime($"Analyzed project '{project.FilePath}'", stopwatch.Elapsed, Verbosity.Minimal);
 
             results = ImmutableArray.Create(result);
         }
@@ -134,7 +142,7 @@ internal class FixCommand : MSBuildWorkspaceCommand<FixCommandResult>
                     || analyzerAssembly.HasAnalyzers
                     || analyzerAssembly.HasFixers)
                 {
-                    WriteLine($"Add analyzer assembly '{analyzerAssembly.FullName}'", ConsoleColors.DarkGray, Verbosity.Detailed);
+                    WriteLine($"Loaded analyzer assembly '{analyzerAssembly.FullName}'", ConsoleColors.DarkGray, Verbosity.Detailed);
                 }
             };
 
@@ -285,10 +293,5 @@ internal class FixCommand : MSBuildWorkspaceCommand<FixCommandResult>
                 }
             }
         }
-    }
-
-    protected override void OperationCanceled(OperationCanceledException ex)
-    {
-        WriteLine("Fixing was canceled.", Verbosity.Quiet);
     }
 }

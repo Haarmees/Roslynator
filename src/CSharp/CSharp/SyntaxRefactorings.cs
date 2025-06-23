@@ -50,7 +50,9 @@ internal static class SyntaxRefactorings
             case SyntaxKind.TypeParameter:
                 return (T)(SyntaxNode)AddAttributeLists((TypeParameterSyntax)(SyntaxNode)node, keepDocumentationCommentOnTop, attributeLists, f => f.AttributeLists.Any(), (f, g) => f.WithAttributeLists(g), (f, g) => f.AddAttributeLists(g));
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
                 return (T)(SyntaxNode)AddAttributeLists((RecordDeclarationSyntax)(SyntaxNode)node, keepDocumentationCommentOnTop, attributeLists, f => f.AttributeLists.Any(), (f, g) => f.WithAttributeLists(g), (f, g) => f.AddAttributeLists(g));
             case SyntaxKind.StructDeclaration:
                 return (T)(SyntaxNode)AddAttributeLists((StructDeclarationSyntax)(SyntaxNode)node, keepDocumentationCommentOnTop, attributeLists, f => f.AttributeLists.Any(), (f, g) => f.WithAttributeLists(g), (f, g) => f.AddAttributeLists(g));
@@ -153,7 +155,7 @@ internal static class SyntaxRefactorings
         return removeOptions;
     }
 
-    internal static MemberDeclarationSyntax RemoveSingleLineDocumentationComment(MemberDeclarationSyntax declaration)
+    internal static TMemberDeclaration RemoveSingleLineDocumentationComment<TMemberDeclaration>(TMemberDeclaration declaration) where TMemberDeclaration : MemberDeclarationSyntax
     {
         if (declaration is null)
             throw new ArgumentNullException(nameof(declaration));
@@ -237,69 +239,69 @@ internal static class SyntaxRefactorings
                 switch (trivia.Kind())
                 {
                     case SyntaxKind.SingleLineCommentTrivia:
-                        {
-                            if ((comments & CommentFilter.SingleLine) == 0)
-                                break;
-
-                            AddTrivia(trivia);
-
-                            SyntaxTriviaList triviaList = trivia.GetContainingList();
-
-                            int index = triviaList.IndexOf(trivia);
-
-                            if (index > 0)
-                            {
-                                SyntaxTrivia previousTrivia = triviaList[index - 1];
-
-                                if (previousTrivia.IsKind(SyntaxKind.WhitespaceTrivia))
-                                    AddTrivia(previousTrivia);
-                            }
-
-                            if (index < triviaList.Count - 1)
-                            {
-                                SyntaxTrivia nextTrivia = triviaList[index + 1];
-
-                                if (nextTrivia.IsKind(SyntaxKind.EndOfLineTrivia))
-                                    AddTrivia(nextTrivia);
-                            }
-
+                    {
+                        if ((comments & CommentFilter.SingleLine) == 0)
                             break;
+
+                        AddTrivia(trivia);
+
+                        SyntaxTriviaList triviaList = trivia.GetContainingList();
+
+                        int index = triviaList.IndexOf(trivia);
+
+                        if (index > 0)
+                        {
+                            SyntaxTrivia previousTrivia = triviaList[index - 1];
+
+                            if (previousTrivia.IsKind(SyntaxKind.WhitespaceTrivia))
+                                AddTrivia(previousTrivia);
                         }
+
+                        if (index < triviaList.Count - 1)
+                        {
+                            SyntaxTrivia nextTrivia = triviaList[index + 1];
+
+                            if (nextTrivia.IsKind(SyntaxKind.EndOfLineTrivia))
+                                AddTrivia(nextTrivia);
+                        }
+
+                        break;
+                    }
                     case SyntaxKind.SingleLineDocumentationCommentTrivia:
-                        {
-                            if ((comments & CommentFilter.SingleLineDocumentation) == 0)
-                                break;
-
-                            AddTrivia(trivia);
-
-                            SyntaxTriviaList triviaList = trivia.GetContainingList();
-
-                            int index = triviaList.IndexOf(trivia);
-
-                            if (index > 0)
-                            {
-                                SyntaxTrivia previousTrivia = triviaList[index - 1];
-
-                                if (previousTrivia.IsKind(SyntaxKind.WhitespaceTrivia))
-                                    AddTrivia(previousTrivia);
-                            }
-
+                    {
+                        if ((comments & CommentFilter.SingleLineDocumentation) == 0)
                             break;
+
+                        AddTrivia(trivia);
+
+                        SyntaxTriviaList triviaList = trivia.GetContainingList();
+
+                        int index = triviaList.IndexOf(trivia);
+
+                        if (index > 0)
+                        {
+                            SyntaxTrivia previousTrivia = triviaList[index - 1];
+
+                            if (previousTrivia.IsKind(SyntaxKind.WhitespaceTrivia))
+                                AddTrivia(previousTrivia);
                         }
+
+                        break;
+                    }
                     case SyntaxKind.MultiLineCommentTrivia:
-                        {
-                            if ((comments & CommentFilter.MultiLine) != 0)
-                                RemoveMultiline(trivia);
+                    {
+                        if ((comments & CommentFilter.MultiLine) != 0)
+                            RemoveMultiline(trivia);
 
-                            break;
-                        }
+                        break;
+                    }
                     case SyntaxKind.MultiLineDocumentationCommentTrivia:
-                        {
-                            if ((comments & CommentFilter.MultiLineDocumentation) != 0)
-                                RemoveMultiline(trivia);
+                    {
+                        if ((comments & CommentFilter.MultiLineDocumentation) != 0)
+                            RemoveMultiline(trivia);
 
-                            break;
-                        }
+                        break;
+                    }
                 }
             }
         }
@@ -417,7 +419,11 @@ internal static class SyntaxRefactorings
         return RemoveNode(interfaceDeclaration, f => f.Members, index, GetRemoveOptions(newMember));
     }
 
+#if ROSLYN_4_0
     public static BaseNamespaceDeclarationSyntax RemoveMember(BaseNamespaceDeclarationSyntax namespaceDeclaration, MemberDeclarationSyntax member)
+#else
+    public static NamespaceDeclarationSyntax RemoveMember(NamespaceDeclarationSyntax namespaceDeclaration, MemberDeclarationSyntax member)
+#endif
     {
         if (namespaceDeclaration is null)
             throw new ArgumentNullException(nameof(namespaceDeclaration));
@@ -431,14 +437,18 @@ internal static class SyntaxRefactorings
 
         namespaceDeclaration = namespaceDeclaration.WithMembers(namespaceDeclaration.Members.ReplaceAt(index, newMember));
 
+#if ROSLYN_4_0
         if (namespaceDeclaration.IsKind(SyntaxKind.FileScopedNamespaceDeclaration))
         {
             return namespaceDeclaration.RemoveNode(namespaceDeclaration.Members[index], GetRemoveOptions(newMember))!;
         }
         else
         {
+#endif
             return RemoveNode(namespaceDeclaration, f => f.Members, index, GetRemoveOptions(newMember));
+#if ROSLYN_4_0
         }
+#endif
     }
 
     public static StructDeclarationSyntax RemoveMember(StructDeclarationSyntax structDeclaration, MemberDeclarationSyntax member)
@@ -492,6 +502,23 @@ internal static class SyntaxRefactorings
         return RemoveNode(typeDeclaration, f => f.Members, index, GetRemoveOptions(newMember));
     }
 
+    public static EnumDeclarationSyntax RemoveMember(EnumDeclarationSyntax typeDeclaration, EnumMemberDeclarationSyntax member)
+    {
+        if (typeDeclaration is null)
+            throw new ArgumentNullException(nameof(typeDeclaration));
+
+        if (member is null)
+            throw new ArgumentNullException(nameof(member));
+
+        int index = typeDeclaration.Members.IndexOf(member);
+
+        EnumMemberDeclarationSyntax newMember = RemoveSingleLineDocumentationComment(member);
+
+        typeDeclaration = typeDeclaration.WithMembers(typeDeclaration.Members.ReplaceAt(index, newMember));
+
+        return RemoveNode(typeDeclaration, f => f.Members, index, GetRemoveOptions(newMember));
+    }
+
     private static T RemoveNode<T>(
         T declaration,
         Func<T, SyntaxList<MemberDeclarationSyntax>> getMembers,
@@ -516,6 +543,38 @@ internal static class SyntaxRefactorings
             if (trivia.IsEndOfLineTrivia())
             {
                 MemberDeclarationSyntax newNextMember = nextMember.WithLeadingTrivia(leadingTrivia.RemoveAt(0));
+
+                newDeclaration = newDeclaration.ReplaceNode(nextMember, newNextMember);
+            }
+        }
+
+        return newDeclaration;
+    }
+
+    private static T RemoveNode<T>(
+        T declaration,
+        Func<T, SeparatedSyntaxList<EnumMemberDeclarationSyntax>> getMembers,
+        int index,
+        SyntaxRemoveOptions removeOptions) where T : SyntaxNode
+    {
+        SeparatedSyntaxList<EnumMemberDeclarationSyntax> members = getMembers(declaration);
+
+        T newDeclaration = declaration.RemoveNode(members[index], removeOptions)!;
+
+        if (index == 0
+            && index < members.Count - 1)
+        {
+            members = getMembers(newDeclaration);
+
+            EnumMemberDeclarationSyntax nextMember = members[index];
+
+            SyntaxTriviaList leadingTrivia = nextMember.GetLeadingTrivia();
+
+            SyntaxTrivia trivia = leadingTrivia.FirstOrDefault();
+
+            if (trivia.IsEndOfLineTrivia())
+            {
+                EnumMemberDeclarationSyntax newNextMember = nextMember.WithLeadingTrivia(leadingTrivia.RemoveAt(0));
 
                 newDeclaration = newDeclaration.ReplaceNode(nextMember, newNextMember);
             }
@@ -766,4 +825,36 @@ internal static class SyntaxRefactorings
             operatorToken: Token(token.LeadingTrivia, newTokenKind, token.TrailingTrivia),
             right: left.WithTriviaFrom(right));
     }
+
+#if ROSLYN_4_7
+    public static CollectionExpressionSyntax ConvertInitializerToCollectionExpression(InitializerExpressionSyntax? initializer)
+    {
+        if (initializer is not null)
+        {
+            return CollectionExpression(
+                Token(SyntaxKind.OpenBracketToken).WithTriviaFrom(initializer.OpenBraceToken),
+                initializer.Expressions.ForEach(e => (CollectionElementSyntax)ExpressionElement(e)),
+                Token(SyntaxKind.CloseBracketToken).WithTriviaFrom(initializer.CloseBraceToken));
+        }
+        else
+        {
+            return CollectionExpression();
+        }
+    }
+
+    public static InitializerExpressionSyntax? ConvertCollectionExpressionToInitializer(CollectionExpressionSyntax collectionExpression, SyntaxKind initializerKind)
+    {
+        if (collectionExpression.Elements.Any())
+        {
+            return InitializerExpression(
+                initializerKind,
+                collectionExpression
+                    .Elements
+                    .Select(element => ((ExpressionElementSyntax)element).Expression)
+                    .ToSeparatedSyntaxList());
+        }
+
+        return default;
+    }
+#endif
 }

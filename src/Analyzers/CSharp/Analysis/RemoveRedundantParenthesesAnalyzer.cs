@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Roslynator.CSharp.Analysis;
 
@@ -82,10 +83,10 @@ public sealed class RemoveRedundantParenthesesAnalyzer : BaseDiagnosticAnalyzer
             case SyntaxKind.IfStatement:
             case SyntaxKind.SwitchStatement:
             case SyntaxKind.ArrayRankSpecifier:
-                {
-                    ReportDiagnostic();
-                    break;
-                }
+            {
+                ReportDiagnostic(context, parenthesizedExpression);
+                break;
+            }
             case SyntaxKind.LessThanExpression:
             case SyntaxKind.GreaterThanExpression:
             case SyntaxKind.LessThanOrEqualExpression:
@@ -93,15 +94,15 @@ public sealed class RemoveRedundantParenthesesAnalyzer : BaseDiagnosticAnalyzer
             case SyntaxKind.EqualsExpression:
             case SyntaxKind.NotEqualsExpression:
             case SyntaxKind.SimpleMemberAccessExpression:
+            {
+                if (expression.IsKind(SyntaxKind.IdentifierName)
+                    || expression is LiteralExpressionSyntax)
                 {
-                    if (expression.IsKind(SyntaxKind.IdentifierName)
-                        || expression is LiteralExpressionSyntax)
-                    {
-                        ReportDiagnostic();
-                    }
-
-                    break;
+                    ReportDiagnostic(context, parenthesizedExpression);
                 }
+
+                break;
+            }
             case SyntaxKind.MultiplyExpression:
             case SyntaxKind.DivideExpression:
             case SyntaxKind.ModuloExpression:
@@ -114,40 +115,40 @@ public sealed class RemoveRedundantParenthesesAnalyzer : BaseDiagnosticAnalyzer
             case SyntaxKind.BitwiseOrExpression:
             case SyntaxKind.LogicalAndExpression:
             case SyntaxKind.LogicalOrExpression:
+            {
+                SyntaxKind kind = expression.Kind();
+
+                if (kind == SyntaxKind.IdentifierName
+                    || expression is LiteralExpressionSyntax)
                 {
-                    SyntaxKind kind = expression.Kind();
-
-                    if (kind == SyntaxKind.IdentifierName
-                        || expression is LiteralExpressionSyntax)
-                    {
-                        ReportDiagnostic();
-                    }
-                    else if (kind == parentKind
-                        && ((BinaryExpressionSyntax)parent).Left == parenthesizedExpression)
-                    {
-                        ReportDiagnostic();
-                    }
-
-                    break;
+                    ReportDiagnostic(context, parenthesizedExpression);
                 }
+                else if (kind == parentKind
+                    && ((BinaryExpressionSyntax)parent).Left == parenthesizedExpression)
+                {
+                    ReportDiagnostic(context, parenthesizedExpression);
+                }
+
+                break;
+            }
             case SyntaxKind.LogicalNotExpression:
+            {
+                switch (expression.Kind())
                 {
-                    switch (expression.Kind())
+                    case SyntaxKind.IdentifierName:
+                    case SyntaxKind.GenericName:
+                    case SyntaxKind.InvocationExpression:
+                    case SyntaxKind.SimpleMemberAccessExpression:
+                    case SyntaxKind.ElementAccessExpression:
+                    case SyntaxKind.ConditionalAccessExpression:
                     {
-                        case SyntaxKind.IdentifierName:
-                        case SyntaxKind.GenericName:
-                        case SyntaxKind.InvocationExpression:
-                        case SyntaxKind.SimpleMemberAccessExpression:
-                        case SyntaxKind.ElementAccessExpression:
-                        case SyntaxKind.ConditionalAccessExpression:
-                            {
-                                ReportDiagnostic();
-                                break;
-                            }
+                        ReportDiagnostic(context, parenthesizedExpression);
+                        break;
                     }
-
-                    break;
                 }
+
+                break;
+            }
             case SyntaxKind.SimpleAssignmentExpression:
             case SyntaxKind.AddAssignmentExpression:
             case SyntaxKind.SubtractAssignmentExpression:
@@ -159,88 +160,107 @@ public sealed class RemoveRedundantParenthesesAnalyzer : BaseDiagnosticAnalyzer
             case SyntaxKind.OrAssignmentExpression:
             case SyntaxKind.LeftShiftAssignmentExpression:
             case SyntaxKind.RightShiftAssignmentExpression:
+            {
+                if (((AssignmentExpressionSyntax)parent).Left == parenthesizedExpression)
                 {
-                    if (((AssignmentExpressionSyntax)parent).Left == parenthesizedExpression)
-                    {
-                        ReportDiagnostic();
-                    }
-                    else if (expression.IsKind(SyntaxKind.IdentifierName)
-                        || expression is LiteralExpressionSyntax)
-                    {
-                        ReportDiagnostic();
-                    }
-
-                    break;
+                    ReportDiagnostic(context, parenthesizedExpression);
                 }
+                else if (expression.IsKind(SyntaxKind.IdentifierName)
+                    || expression is LiteralExpressionSyntax)
+                {
+                    ReportDiagnostic(context, parenthesizedExpression);
+                }
+
+                break;
+            }
             case SyntaxKind.Interpolation:
+            {
+                if (!expression.IsKind(SyntaxKind.ConditionalExpression)
+                    && !expression.DescendantNodes().Any(f => f.IsKind(SyntaxKind.AliasQualifiedName))
+                    && ((InterpolationSyntax)parent).Expression == parenthesizedExpression)
                 {
-                    if (!expression.IsKind(SyntaxKind.ConditionalExpression)
-                        && !expression.DescendantNodes().Any(f => f.IsKind(SyntaxKind.AliasQualifiedName))
-                        && ((InterpolationSyntax)parent).Expression == parenthesizedExpression)
-                    {
-                        ReportDiagnostic();
-                    }
-
-                    break;
+                    ReportDiagnostic(context, parenthesizedExpression);
                 }
+
+                break;
+            }
             case SyntaxKind.AwaitExpression:
-                {
-                    if (parenthesizedExpression.Expression.IsKind(SyntaxKind.SwitchExpression))
-                        return;
+            {
+                if (parenthesizedExpression.Expression.IsKind(SyntaxKind.SwitchExpression))
+                    return;
 
-                    if (CSharpFacts.GetOperatorPrecedence(expression.Kind()) <= CSharpFacts.GetOperatorPrecedence(SyntaxKind.AwaitExpression))
-                        ReportDiagnostic();
+                if (CSharpFacts.GetOperatorPrecedence(expression.Kind()) <= CSharpFacts.GetOperatorPrecedence(SyntaxKind.AwaitExpression))
+                    ReportDiagnostic(context, parenthesizedExpression);
 
-                    break;
-                }
+                break;
+            }
             case SyntaxKind.ArrayInitializerExpression:
             case SyntaxKind.CollectionInitializerExpression:
-                {
-                    if (expression is not AssignmentExpressionSyntax)
-                        ReportDiagnostic();
+            {
+                if (expression is not AssignmentExpressionSyntax)
+                    ReportDiagnostic(context, parenthesizedExpression);
 
-                    break;
-                }
+                break;
+            }
             case SyntaxKind.SimpleLambdaExpression:
             case SyntaxKind.ParenthesizedLambdaExpression:
+            {
+                switch (parent.Parent.Kind())
                 {
-                    switch (parent.Parent.Kind())
+                    case SyntaxKind.ParenthesizedExpression:
+                    case SyntaxKind.ArrowExpressionClause:
+                    case SyntaxKind.Argument:
+                    case SyntaxKind.ReturnStatement:
+                    case SyntaxKind.YieldReturnStatement:
+                    case SyntaxKind.SimpleAssignmentExpression:
+                    case SyntaxKind.AddAssignmentExpression:
+                    case SyntaxKind.SubtractAssignmentExpression:
                     {
-                        case SyntaxKind.ParenthesizedExpression:
-                        case SyntaxKind.ArrowExpressionClause:
-                        case SyntaxKind.Argument:
-                        case SyntaxKind.ReturnStatement:
-                        case SyntaxKind.YieldReturnStatement:
-                        case SyntaxKind.SimpleAssignmentExpression:
-                        case SyntaxKind.AddAssignmentExpression:
-                        case SyntaxKind.SubtractAssignmentExpression:
-                            {
-                                ReportDiagnostic();
-                                break;
-                            }
-#if DEBUG
-                        default:
-                            {
-                                SyntaxDebug.Fail(parent.Parent);
-                                break;
-                            }
-#endif
+                        ReportDiagnostic(context, parenthesizedExpression);
+                        break;
                     }
-
-                    break;
+#if DEBUG
+                    default:
+                    {
+                        SyntaxDebug.Fail(parent.Parent);
+                        break;
+                    }
+#endif
                 }
+
+                break;
+            }
         }
 
-        void ReportDiagnostic()
+        static void ReportDiagnostic(SyntaxNodeAnalysisContext context, ParenthesizedExpressionSyntax parenthesizedExpression)
         {
+            if (parenthesizedExpression.Expression.IsKind(SyntaxKind.LessThanExpression)
+                && parenthesizedExpression.IsParentKind(SyntaxKind.Argument)
+                && parenthesizedExpression.Parent.Parent is BaseArgumentListSyntax argumentList)
+            {
+                SeparatedSyntaxList<ArgumentSyntax> arguments = argumentList.Arguments;
+                int index = arguments.IndexOf((ArgumentSyntax)parenthesizedExpression.Parent);
+
+                if (index < arguments.Count - 1)
+                {
+                    string syntax = parenthesizedExpression.Expression
+                        + argumentList.ToString(TextSpan.FromBounds(arguments[index].Span.End, arguments[index + 1].Span.End));
+
+                    NameSyntax name = SyntaxFactory.ParseName(syntax);
+
+                    if (name.IsKind(SyntaxKind.GenericName))
+                        return;
+                }
+            }
+
             DiagnosticHelpers.ReportDiagnostic(
                 context,
                 DiagnosticRules.RemoveRedundantParentheses,
-                openParen.GetLocation(),
-                additionalLocations: ImmutableArray.Create(closeParen.GetLocation()));
+                parenthesizedExpression.OpenParenToken.GetLocation(),
+                additionalLocations: ImmutableArray.Create(parenthesizedExpression.CloseParenToken.GetLocation()));
 
-            DiagnosticHelpers.ReportToken(context, DiagnosticRules.RemoveRedundantParenthesesFadeOut, openParen);
-            DiagnosticHelpers.ReportToken(context, DiagnosticRules.RemoveRedundantParenthesesFadeOut, closeParen);
+            DiagnosticHelpers.ReportToken(context, DiagnosticRules.RemoveRedundantParenthesesFadeOut, parenthesizedExpression.OpenParenToken);
+            DiagnosticHelpers.ReportToken(context, DiagnosticRules.RemoveRedundantParenthesesFadeOut, parenthesizedExpression.CloseParenToken);
         }
     }
 }

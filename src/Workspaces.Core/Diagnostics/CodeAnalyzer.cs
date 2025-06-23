@@ -74,7 +74,7 @@ internal class CodeAnalyzer
             }
             else
             {
-                WriteLine($"Skip '{project.Name}' {$"{i + 1}/{projectIds.Length}"}", ConsoleColors.DarkGray, Verbosity.Minimal);
+                WriteLine($"Skipping '{project.Name}' {$"{i + 1}/{projectIds.Length}"}", ConsoleColors.DarkGray, Verbosity.Minimal);
             }
 
             lastElapsed = stopwatch.Elapsed;
@@ -82,7 +82,7 @@ internal class CodeAnalyzer
 
         stopwatch.Stop();
 
-        WriteLine($"Done analyzing solution '{solution.FilePath}' in {stopwatch.Elapsed:mm\\:ss\\.ff}", Verbosity.Minimal);
+        LogHelpers.WriteElapsedTime($"Analyzed solution '{solution.FilePath}'", stopwatch.Elapsed, Verbosity.Minimal);
 
         if (results.Count > 0)
             WriteProjectAnalysisResults(results);
@@ -100,7 +100,7 @@ internal class CodeAnalyzer
 
         stopwatch.Stop();
 
-        WriteLine($"Done analyzing project '{project.FilePath}' in {stopwatch.Elapsed:mm\\:ss\\.ff}", Verbosity.Minimal);
+        LogHelpers.WriteElapsedTime($"Analyzed project '{project.FilePath}'", stopwatch.Elapsed, Verbosity.Minimal);
 
         WriteProjectAnalysisResults(new ProjectAnalysisResult[] { result });
 
@@ -203,8 +203,7 @@ internal class CodeAnalyzer
     {
         foreach (Diagnostic diagnostic in diagnostics)
         {
-            if (diagnostic.IsEffective(Options, project.CompilationOptions, cancellationToken)
-                && (Options.ReportNotConfigurable || !diagnostic.Descriptor.CustomTags.Contains(WellKnownDiagnosticTags.NotConfigurable)))
+            if (diagnostic.IsEffective(Options, project.CompilationOptions, cancellationToken))
             {
                 if (diagnostic.Descriptor.CustomTags.Contains(WellKnownDiagnosticTags.Compiler))
                 {
@@ -222,9 +221,16 @@ internal class CodeAnalyzer
                         }
                     }
                 }
-                else
+                else if (Options.ReportNotConfigurable
+                    || !diagnostic.Descriptor.CustomTags.Contains(WellKnownDiagnosticTags.NotConfigurable))
                 {
-                    yield return diagnostic;
+                    SyntaxTree? tree = diagnostic.Location.SourceTree;
+
+                    if (tree is null
+                        || Options.FileSystemFilter?.IsMatch(tree.FilePath) != false)
+                    {
+                        yield return diagnostic;
+                    }
                 }
             }
         }

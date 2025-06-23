@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Roslynator.CSharp;
 using Roslynator.CSharp.Analysis.Documentation;
 
 namespace Roslynator.CSharp.Refactorings.Documentation;
@@ -190,7 +189,7 @@ internal abstract class DocumentationCommentRefactoring<TNode> where TNode : Syn
 
         foreach (XmlElementSyntax element in comment.Elements(Tag))
         {
-            string name = element.GetAttributeValue("name");
+            string name = element.GetAttributeValueText("name");
 
             if (!dic.ContainsKey(name))
                 dic.Add(name, element);

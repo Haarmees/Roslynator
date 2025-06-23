@@ -10,7 +10,6 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Roslynator.Formatting.CSharp;
 
 namespace Roslynator.Formatting.CodeFixes.CSharp;
 
@@ -42,15 +41,15 @@ public sealed class DirectiveTriviaCodeFixProvider : BaseCodeFixProvider
         {
             case DiagnosticIdentifiers.AddBlankLineAfterRegionDirective:
             case DiagnosticIdentifiers.AddBlankLineBeforeEndRegionDirective:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        CodeFixTitles.AddBlankLine,
-                        ct => AddBlankLineAfterRegionDirectiveAndBeforeEndRegionAsync(document, directiveTrivia, ct),
-                        GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    CodeFixTitles.AddBlankLine,
+                    ct => AddBlankLineAfterRegionDirectiveAndBeforeEndRegionAsync(document, directiveTrivia, ct),
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
         }
     }
 

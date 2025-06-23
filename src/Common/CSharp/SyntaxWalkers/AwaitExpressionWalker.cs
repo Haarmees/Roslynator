@@ -8,14 +8,14 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Roslynator.CSharp.SyntaxWalkers;
 
-internal class AwaitExpressionWalker : CSharpSyntaxNodeWalker
+internal class AwaitExpressionWalker : BaseCSharpSyntaxWalker
 {
     [ThreadStatic]
     private static AwaitExpressionWalker _cachedInstance;
 
     private bool _shouldVisit = true;
 
-    public HashSet<AwaitExpressionSyntax> AwaitExpressions { get; } = new();
+    public HashSet<AwaitExpressionSyntax> AwaitExpressions { get; } = [];
 
     private bool StopOnFirstAwaitExpression { get; set; }
 

@@ -25,8 +25,8 @@ public sealed class SimpleMemberAccessExpressionAnalyzer : BaseDiagnosticAnalyze
             {
                 Immutable.InterlockedInitialize(
                     ref _supportedDiagnostics,
-                    DiagnosticRules.UsePropertySyntaxNodeSpanStart,
-                    DiagnosticRules.CallAnyInsteadOfAccessingCount);
+                    CodeAnalysisDiagnosticRules.UsePropertySyntaxNodeSpanStart,
+                    CodeAnalysisDiagnosticRules.CallAnyInsteadOfAccessingCount);
             }
 
             return _supportedDiagnostics;
@@ -49,54 +49,54 @@ public sealed class SimpleMemberAccessExpressionAnalyzer : BaseDiagnosticAnalyze
         switch (name)
         {
             case IdentifierNameSyntax identifierName:
+            {
+                switch (identifierName.Identifier.ValueText)
                 {
-                    switch (identifierName.Identifier.ValueText)
+                    case "Start":
                     {
-                        case "Start":
-                            {
-                                ExpressionSyntax expression = memberAccessExpression.Expression;
+                        ExpressionSyntax expression = memberAccessExpression.Expression;
 
-                                if (!expression.IsKind(SyntaxKind.SimpleMemberAccessExpression))
-                                    break;
+                        if (!expression.IsKind(SyntaxKind.SimpleMemberAccessExpression))
+                            break;
 
-                                ISymbol symbol = context.SemanticModel.GetSymbol(memberAccessExpression, context.CancellationToken);
+                        ISymbol symbol = context.SemanticModel.GetSymbol(memberAccessExpression, context.CancellationToken);
 
-                                if (symbol is null)
-                                    break;
+                        if (symbol is null)
+                            break;
 
-                                if (!symbol.ContainingType.HasMetadataName(RoslynMetadataNames.Microsoft_CodeAnalysis_Text_TextSpan))
-                                    break;
+                        if (!symbol.ContainingType.HasMetadataName(RoslynMetadataNames.Microsoft_CodeAnalysis_Text_TextSpan))
+                            break;
 
-                                var memberAccess2 = (MemberAccessExpressionSyntax)expression;
+                        var memberAccess2 = (MemberAccessExpressionSyntax)expression;
 
-                                SimpleNameSyntax name2 = memberAccess2.Name;
+                        SimpleNameSyntax name2 = memberAccess2.Name;
 
-                                if (name2 is not IdentifierNameSyntax identifierName2)
-                                    break;
+                        if (name2 is not IdentifierNameSyntax identifierName2)
+                            break;
 
-                                if (!string.Equals(identifierName2.Identifier.ValueText, "Span", StringComparison.Ordinal))
-                                    break;
+                        if (!string.Equals(identifierName2.Identifier.ValueText, "Span", StringComparison.Ordinal))
+                            break;
 
-                                ISymbol symbol2 = context.SemanticModel.GetSymbol(expression, context.CancellationToken);
+                        ISymbol symbol2 = context.SemanticModel.GetSymbol(expression, context.CancellationToken);
 
-                                if (symbol2 is null)
-                                    break;
+                        if (symbol2 is null)
+                            break;
 
-                                if (!symbol2.ContainingType.HasMetadataName(MetadataNames.Microsoft_CodeAnalysis_SyntaxNode))
-                                    break;
+                        if (!symbol2.ContainingType.HasMetadataName(MetadataNames.Microsoft_CodeAnalysis_SyntaxNode))
+                            break;
 
-                                DiagnosticHelpers.ReportDiagnostic(context, DiagnosticRules.UsePropertySyntaxNodeSpanStart, memberAccessExpression);
-                                break;
-                            }
-                        case "Count":
-                            {
-                                CallAnyInsteadOfUsingCount();
-                                break;
-                            }
+                        DiagnosticHelpers.ReportDiagnostic(context, CodeAnalysisDiagnosticRules.UsePropertySyntaxNodeSpanStart, memberAccessExpression);
+                        break;
                     }
-
-                    break;
+                    case "Count":
+                    {
+                        CallAnyInsteadOfUsingCount();
+                        break;
+                    }
                 }
+
+                break;
+            }
         }
 
         void CallAnyInsteadOfUsingCount()
@@ -139,7 +139,7 @@ public sealed class SimpleMemberAccessExpressionAnalyzer : BaseDiagnosticAnalyze
                 ? TextSpan.FromBounds(name.SpanStart, numericLiteralExpression.Span.End)
                 : TextSpan.FromBounds(numericLiteralExpression.SpanStart, name.Span.End);
 
-            DiagnosticHelpers.ReportDiagnostic(context, DiagnosticRules.CallAnyInsteadOfAccessingCount, Location.Create(memberAccessExpression.SyntaxTree, span));
+            DiagnosticHelpers.ReportDiagnostic(context, CodeAnalysisDiagnosticRules.CallAnyInsteadOfAccessingCount, Location.Create(memberAccessExpression.SyntaxTree, span));
         }
     }
 }

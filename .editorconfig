@@ -3,11 +3,62 @@
 # top-most EditorConfig file
 root = true
 
+[*]
+indent_style = space
+
 # Code files
 [*.{cs,csx}]
-
-indent_style = space
 indent_size = 4
+
+# https://learn.microsoft.com/dotnet/fundamentals/code-analysis/style-rules/csharp-formatting-options
+
+# New-line options
+# https://docs.microsoft.com/visualstudio/ide/editorconfig-formatting-conventions#new-line-options
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_members_in_object_initializers = false
+csharp_new_line_before_members_in_anonymous_types = true
+csharp_new_line_between_query_expression_clauses = true
+
+# Indentation options
+# https://docs.microsoft.com/visualstudio/ide/editorconfig-formatting-conventions#indentation-options
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+csharp_indent_labels = flush_left
+csharp_indent_block_contents = true
+csharp_indent_braces = false
+csharp_indent_case_contents_when_block = false
+
+# Spacing options
+# https://docs.microsoft.com/visualstudio/ide/editorconfig-formatting-conventions#spacing-options
+csharp_space_after_cast = false
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_before_colon_in_inheritance_clause = true
+csharp_space_after_colon_in_inheritance_clause = true
+csharp_space_around_binary_operators = before_and_after
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+csharp_space_between_method_declaration_empty_parameter_list_parentheses = false
+csharp_space_between_method_declaration_name_and_open_parenthesis = false
+csharp_space_between_method_call_parameter_list_parentheses = false
+csharp_space_between_method_call_empty_parameter_list_parentheses = false
+csharp_space_between_method_call_name_and_opening_parenthesis = false
+csharp_space_after_comma = true
+csharp_space_before_comma = false
+csharp_space_after_dot = false
+csharp_space_before_dot = false
+csharp_space_after_semicolon_in_for_statement = true
+csharp_space_before_semicolon_in_for_statement = false
+csharp_space_around_declaration_statements = false
+csharp_space_before_open_square_brackets = false
+csharp_space_between_empty_square_brackets = false
+csharp_space_between_square_brackets = false
+
+# Wrap options
+# https://docs.microsoft.com/visualstudio/ide/editorconfig-formatting-conventions#wrap-options
+csharp_preserve_single_line_statements = false
+csharp_preserve_single_line_blocks = true
 
 dotnet_sort_system_directives_first = true
 
@@ -18,7 +69,6 @@ roslynator_accessor_braces_style = single_line_when_expression_is_on_single_line
 roslynator_array_creation_type_style = implicit_when_type_is_obvious
 roslynator_arrow_token_new_line = before
 roslynator_binary_operator_new_line = before
-roslynator_blank_line_between_closing_brace_and_switch_section = false
 roslynator_blank_line_between_single_line_accessors = false
 roslynator_blank_line_between_using_directives = never
 roslynator_block_braces_style = multi_line
@@ -46,18 +96,19 @@ roslynator_enum_flag_value_style = shift_operator
 roslynator_blank_line_after_file_scoped_namespace_declaration = true
 roslynator_null_check_style = pattern_matching
 roslynator_trailing_comma_style = omit_when_single_line
+roslynator_use_collection_expression = true
+roslynator_blank_line_between_switch_sections = omit
+roslynator_use_var = when_type_is_obvious
 
 dotnet_diagnostic.RCS0001.severity = suggestion
 dotnet_diagnostic.RCS0003.severity = suggestion
 dotnet_diagnostic.RCS0004.severity = suggestion
 dotnet_diagnostic.RCS0006.severity = suggestion
-dotnet_diagnostic.RCS0008.severity = suggestion
-dotnet_diagnostic.RCS0009.severity = suggestion
-dotnet_diagnostic.RCS0010.severity = suggestion
 dotnet_diagnostic.RCS0011.severity = suggestion
 dotnet_diagnostic.RCS0013.severity = suggestion
 dotnet_diagnostic.RCS0015.severity = suggestion
 dotnet_diagnostic.RCS0016.severity = suggestion
+dotnet_diagnostic.RCS0020.severity = suggestion
 dotnet_diagnostic.RCS0021.severity = suggestion
 dotnet_diagnostic.RCS0022.severity = suggestion
 dotnet_diagnostic.RCS0023.severity = suggestion
@@ -73,7 +124,6 @@ dotnet_diagnostic.RCS0038.severity = suggestion
 dotnet_diagnostic.RCS0039.severity = suggestion
 dotnet_diagnostic.RCS0041.severity = suggestion
 dotnet_diagnostic.RCS0042.severity = suggestion
-dotnet_diagnostic.RCS0043.severity = suggestion
 dotnet_diagnostic.RCS0046.severity = suggestion
 dotnet_diagnostic.RCS0048.severity = silent
 dotnet_diagnostic.RCS0049.severity = suggestion
@@ -87,11 +137,12 @@ dotnet_diagnostic.RCS0057.severity = suggestion
 dotnet_diagnostic.RCS0058.severity = suggestion
 dotnet_diagnostic.RCS0059.severity = suggestion
 dotnet_diagnostic.RCS0060.severity = suggestion
+dotnet_diagnostic.RCS0061.severity = suggestion
 dotnet_diagnostic.RCS1002.severity = silent
 dotnet_diagnostic.RCS1006.severity = suggestion
-dotnet_diagnostic.RCS1008.severity = suggestion
-dotnet_diagnostic.RCS1009.severity = suggestion
-dotnet_diagnostic.RCS1010.severity = suggestion
+dotnet_diagnostic.RCS1008.severity = none
+dotnet_diagnostic.RCS1009.severity = none
+dotnet_diagnostic.RCS1010.severity = none
 dotnet_diagnostic.RCS1013.severity = suggestion
 dotnet_diagnostic.RCS1014.severity = suggestion
 dotnet_diagnostic.RCS1016.severity = suggestion
@@ -139,6 +190,7 @@ dotnet_diagnostic.RCS1162.severity = suggestion
 dotnet_diagnostic.RCS1188.severity = suggestion
 dotnet_diagnostic.RCS1189.severity = suggestion
 dotnet_diagnostic.RCS1207.severity = suggestion
+dotnet_diagnostic.RCS1228.severity = suggestion
 dotnet_diagnostic.RCS1237.severity = none
 dotnet_diagnostic.RCS1244.severity = suggestion
 dotnet_diagnostic.RCS1248.severity = suggestion
@@ -148,6 +200,8 @@ dotnet_diagnostic.RCS1253.severity = suggestion
 dotnet_diagnostic.RCS1254.severity = suggestion
 dotnet_diagnostic.RCS1255.severity = none
 dotnet_diagnostic.RCS1260.severity = suggestion
+dotnet_diagnostic.RCS1264.severity = suggestion
+dotnet_diagnostic.RCS9001.severity = suggestion
 
 dotnet_diagnostic.IDE0007.severity = none
 dotnet_diagnostic.IDE0007WithoutSuggestion.severity = none
@@ -171,7 +225,7 @@ dotnet_diagnostic.IDE0026.severity = none
 dotnet_diagnostic.IDE0026WithoutSuggestion.severity = none
 dotnet_diagnostic.IDE0027.severity = none
 dotnet_diagnostic.IDE0027WithoutSuggestion.severity = none
-dotnet_diagnostic.IDE0028.severity = suggestion
+dotnet_diagnostic.IDE0028.severity = none # Collection initialization can be simplified
 dotnet_diagnostic.IDE0029.severity = suggestion
 dotnet_diagnostic.IDE0031.severity = suggestion
 dotnet_diagnostic.IDE0033.severity = suggestion
@@ -194,8 +248,14 @@ dotnet_diagnostic.IDE0074.severity = none
 dotnet_diagnostic.IDE0074WithoutSuggestion.severity = none
 dotnet_diagnostic.IDE0079.severity = none
 dotnet_diagnostic.IDE0090.severity = none
+dotnet_diagnostic.IDE0130.severity = none
 dotnet_diagnostic.IDE0220.severity = none
 dotnet_diagnostic.IDE0270.severity = silent
+dotnet_diagnostic.IDE0290.severity = none # Use primary constructor
+dotnet_diagnostic.IDE0300.severity = none # Use collection expression
+dotnet_diagnostic.IDE0301.severity = none # ImmutableArray<object>.Empty -> []
+dotnet_diagnostic.IDE0303.severity = none # ImmutableArray.Create(x) -> [x]
+dotnet_diagnostic.IDE0305.severity = none # x.ToArray() -> [.. x]
 dotnet_diagnostic.IDE1005.severity = suggestion
 dotnet_diagnostic.IDE1006.severity = suggestion
 
@@ -205,4 +265,8 @@ dotnet_diagnostic.RS1026.severity = none
 
 dotnet_diagnostic.CA1806.severity = none
 dotnet_diagnostic.CA1826.severity = none
+dotnet_diagnostic.CA1860.severity = none
+dotnet_diagnostic.CA1861.severity = none
 dotnet_diagnostic.CA2231.severity = none
+
+dotnet_diagnostic.SYSLIB1045.severity = silent # Use 'GeneratedRegexAttribute' to generate the regular expression implementation at compile-time.

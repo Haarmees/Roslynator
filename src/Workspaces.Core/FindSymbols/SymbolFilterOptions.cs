@@ -106,7 +106,16 @@ internal class SymbolFilterOptions
 
     public virtual SymbolFilterReason GetReason(INamespaceSymbol namespaceSymbol)
     {
-        return GetRulesReason(namespaceSymbol);
+        foreach (SymbolFilterRule rule in Rules)
+        {
+            if (rule.IsApplicable(namespaceSymbol)
+                && !rule.IsMatch(namespaceSymbol))
+            {
+                return rule.Reason;
+            }
+        }
+
+        return SymbolFilterReason.None;
     }
 
     public virtual SymbolFilterReason GetReason(INamedTypeSymbol typeSymbol)
@@ -186,32 +195,32 @@ internal class SymbolFilterOptions
         switch (symbol.MethodKind)
         {
             case MethodKind.Constructor:
+            {
+                TypeKind typeKind = symbol.ContainingType.TypeKind;
+
+                Debug.Assert(typeKind.Is(TypeKind.Class, TypeKind.Struct, TypeKind.Enum), symbol.ToDisplayString(SymbolDisplayFormats.Test));
+
+                if (typeKind == TypeKind.Class
+                    && !symbol.Parameters.Any())
                 {
-                    TypeKind typeKind = symbol.ContainingType.TypeKind;
-
-                    Debug.Assert(typeKind.Is(TypeKind.Class, TypeKind.Struct, TypeKind.Enum), symbol.ToDisplayString(SymbolDisplayFormats.Test));
-
-                    if (typeKind == TypeKind.Class
-                        && !symbol.Parameters.Any())
-                    {
-                        canBeImplicitlyDeclared = true;
-                    }
-
-                    break;
+                    canBeImplicitlyDeclared = true;
                 }
+
+                break;
+            }
             case MethodKind.Conversion:
             case MethodKind.UserDefinedOperator:
             case MethodKind.Ordinary:
             case MethodKind.StaticConstructor:
             case MethodKind.Destructor:
             case MethodKind.ExplicitInterfaceImplementation:
-                {
-                    break;
-                }
+            {
+                break;
+            }
             default:
-                {
-                    return SymbolFilterReason.Other;
-                }
+            {
+                return SymbolFilterReason.Other;
+            }
         }
 
         if (!canBeImplicitlyDeclared && symbol.IsImplicitlyDeclared)

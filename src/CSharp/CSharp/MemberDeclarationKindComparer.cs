@@ -51,17 +51,19 @@ internal class MemberDeclarationKindComparer : IComparer<SyntaxKind>
                 return 15;
             case SyntaxKind.RecordDeclaration:
                 return 16;
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
                 return 17;
+#endif
             case SyntaxKind.NamespaceDeclaration:
                 return 18;
             case SyntaxKind.IncompleteMember:
                 return 19;
             default:
-                {
-                    Debug.Fail($"unknown member '{kind}'");
-                    return MemberDeclarationComparer.MaxRank;
-                }
+            {
+                Debug.Fail($"unknown member '{kind}'");
+                return MemberDeclarationComparer.MaxRank;
+            }
         }
     }
 }

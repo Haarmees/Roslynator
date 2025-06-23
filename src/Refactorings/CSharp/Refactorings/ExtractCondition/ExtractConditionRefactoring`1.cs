@@ -1,7 +1,6 @@
 ﻿// Copyright (c) .NET Foundation and Contributors. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
@@ -72,10 +71,8 @@ internal abstract class ExtractConditionRefactoring<TStatement> where TStatement
     {
         StatementSyntax childStatement = GetStatement(statement);
 
-        if (childStatement.IsKind(SyntaxKind.Block))
+        if (childStatement is BlockSyntax block)
         {
-            var block = (BlockSyntax)childStatement;
-
             IfStatementSyntax nestedIf = IfStatement(
                 expression.WithoutTrivia(),
                 Block(block.Statements));
@@ -90,7 +87,7 @@ internal abstract class ExtractConditionRefactoring<TStatement> where TStatement
                 expression.WithoutTrivia(),
                 childStatement.WithoutTrivia());
 
-            BlockSyntax block = Block(nestedIf).WithTriviaFrom(childStatement);
+            block = Block(nestedIf).WithTriviaFrom(childStatement);
 
             return SetStatement(statement, block);
         }

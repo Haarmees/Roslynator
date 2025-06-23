@@ -17,6 +17,9 @@ namespace Roslynator
         public const string ArrowTokenNewLine_Before                                                    = "before";
         public const string BinaryOperatorNewLine_After                                                 = "after";
         public const string BinaryOperatorNewLine_Before                                                = "before";
+        public const string BlankLineBetweenSwitchSections_Include                                      = "include";
+        public const string BlankLineBetweenSwitchSections_Omit                                         = "omit";
+        public const string BlankLineBetweenSwitchSections_OmitAfterBlock                               = "omit_after_block";
         public const string BlankLineBetweenUsingDirectives_Never                                       = "never";
         public const string BlankLineBetweenUsingDirectives_SeparateGroups                              = "separate_groups";
         public const string BlockBracesStyle_MultiLine                                                  = "multi_line";
@@ -40,10 +43,10 @@ namespace Roslynator
         public const string EqualsTokenNewLine_Before                                                   = "before";
         public const string InfiniteLoopStyle_For                                                       = "for";
         public const string InfiniteLoopStyle_While                                                     = "while";
-        public const string NullConditionalOperatorNewLine_After                                        = "after";
-        public const string NullConditionalOperatorNewLine_Before                                       = "before";
         public const string NullCheckStyle_EqualityOperator                                             = "equality_operator";
         public const string NullCheckStyle_PatternMatching                                              = "pattern_matching";
+        public const string NullConditionalOperatorNewLine_After                                        = "after";
+        public const string NullConditionalOperatorNewLine_Before                                       = "before";
         public const string ObjectCreationParenthesesStyle_Include                                      = "include";
         public const string ObjectCreationParenthesesStyle_Omit                                         = "omit";
         public const string ObjectCreationTypeStyle_Explicit                                            = "explicit";
@@ -54,5 +57,8 @@ namespace Roslynator
         public const string TrailingCommaStyle_OmitWhenSingleLine                                       = "omit_when_single_line";
         public const string UseAnonymousFunctionOrMethodGroup_AnonymousFunction                         = "anonymous_function";
         public const string UseAnonymousFunctionOrMethodGroup_MethodGroup                               = "method_group";
+        public const string UseVar_Always                                                               = "always";
+        public const string UseVar_Never                                                                = "never";
+        public const string UseVar_WhenTypeIsObvious                                                    = "when_type_is_obvious";
     }
 }

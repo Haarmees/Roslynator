@@ -131,6 +131,7 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
         return new MemberDeclarationListInfo(namespaceDeclaration, namespaceDeclaration.Members);
     }
 
+#if ROSLYN_4_0
     internal static MemberDeclarationListInfo Create(BaseNamespaceDeclarationSyntax namespaceDeclaration)
     {
         if (namespaceDeclaration is null)
@@ -138,6 +139,7 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
 
         return new MemberDeclarationListInfo(namespaceDeclaration, namespaceDeclaration.Members);
     }
+#endif
 
     internal static MemberDeclarationListInfo Create(TypeDeclarationSyntax typeDeclaration)
     {
@@ -176,25 +178,33 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
         switch (node?.Kind())
         {
             case SyntaxKind.CompilationUnit:
-                {
-                    var compilationUnit = (CompilationUnitSyntax)node;
-                    return new MemberDeclarationListInfo(compilationUnit, compilationUnit.Members);
-                }
+            {
+                var compilationUnit = (CompilationUnitSyntax)node;
+                return new MemberDeclarationListInfo(compilationUnit, compilationUnit.Members);
+            }
             case SyntaxKind.NamespaceDeclaration:
+            {
+                var namespaceDeclaration = (NamespaceDeclarationSyntax)node;
+                return new MemberDeclarationListInfo(namespaceDeclaration, namespaceDeclaration.Members);
+            }
+#if ROSLYN_4_0
             case SyntaxKind.FileScopedNamespaceDeclaration:
-                {
-                    var namespaceDeclaration = (BaseNamespaceDeclarationSyntax)node;
-                    return new MemberDeclarationListInfo(namespaceDeclaration, namespaceDeclaration.Members);
-                }
+            {
+                var namespaceDeclaration = (FileScopedNamespaceDeclarationSyntax)node;
+                return new MemberDeclarationListInfo(namespaceDeclaration, namespaceDeclaration.Members);
+            }
+#endif
             case SyntaxKind.ClassDeclaration:
             case SyntaxKind.RecordDeclaration:
             case SyntaxKind.StructDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
+#endif
             case SyntaxKind.InterfaceDeclaration:
-                {
-                    var typeDeclaration = (TypeDeclarationSyntax)node;
-                    return new MemberDeclarationListInfo(typeDeclaration, typeDeclaration.Members);
-                }
+            {
+                var typeDeclaration = (TypeDeclarationSyntax)node;
+                return new MemberDeclarationListInfo(typeDeclaration, typeDeclaration.Members);
+            }
         }
 
         return default;
@@ -202,13 +212,12 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
 
     internal static MemberDeclarationListInfo Create(MemberDeclarationListSelection selectedMembers)
     {
-        return new MemberDeclarationListInfo(selectedMembers.Parent, selectedMembers.UnderlyingList);
+        return new(selectedMembers.Parent, selectedMembers.UnderlyingList);
     }
 
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the members updated.
     /// </summary>
-    /// <param name="members"></param>
     public MemberDeclarationListInfo WithMembers(IEnumerable<MemberDeclarationSyntax> members)
     {
         return WithMembers(List(members));
@@ -217,7 +226,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the members updated.
     /// </summary>
-    /// <param name="members"></param>
     public MemberDeclarationListInfo WithMembers(SyntaxList<MemberDeclarationSyntax> members)
     {
         ThrowInvalidOperationIfNotInitialized();
@@ -225,43 +233,52 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
         switch (Parent.Kind())
         {
             case SyntaxKind.CompilationUnit:
-                {
-                    var compilationUnit = (CompilationUnitSyntax)Parent;
-                    compilationUnit = compilationUnit.WithMembers(members);
-                    return new MemberDeclarationListInfo(compilationUnit, compilationUnit.Members);
-                }
+            {
+                var compilationUnit = (CompilationUnitSyntax)Parent;
+                compilationUnit = compilationUnit.WithMembers(members);
+                return new MemberDeclarationListInfo(compilationUnit, compilationUnit.Members);
+            }
             case SyntaxKind.NamespaceDeclaration:
+            {
+                var declaration = (NamespaceDeclarationSyntax)Parent;
+                declaration = declaration.WithMembers(members);
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
+#if ROSLYN_4_0
             case SyntaxKind.FileScopedNamespaceDeclaration:
-                {
-                    var declaration = (BaseNamespaceDeclarationSyntax)Parent;
-                    declaration = declaration.WithMembers(members);
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+            {
+                var declaration = (FileScopedNamespaceDeclarationSyntax)Parent;
+                declaration = declaration.WithMembers(members);
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
+#endif
             case SyntaxKind.ClassDeclaration:
-                {
-                    var declaration = (ClassDeclarationSyntax)Parent;
-                    declaration = declaration.WithMembers(members);
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+            {
+                var declaration = (ClassDeclarationSyntax)Parent;
+                declaration = declaration.WithMembers(members);
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
-                {
-                    var declaration = (RecordDeclarationSyntax)Parent;
-                    declaration = declaration.WithMembers(members);
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+#endif
+            {
+                var declaration = (RecordDeclarationSyntax)Parent;
+                declaration = declaration.WithMembers(members);
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
             case SyntaxKind.StructDeclaration:
-                {
-                    var declaration = (StructDeclarationSyntax)Parent;
-                    declaration = declaration.WithMembers(members);
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+            {
+                var declaration = (StructDeclarationSyntax)Parent;
+                declaration = declaration.WithMembers(members);
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
             case SyntaxKind.InterfaceDeclaration:
-                {
-                    var declaration = (InterfaceDeclarationSyntax)Parent;
-                    declaration = declaration.WithMembers(members);
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+            {
+                var declaration = (InterfaceDeclarationSyntax)Parent;
+                declaration = declaration.WithMembers(members);
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
         }
 
         throw new InvalidOperationException();
@@ -270,8 +287,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the specified node removed.
     /// </summary>
-    /// <param name="node"></param>
-    /// <param name="options"></param>
     public MemberDeclarationListInfo RemoveNode(SyntaxNode node, SyntaxRemoveOptions options)
     {
         ThrowInvalidOperationIfNotInitialized();
@@ -279,43 +294,52 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
         switch (Parent.Kind())
         {
             case SyntaxKind.CompilationUnit:
-                {
-                    var compilationUnit = (CompilationUnitSyntax)Parent;
-                    compilationUnit = compilationUnit.RemoveNode(node, options)!;
-                    return new MemberDeclarationListInfo(compilationUnit, compilationUnit.Members);
-                }
+            {
+                var compilationUnit = (CompilationUnitSyntax)Parent;
+                compilationUnit = compilationUnit.RemoveNode(node, options)!;
+                return new MemberDeclarationListInfo(compilationUnit, compilationUnit.Members);
+            }
             case SyntaxKind.NamespaceDeclaration:
+            {
+                var declaration = (NamespaceDeclarationSyntax)Parent;
+                declaration = declaration.RemoveNode(node, options)!;
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
+#if ROSLYN_4_0
             case SyntaxKind.FileScopedNamespaceDeclaration:
-                {
-                    var declaration = (BaseNamespaceDeclarationSyntax)Parent;
-                    declaration = declaration.RemoveNode(node, options)!;
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+            {
+                var declaration = (FileScopedNamespaceDeclarationSyntax)Parent;
+                declaration = declaration.RemoveNode(node, options)!;
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
+#endif
             case SyntaxKind.ClassDeclaration:
-                {
-                    var declaration = (ClassDeclarationSyntax)Parent;
-                    declaration = declaration.RemoveNode(node, options)!;
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+            {
+                var declaration = (ClassDeclarationSyntax)Parent;
+                declaration = declaration.RemoveNode(node, options)!;
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
-                {
-                    var declaration = (RecordDeclarationSyntax)Parent;
-                    declaration = declaration.RemoveNode(node, options)!;
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+#endif
+            {
+                var declaration = (RecordDeclarationSyntax)Parent;
+                declaration = declaration.RemoveNode(node, options)!;
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
             case SyntaxKind.StructDeclaration:
-                {
-                    var declaration = (StructDeclarationSyntax)Parent;
-                    declaration = declaration.RemoveNode(node, options)!;
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+            {
+                var declaration = (StructDeclarationSyntax)Parent;
+                declaration = declaration.RemoveNode(node, options)!;
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
             case SyntaxKind.InterfaceDeclaration:
-                {
-                    var declaration = (InterfaceDeclarationSyntax)Parent;
-                    declaration = declaration.RemoveNode(node, options)!;
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+            {
+                var declaration = (InterfaceDeclarationSyntax)Parent;
+                declaration = declaration.RemoveNode(node, options)!;
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
         }
 
         throw new InvalidOperationException();
@@ -324,8 +348,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the specified old node replaced with a new node.
     /// </summary>
-    /// <param name="oldNode"></param>
-    /// <param name="newNode"></param>
     public MemberDeclarationListInfo ReplaceNode(SyntaxNode oldNode, SyntaxNode newNode)
     {
         ThrowInvalidOperationIfNotInitialized();
@@ -333,43 +355,52 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
         switch (Parent.Kind())
         {
             case SyntaxKind.CompilationUnit:
-                {
-                    var compilationUnit = (CompilationUnitSyntax)Parent;
-                    compilationUnit = compilationUnit.ReplaceNode(oldNode, newNode);
-                    return new MemberDeclarationListInfo(compilationUnit, compilationUnit.Members);
-                }
+            {
+                var compilationUnit = (CompilationUnitSyntax)Parent;
+                compilationUnit = compilationUnit.ReplaceNode(oldNode, newNode);
+                return new MemberDeclarationListInfo(compilationUnit, compilationUnit.Members);
+            }
             case SyntaxKind.NamespaceDeclaration:
+            {
+                var declaration = (NamespaceDeclarationSyntax)Parent;
+                declaration = declaration.ReplaceNode(oldNode, newNode);
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
+#if ROSLYN_4_0
             case SyntaxKind.FileScopedNamespaceDeclaration:
-                {
-                    var declaration = (BaseNamespaceDeclarationSyntax)Parent;
-                    declaration = declaration.ReplaceNode(oldNode, newNode);
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+            {
+                var declaration = (FileScopedNamespaceDeclarationSyntax)Parent;
+                declaration = declaration.ReplaceNode(oldNode, newNode);
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
+#endif
             case SyntaxKind.ClassDeclaration:
-                {
-                    var declaration = (ClassDeclarationSyntax)Parent;
-                    declaration = declaration.ReplaceNode(oldNode, newNode);
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+            {
+                var declaration = (ClassDeclarationSyntax)Parent;
+                declaration = declaration.ReplaceNode(oldNode, newNode);
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
             case SyntaxKind.RecordDeclaration:
+#if ROSLYN_4_0
             case SyntaxKind.RecordStructDeclaration:
-                {
-                    var declaration = (RecordDeclarationSyntax)Parent;
-                    declaration = declaration.ReplaceNode(oldNode, newNode);
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+#endif
+            {
+                var declaration = (RecordDeclarationSyntax)Parent;
+                declaration = declaration.ReplaceNode(oldNode, newNode);
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
             case SyntaxKind.StructDeclaration:
-                {
-                    var declaration = (StructDeclarationSyntax)Parent;
-                    declaration = declaration.ReplaceNode(oldNode, newNode);
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+            {
+                var declaration = (StructDeclarationSyntax)Parent;
+                declaration = declaration.ReplaceNode(oldNode, newNode);
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
             case SyntaxKind.InterfaceDeclaration:
-                {
-                    var declaration = (InterfaceDeclarationSyntax)Parent;
-                    declaration = declaration.ReplaceNode(oldNode, newNode);
-                    return new MemberDeclarationListInfo(declaration, declaration.Members);
-                }
+            {
+                var declaration = (InterfaceDeclarationSyntax)Parent;
+                declaration = declaration.ReplaceNode(oldNode, newNode);
+                return new MemberDeclarationListInfo(declaration, declaration.Members);
+            }
         }
 
         throw new InvalidOperationException();
@@ -378,7 +409,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the specified member added at the end.
     /// </summary>
-    /// <param name="member"></param>
     public MemberDeclarationListInfo Add(MemberDeclarationSyntax member)
     {
         return WithMembers(Members.Add(member));
@@ -387,7 +417,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the specified members added at the end.
     /// </summary>
-    /// <param name="members"></param>
     public MemberDeclarationListInfo AddRange(IEnumerable<MemberDeclarationSyntax> members)
     {
         return WithMembers(Members.AddRange(members));
@@ -420,7 +449,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Searches for a member that matches the predicate and returns zero-based index of the first occurrence in the list.
     /// </summary>
-    /// <param name="predicate"></param>
     public int IndexOf(Func<MemberDeclarationSyntax, bool> predicate)
     {
         return Members.IndexOf(predicate);
@@ -429,7 +457,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// The index of the member in the list.
     /// </summary>
-    /// <param name="member"></param>
     public int IndexOf(MemberDeclarationSyntax member)
     {
         return Members.IndexOf(member);
@@ -438,8 +465,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the specified member inserted at the index.
     /// </summary>
-    /// <param name="index"></param>
-    /// <param name="member"></param>
     public MemberDeclarationListInfo Insert(int index, MemberDeclarationSyntax member)
     {
         return WithMembers(Members.Insert(index, member));
@@ -448,8 +473,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the specified members inserted at the index.
     /// </summary>
-    /// <param name="index"></param>
-    /// <param name="members"></param>
     public MemberDeclarationListInfo InsertRange(int index, IEnumerable<MemberDeclarationSyntax> members)
     {
         return WithMembers(Members.InsertRange(index, members));
@@ -474,7 +497,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Searches for a member that matches the predicate and returns zero-based index of the last occurrence in the list.
     /// </summary>
-    /// <param name="predicate"></param>
     public int LastIndexOf(Func<MemberDeclarationSyntax, bool> predicate)
     {
         return Members.LastIndexOf(predicate);
@@ -483,7 +505,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Searches for a member and returns zero-based index of the last occurrence in the list.
     /// </summary>
-    /// <param name="member"></param>
     public int LastIndexOf(MemberDeclarationSyntax member)
     {
         return Members.LastIndexOf(member);
@@ -492,7 +513,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the specified member removed.
     /// </summary>
-    /// <param name="member"></param>
     public MemberDeclarationListInfo Remove(MemberDeclarationSyntax member)
     {
         return WithMembers(Members.Remove(member));
@@ -501,7 +521,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the member at the specified index removed.
     /// </summary>
-    /// <param name="index"></param>
     public MemberDeclarationListInfo RemoveAt(int index)
     {
         return WithMembers(Members.RemoveAt(index));
@@ -510,8 +529,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the specified member replaced with the new member.
     /// </summary>
-    /// <param name="memberInList"></param>
-    /// <param name="newMember"></param>
     public MemberDeclarationListInfo Replace(MemberDeclarationSyntax memberInList, MemberDeclarationSyntax newMember)
     {
         return WithMembers(Members.Replace(memberInList, newMember));
@@ -520,8 +537,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the member at the specified index replaced with a new member.
     /// </summary>
-    /// <param name="index"></param>
-    /// <param name="newMember"></param>
     public MemberDeclarationListInfo ReplaceAt(int index, MemberDeclarationSyntax newMember)
     {
         return WithMembers(Members.ReplaceAt(index, newMember));
@@ -530,8 +545,6 @@ public readonly struct MemberDeclarationListInfo : IReadOnlyList<MemberDeclarati
     /// <summary>
     /// Creates a new <see cref="MemberDeclarationListInfo"/> with the specified member replaced with new members.
     /// </summary>
-    /// <param name="memberInList"></param>
-    /// <param name="newMembers"></param>
     public MemberDeclarationListInfo ReplaceRange(MemberDeclarationSyntax memberInList, IEnumerable<MemberDeclarationSyntax> newMembers)
     {
         return WithMembers(Members.ReplaceRange(memberInList, newMembers));

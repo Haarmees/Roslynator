@@ -25,8 +25,8 @@ public sealed class BinaryExpressionCodeFixProvider : BaseCodeFixProvider
         get
         {
             return ImmutableArray.Create(
-                DiagnosticIdentifiers.CallAnyInsteadOfAccessingCount,
-                DiagnosticIdentifiers.UnnecessaryNullCheck);
+                CodeAnalysisDiagnosticIdentifiers.CallAnyInsteadOfAccessingCount,
+                CodeAnalysisDiagnosticIdentifiers.UnnecessaryNullCheck);
         }
     }
 
@@ -42,31 +42,31 @@ public sealed class BinaryExpressionCodeFixProvider : BaseCodeFixProvider
 
         switch (diagnostic.Id)
         {
-            case DiagnosticIdentifiers.CallAnyInsteadOfAccessingCount:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        "Call 'Any' instead of accessing 'Count'",
-                        ct => CallAnyInsteadOfUsingCountAsync(document, binaryExpression, ct),
-                        GetEquivalenceKey(diagnostic));
+            case CodeAnalysisDiagnosticIdentifiers.CallAnyInsteadOfAccessingCount:
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Call 'Any' instead of accessing 'Count'",
+                    ct => CallAnyInsteadOfUsingCountAsync(document, binaryExpression, ct),
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
-            case DiagnosticIdentifiers.UnnecessaryNullCheck:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        "Remove unnecessary null check",
-                        ct =>
-                        {
-                            ExpressionSyntax newExpression = binaryExpression.Right.WithLeadingTrivia(binaryExpression.GetLeadingTrivia());
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
+            case CodeAnalysisDiagnosticIdentifiers.UnnecessaryNullCheck:
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Remove unnecessary null check",
+                    ct =>
+                    {
+                        ExpressionSyntax newExpression = binaryExpression.Right.WithLeadingTrivia(binaryExpression.GetLeadingTrivia());
 
-                            return document.ReplaceNodeAsync(binaryExpression, newExpression, ct);
-                        },
-                        GetEquivalenceKey(diagnostic));
+                        return document.ReplaceNodeAsync(binaryExpression, newExpression, ct);
+                    },
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
         }
     }
 

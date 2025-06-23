@@ -9,7 +9,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
-using Roslynator.CSharp;
 using Roslynator.Text;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
@@ -27,14 +26,6 @@ internal static class SyntaxTriviaAnalysis
     {
         return token.LeadingTrivia.IsEmptyOrWhitespace()
             && token.TrailingTrivia.IsEmptyOrWhitespace();
-    }
-
-    public static bool IsEmptyOrSingleWhitespaceTrivia(SyntaxTriviaList triviaList)
-    {
-        int count = triviaList.Count;
-
-        return count == 0
-            || (count == 1 && triviaList[0].IsWhitespaceTrivia());
     }
 
     public static SyntaxTrivia DetermineEndOfLine(SyntaxNodeOrToken nodeOrToken, SyntaxTrivia? defaultValue = null)
@@ -112,94 +103,6 @@ internal static class SyntaxTriviaAnalysis
         }
 
         return default;
-    }
-
-    public static bool IsTokenPrecededWithNewLineAndNotFollowedWithNewLine(
-        ExpressionSyntax left,
-        SyntaxToken token,
-        ExpressionSyntax right)
-    {
-        return IsOptionalWhitespaceThenEndOfLineTrivia(left.GetTrailingTrivia())
-            && token.LeadingTrivia.IsEmptyOrWhitespace()
-            && token.TrailingTrivia.SingleOrDefault(shouldThrow: false).IsKind(SyntaxKind.None, SyntaxKind.WhitespaceTrivia)
-            && !right.GetLeadingTrivia().Any();
-    }
-
-    public static bool IsTokenFollowedWithNewLineAndNotPrecededWithNewLine(
-        ExpressionSyntax left,
-        SyntaxToken token,
-        ExpressionSyntax right)
-    {
-        return left.GetTrailingTrivia().SingleOrDefault(shouldThrow: false).IsKind(SyntaxKind.None, SyntaxKind.WhitespaceTrivia)
-            && !token.LeadingTrivia.Any()
-            && IsOptionalWhitespaceThenEndOfLineTrivia(token.TrailingTrivia)
-            && right.GetLeadingTrivia().IsEmptyOrWhitespace();
-    }
-
-    public static bool IsOptionalWhitespaceThenEndOfLineTrivia(SyntaxTriviaList triviaList)
-    {
-        SyntaxTriviaList.Enumerator en = triviaList.GetEnumerator();
-
-        if (!en.MoveNext())
-            return false;
-
-        SyntaxKind kind = en.Current.Kind();
-
-        if (kind == SyntaxKind.WhitespaceTrivia)
-        {
-            if (!en.MoveNext())
-                return false;
-
-            kind = en.Current.Kind();
-        }
-
-        return kind == SyntaxKind.EndOfLineTrivia
-            && !en.MoveNext();
-    }
-
-    public static bool IsOptionalWhitespaceThenOptionalSingleLineCommentThenEndOfLineTrivia(SyntaxTriviaList triviaList)
-    {
-        SyntaxTriviaList.Enumerator en = triviaList.GetEnumerator();
-
-        if (!en.MoveNext())
-            return false;
-
-        SyntaxKind kind = en.Current.Kind();
-
-        if (kind == SyntaxKind.WhitespaceTrivia)
-        {
-            if (!en.MoveNext())
-                return false;
-
-            kind = en.Current.Kind();
-        }
-
-        if (kind == SyntaxKind.SingleLineCommentTrivia)
-        {
-            if (!en.MoveNext())
-                return false;
-
-            kind = en.Current.Kind();
-        }
-
-        return kind == SyntaxKind.EndOfLineTrivia
-            && !en.MoveNext();
-    }
-
-    public static bool StartsWithOptionalWhitespaceThenEndOfLineTrivia(SyntaxTriviaList trivia)
-    {
-        SyntaxTriviaList.Enumerator en = trivia.GetEnumerator();
-
-        if (!en.MoveNext())
-            return false;
-
-        if (en.Current.IsWhitespaceTrivia()
-            && !en.MoveNext())
-        {
-            return false;
-        }
-
-        return en.Current.IsEndOfLineTrivia();
     }
 
     public static IndentationAnalysis AnalyzeIndentation(SyntaxNode node, AnalyzerConfigOptions configOptions, CancellationToken cancellationToken = default)
@@ -318,18 +221,16 @@ internal static class SyntaxTriviaAnalysis
         return AnalyzeIndentation(node, configOptions, cancellationToken).GetIncreasedIndentationTriviaList();
     }
 
-    public static IEnumerable<IndentationInfo> FindIndentations(SyntaxNode node)
-    {
-        return FindIndentations(node, node.FullSpan);
-    }
-
     public static IEnumerable<IndentationInfo> FindIndentations(SyntaxNode node, TextSpan span)
     {
         foreach (SyntaxTrivia trivia in node.DescendantTrivia(span))
         {
-            if (trivia.IsKind(SyntaxKind.EndOfLineTrivia, SyntaxKind.SingleLineDocumentationCommentTrivia))
+            if (trivia.IsKind(SyntaxKind.EndOfLineTrivia, SyntaxKind.SingleLineDocumentationCommentTrivia)
+                || SyntaxFacts.IsPreprocessorDirective(trivia.Kind()))
             {
-                int position = trivia.Span.End;
+                int position = (SyntaxFacts.IsPreprocessorDirective(trivia.Kind()))
+                    ? trivia.FullSpan.End
+                    : trivia.Span.End;
 
                 if (span.Contains(position))
                 {

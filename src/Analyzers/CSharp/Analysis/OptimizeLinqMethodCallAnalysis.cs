@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -60,6 +59,9 @@ internal static class OptimizeLinqMethodCallAnalysis
 
         SimpleMemberInvocationExpressionInfo invocationInfo2 = SyntaxInfo.SimpleMemberInvocationExpressionInfo((InvocationExpressionSyntax)firstExpression);
 
+        if (!invocationInfo2.Success)
+            return;
+
         if (invocationInfo2.NameText != "First")
             return;
 
@@ -104,8 +106,8 @@ internal static class OptimizeLinqMethodCallAnalysis
             Properties.SimplifyLinqMethodChain);
     }
 
-    // items.Select(selector).Min/Max() >>> items.Min/Max(selector)
-    public static void AnalyzeSelectAndMinOrMax(
+    // items.Select(selector).Average/Min/Max/Sum() >>> items.Average/Min/Max/Sum(selector)
+    public static void AnalyzeSelectAndAverageOrMinOrMaxOrSum(
         SyntaxNodeAnalysisContext context,
         in SimpleMemberInvocationExpressionInfo invocationInfo)
     {
@@ -165,33 +167,33 @@ internal static class OptimizeLinqMethodCallAnalysis
         switch (methodName)
         {
             case "Where":
-                {
-                    if (!SymbolUtility.IsLinqWhere(methodSymbol2, allowImmutableArrayExtension: true))
-                        return;
+            {
+                if (!SymbolUtility.IsLinqWhere(methodSymbol2, allowImmutableArrayExtension: true))
+                    return;
 
-                    break;
-                }
+                break;
+            }
             case "Select":
-                {
-                    if (!SymbolUtility.IsLinqSelect(methodSymbol2, allowImmutableArrayExtension: true))
-                        return;
+            {
+                if (!SymbolUtility.IsLinqSelect(methodSymbol2, allowImmutableArrayExtension: true))
+                    return;
 
-                    if (invocationInfo.NameText == "ToList"
-                        && semanticModel
-                            .GetTypeSymbol(invocationInfo2.Expression, cancellationToken)?
-                            .OriginalDefinition
-                            .HasMetadataName(MetadataNames.System_Collections_Generic_List_T) != true)
-                    {
-                        return;
-                    }
-
-                    break;
-                }
-            default:
+                if (invocationInfo.NameText == "ToList"
+                    && semanticModel
+                        .GetTypeSymbol(invocationInfo2.Expression, cancellationToken)?
+                        .OriginalDefinition
+                        .HasMetadataName(MetadataNames.System_Collections_Generic_List_T) != true)
                 {
-                    Debug.Fail(methodName);
                     return;
                 }
+
+                break;
+            }
+            default:
+            {
+                Debug.Fail(methodName);
+                return;
+            }
         }
 
         TextSpan span = TextSpan.FromBounds(invocationInfo2.Name.SpanStart, invocation.Span.End);
@@ -229,29 +231,9 @@ internal static class OptimizeLinqMethodCallAnalysis
             if (parameterCount == 2)
             {
                 if (parameters[0].Type.OriginalDefinition.IsIEnumerableOfT()
-                    && SymbolUtility.IsPredicateFunc(parameters[1].Type, methodSymbol.TypeArguments[0]))
+                    && SymbolUtility.IsPredicateFunc(parameters[1].Type, methodSymbol.TypeArguments[0])
+                    && invocationInfo.Arguments[0].Expression is LambdaExpressionSyntax)
                 {
-                    ITypeSymbol typeSymbol = context.SemanticModel.GetTypeSymbol(invocationInfo.Expression, context.CancellationToken);
-
-                    if (typeSymbol is not null)
-                    {
-                        if (typeSymbol.Kind == SymbolKind.ArrayType)
-                        {
-                            if (((IArrayTypeSymbol)typeSymbol).Rank == 1
-                                && !invocationInfo.Expression.IsKind(SyntaxKind.MemberBindingExpression)
-                                && context.SemanticModel.Compilation.GetTypeByMetadataName("System.Array").GetMembers("Find").Any())
-                            {
-                                Report(context, invocationInfo.Name);
-                                return;
-                            }
-                        }
-                        else if (typeSymbol.OriginalDefinition.HasMetadataName(MetadataNames.System_Collections_Generic_List_T))
-                        {
-                            Report(context, invocationInfo.Name);
-                            return;
-                        }
-                    }
-
                     success = true;
                 }
             }
@@ -536,55 +518,55 @@ internal static class OptimizeLinqMethodCallAnalysis
         {
             case SyntaxKind.EqualsExpression:
             case SyntaxKind.NotEqualsExpression:
+            {
+                var equalsExpression = (BinaryExpressionSyntax)parent;
+
+                if (equalsExpression.Left == invocationExpression)
                 {
-                    var equalsExpression = (BinaryExpressionSyntax)parent;
-
-                    if (equalsExpression.Left == invocationExpression)
-                    {
-                        if (equalsExpression.Right.IsNumericLiteralExpression("0"))
-                            ReportNameWithArgumentList(context, invocationInfo);
-                    }
-                    else if (equalsExpression.Left.IsNumericLiteralExpression("0"))
-                    {
+                    if (equalsExpression.Right.IsNumericLiteralExpression("0"))
                         ReportNameWithArgumentList(context, invocationInfo);
-                    }
-
-                    break;
                 }
+                else if (equalsExpression.Left.IsNumericLiteralExpression("0"))
+                {
+                    ReportNameWithArgumentList(context, invocationInfo);
+                }
+
+                break;
+            }
             case SyntaxKind.GreaterThanExpression:
             case SyntaxKind.LessThanOrEqualExpression:
+            {
+                var binaryExpression = (BinaryExpressionSyntax)parent;
+
+                if (binaryExpression.Left == invocationExpression)
                 {
-                    var binaryExpression = (BinaryExpressionSyntax)parent;
-
-                    if (binaryExpression.Left == invocationExpression)
-                    {
-                        if (binaryExpression.Right.IsNumericLiteralExpression("0"))
-                            ReportNameWithArgumentList(context, invocationInfo);
-                    }
-                    else if (binaryExpression.Left.IsNumericLiteralExpression("1"))
-                    {
+                    if (binaryExpression.Right.IsNumericLiteralExpression("0"))
                         ReportNameWithArgumentList(context, invocationInfo);
-                    }
-
-                    break;
                 }
+                else if (binaryExpression.Left.IsNumericLiteralExpression("1"))
+                {
+                    ReportNameWithArgumentList(context, invocationInfo);
+                }
+
+                break;
+            }
             case SyntaxKind.GreaterThanOrEqualExpression:
             case SyntaxKind.LessThanExpression:
+            {
+                var binaryExpression = (BinaryExpressionSyntax)parent;
+
+                if (binaryExpression.Left == invocationExpression)
                 {
-                    var binaryExpression = (BinaryExpressionSyntax)parent;
-
-                    if (binaryExpression.Left == invocationExpression)
-                    {
-                        if (binaryExpression.Right.IsNumericLiteralExpression("1"))
-                            ReportNameWithArgumentList(context, invocationInfo);
-                    }
-                    else if (binaryExpression.Left.IsNumericLiteralExpression("0"))
-                    {
+                    if (binaryExpression.Right.IsNumericLiteralExpression("1"))
                         ReportNameWithArgumentList(context, invocationInfo);
-                    }
-
-                    break;
                 }
+                else if (binaryExpression.Left.IsNumericLiteralExpression("0"))
+                {
+                    ReportNameWithArgumentList(context, invocationInfo);
+                }
+
+                break;
+            }
         }
 
         bool CanBeReplacedWithMemberAccessExpression(ExpressionSyntax e)
@@ -594,14 +576,14 @@ internal static class OptimizeLinqMethodCallAnalysis
             switch (p.Kind())
             {
                 case SyntaxKind.ExpressionStatement:
-                    {
-                        return false;
-                    }
+                {
+                    return false;
+                }
                 case SyntaxKind.SimpleLambdaExpression:
                 case SyntaxKind.ParenthesizedLambdaExpression:
-                    {
-                        return semanticModel.GetMethodSymbol((LambdaExpressionSyntax)p, cancellationToken)?.ReturnType.IsVoid() == false;
-                    }
+                {
+                    return semanticModel.GetMethodSymbol((LambdaExpressionSyntax)p, cancellationToken)?.ReturnType.IsVoid() == false;
+                }
             }
 
             return true;
@@ -696,6 +678,46 @@ internal static class OptimizeLinqMethodCallAnalysis
 
         TextSpan span = TextSpan.FromBounds(invocationInfo2.Name.SpanStart, invocationExpression.Span.End);
 
+        Report(context, invocationExpression, span, checkDirectives: true);
+    }
+
+    // x.OrderBy(f => f) >>> x.Order()
+    public static void AnalyzeOrderByIdentity(SyntaxNodeAnalysisContext context, in SimpleMemberInvocationExpressionInfo invocationInfo)
+    {
+        InvocationExpressionSyntax invocationExpression = invocationInfo.InvocationExpression;
+
+        IMethodSymbol orderMethod = context.SemanticModel
+            .GetSymbolInfo(invocationExpression)
+            .Symbol
+            .ContainingType
+            .FindMember<IMethodSymbol>(method => method.Name == "Order" && method.Parameters.Length is 1);
+
+        if (orderMethod is null)
+            return;
+
+        ArgumentSyntax argument = invocationInfo.Arguments.SingleOrDefault(shouldThrow: false);
+
+        if (argument is null)
+            return;
+
+        if (!string.Equals(invocationInfo.NameText, "OrderBy", StringComparison.Ordinal))
+            return;
+
+        if (argument.Expression is not SimpleLambdaExpressionSyntax lambdaExpression)
+            return;
+
+        if (lambdaExpression.Body is not IdentifierNameSyntax identifier || identifier.Identifier.Text != lambdaExpression.Parameter.Identifier.Text)
+            return;
+
+        if (context.SemanticModel
+            .GetTypeSymbol(invocationInfo.Expression, context.CancellationToken)?
+            .OriginalDefinition
+            .HasMetadataName(MetadataNames.System_Linq_IQueryable_T) == true)
+        {
+            return;
+        }
+
+        TextSpan span = TextSpan.FromBounds(invocationInfo.Name.SpanStart, invocationExpression.Span.End);
         Report(context, invocationExpression, span, checkDirectives: true);
     }
 
@@ -906,15 +928,15 @@ internal static class OptimizeLinqMethodCallAnalysis
         public static ImmutableDictionary<string, string> Length { get; } = ImmutableDictionary.CreateRange(new[] { new KeyValuePair<string, string>("PropertyName", "Length") });
 
         public static ImmutableDictionary<string, string> Sum_Count { get; } = ImmutableDictionary.CreateRange(new[]
-            {
-                new KeyValuePair<string, string>("PropertyName", "Count"),
-                new KeyValuePair<string, string>("MethodName", "Sum"),
-            });
+        {
+            new KeyValuePair<string, string>("PropertyName", "Count"),
+            new KeyValuePair<string, string>("MethodName", "Sum"),
+        });
 
         public static ImmutableDictionary<string, string> Sum_Length { get; } = ImmutableDictionary.CreateRange(new[]
-            {
-                new KeyValuePair<string, string>("PropertyName", "Length"),
-                new KeyValuePair<string, string>("MethodName", "Sum"),
-            });
+        {
+            new KeyValuePair<string, string>("PropertyName", "Length"),
+            new KeyValuePair<string, string>("MethodName", "Sum"),
+        });
     }
 }

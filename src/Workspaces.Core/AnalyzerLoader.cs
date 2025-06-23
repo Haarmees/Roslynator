@@ -13,10 +13,10 @@ namespace Roslynator;
 
 internal class AnalyzerLoader
 {
-    private readonly Dictionary<string, AnalyzerAssembly> _cache = new();
-    private readonly Dictionary<string, AnalyzerAssembly> _defaultAssemblies = new();
-    private readonly Dictionary<string, ImmutableArray<DiagnosticAnalyzer>> _defaultAnalyzers = new();
-    private readonly Dictionary<string, ImmutableArray<CodeFixProvider>> _defaultFixers = new();
+    private readonly Dictionary<string, AnalyzerAssembly> _cache = [];
+    private readonly Dictionary<string, AnalyzerAssembly> _defaultAssemblies = [];
+    private readonly Dictionary<string, ImmutableArray<DiagnosticAnalyzer>> _defaultAnalyzers = [];
+    private readonly Dictionary<string, ImmutableArray<CodeFixProvider>> _defaultFixers = [];
 
     public AnalyzerLoader(IEnumerable<AnalyzerAssembly> defaultAssemblies, CodeAnalysisOptions options)
     {
@@ -64,7 +64,7 @@ internal class AnalyzerLoader
 
     private (ImmutableArray<DiagnosticAnalyzer> analyzers, ImmutableArray<CodeFixProvider> fixers) GetAnalyzersAndFixers(
         Project project,
-        bool loadFixers = true)
+        bool loadFixers)
     {
         string language = project.Language;
 
@@ -104,6 +104,7 @@ internal class AnalyzerLoader
                 .Distinct()
                 .OfType<AnalyzerFileReference>()
                 .Select(f => f.GetAssembly())
+                .Distinct(AssemblyFullNameComparer.Instance)
                 .Where(f => !_defaultAssemblies.ContainsKey(f.FullName)))
             {
                 if (!_cache.TryGetValue(assembly.FullName, out AnalyzerAssembly analyzerAssembly))

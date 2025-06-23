@@ -1,6 +1,5 @@
 ﻿// Copyright (c) .NET Foundation and Contributors. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -33,7 +32,9 @@ public sealed class UnnecessaryUnsafeContextAnalyzer : BaseDiagnosticAnalyzer
             f => AnalyzeTypeDeclaration(f),
             SyntaxKind.ClassDeclaration,
             SyntaxKind.StructDeclaration,
+#if ROSLYN_4_0
             SyntaxKind.RecordStructDeclaration,
+#endif
             SyntaxKind.InterfaceDeclaration);
 
         context.RegisterSyntaxNodeAction(f => AnalyzeUnsafeStatement(f), SyntaxKind.UnsafeStatement);
@@ -180,19 +181,19 @@ public sealed class UnnecessaryUnsafeContextAnalyzer : BaseDiagnosticAnalyzer
                 case UnsafeStatementSyntax:
                     return true;
                 case MemberDeclarationSyntax memberDeclarationSyntax:
-                    {
-                        if (memberDeclarationSyntax.Modifiers.Contains(SyntaxKind.UnsafeKeyword))
-                            return true;
+                {
+                    if (memberDeclarationSyntax.Modifiers.Contains(SyntaxKind.UnsafeKeyword))
+                        return true;
 
-                        break;
-                    }
+                    break;
+                }
                 case LocalFunctionStatementSyntax localFunctionStatement:
-                    {
-                        if (localFunctionStatement.Modifiers.Contains(SyntaxKind.UnsafeKeyword))
-                            return true;
+                {
+                    if (localFunctionStatement.Modifiers.Contains(SyntaxKind.UnsafeKeyword))
+                        return true;
 
-                        break;
-                    }
+                    break;
+                }
             }
 
             node = node.Parent;

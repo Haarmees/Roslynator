@@ -1,7 +1,7 @@
 ﻿<Project>
 
   <PropertyGroup>
-    <LangVersion>10.0</LangVersion>
+    <LangVersion>12.0</LangVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)Roslynator.snk</AssemblyOriginatorKeyFile>
     <Authors>Josef Pihrt</Authors>
@@ -11,12 +11,29 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <Choose>
+    <When Condition="$(RoslynVersion) == 'roslyn3.8'">
+      <PropertyGroup>
+        <RoslynatorRoslynVersion>3.8.0</RoslynatorRoslynVersion>
+        <RoslynatorRoslynAnalyzersVersion>3.0.0</RoslynatorRoslynAnalyzersVersion>
+        <DefineConstants>$(DefineConstants);ROSLYN_3_8;ROSLYN_3_8_ONLY</DefineConstants>
+        <NoWarn>$(NoWarn);8600;8604;8625</NoWarn>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <RoslynatorRoslynVersion>4.7.0</RoslynatorRoslynVersion>
+        <RoslynatorRoslynAnalyzersVersion>3.3.4</RoslynatorRoslynAnalyzersVersion>
+        <DefineConstants>$(DefineConstants);ROSLYN_3_8;ROSLYN_4_0;ROSLYN_4_2,ROSLYN_4_4;ROSLYN_4_7;ROSLYN_4_7_ONLY</DefineConstants>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+  
   <PropertyGroup>
     <Version Condition="'$(Version)' == ''">1.0.0</Version>
-    <RoslynatorRoslynVersion>4.4.0</RoslynatorRoslynVersion>
-    <RoslynatorRoslynAnalyzersVersion>3.3.4</RoslynatorRoslynAnalyzersVersion>
-    <RoslynatorCliRoslynVersion>4.7.0</RoslynatorCliRoslynVersion>
-    <RoslynatorTestingRoslynVersion>4.7.0</RoslynatorTestingRoslynVersion>
+    <RoslynatorCliRoslynVersion>4.12.0</RoslynatorCliRoslynVersion>
+    <RoslynatorTestingRoslynVersion>4.12.0</RoslynatorTestingRoslynVersion>
+    <RoslynatorAnalyzersPackageReferenceVersion>4.12.11</RoslynatorAnalyzersPackageReferenceVersion>
     <RoslynatorCliPackageVersion>$(RoslynatorCliVersion)</RoslynatorCliPackageVersion>
     <RoslynatorPackageVersion>$(Version)</RoslynatorPackageVersion>
     <RoslynatorVersion>$(RoslynatorPackageVersion)</RoslynatorVersion>
@@ -26,7 +43,7 @@
     <RoslynatorCorePackageVersion>$(RoslynatorPackageVersion)</RoslynatorCorePackageVersion>
     <RoslynatorAnalyzersPackageVersion>$(RoslynatorPackageVersion)</RoslynatorAnalyzersPackageVersion>
     <RoslynatorTestingPackageVersion>$(RoslynatorPackageVersion)</RoslynatorTestingPackageVersion>
-    <RoslynatorMicrosoftBuildLocatorVersion>1.6.1</RoslynatorMicrosoftBuildLocatorVersion>
+    <RoslynatorMicrosoftBuildLocatorVersion>1.7.8</RoslynatorMicrosoftBuildLocatorVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(RoslynatorDotNetCli)' == true OR '$(RoslynatorCommandLine)' == true">
@@ -45,16 +62,24 @@
     <RoslynatorDllPrefix>Roslynator_Formatting_Analyzers_</RoslynatorDllPrefix>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(RoslynatorRefactoringsNuGet)' == true">
+    <RoslynatorDllPrefix>Roslynator_Refactorings_</RoslynatorDllPrefix>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition="'$(RoslynatorCodeFixesNuGet)' == true">
+    <RoslynatorDllPrefix>Roslynator_CodeFixes_</RoslynatorDllPrefix>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="roslynator.analyzers" Version="4.5.0" Condition="'$(MSBuildProjectName)'!='Analyzers'">
+    <PackageReference Include="roslynator.analyzers" Version="$(RoslynatorAnalyzersPackageReferenceVersion)">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="roslynator.formatting.analyzers" Version="4.5.0" Condition="'$(MSBuildProjectName)'!='Formatting.Analyzers'">
+    <PackageReference Include="roslynator.formatting.analyzers" Version="$(RoslynatorAnalyzersPackageReferenceVersion)">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="roslynator.codeanalysis.analyzers" Version="4.5.0" Condition="'$(MSBuildProjectName)'!='CodeAnalysis.Analyzers'">
+    <PackageReference Include="roslynator.codeanalysis.analyzers" Version="$(RoslynatorAnalyzersPackageReferenceVersion)">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

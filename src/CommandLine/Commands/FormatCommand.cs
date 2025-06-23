@@ -1,6 +1,5 @@
 ﻿// Copyright (c) .NET Foundation and Contributors. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -79,7 +78,7 @@ internal class FormatCommand : MSBuildWorkspaceCommand<FormatCommandResult>
                     LogHelpers.WriteFormattedDocuments(formattedDocuments, project, solutionDirectory);
                 }
 
-                WriteLine($"  Done analyzing '{project.Name}'", Verbosity.Normal);
+                WriteLine($"  Analyzed '{project.Name}'", Verbosity.Normal);
             });
 #else
         await Parallel.ForEachAsync(
@@ -101,7 +100,7 @@ internal class FormatCommand : MSBuildWorkspaceCommand<FormatCommandResult>
                     LogHelpers.WriteFormattedDocuments(formattedDocuments, project, solutionDirectory);
                 }
 
-                WriteLine($"  Done analyzing '{project.Name}'", Verbosity.Normal);
+                WriteLine($"  Analyzed '{project.Name}'", Verbosity.Normal);
             });
 #endif
 
@@ -116,7 +115,7 @@ internal class FormatCommand : MSBuildWorkspaceCommand<FormatCommandResult>
                 newSolution = newSolution.WithDocumentText(documentId, sourceText);
             }
 
-            WriteLine($"Apply changes to solution '{solution.FilePath}'", Verbosity.Normal);
+            WriteLine($"Applying changes to solution '{solution.FilePath}'...", Verbosity.Normal);
 
             if (!solution.Workspace.TryApplyChanges(newSolution))
             {
@@ -131,7 +130,7 @@ internal class FormatCommand : MSBuildWorkspaceCommand<FormatCommandResult>
         WriteLine($"{count} {((count == 1) ? "document" : "documents")} formatted", ConsoleColors.Green, Verbosity.Minimal);
 
         WriteLine(Verbosity.Minimal);
-        WriteLine($"Done formatting solution '{solution.FilePath}' in {stopwatch.Elapsed:mm\\:ss\\.ff}", Verbosity.Minimal);
+        LogHelpers.WriteElapsedTime($"Analyzed solution '{solution.FilePath}'", stopwatch.Elapsed, Verbosity.Minimal);
 
         return changedDocuments.SelectMany(f => f).ToImmutableArray();
     }
@@ -156,7 +155,7 @@ internal class FormatCommand : MSBuildWorkspaceCommand<FormatCommandResult>
         {
             Solution newSolution = newProject.Solution;
 
-            WriteLine($"Apply changes to solution '{newSolution.FilePath}'", Verbosity.Normal);
+            WriteLine($"Applying changes to solution '{newSolution.FilePath}'...", Verbosity.Normal);
 
             if (!solution.Workspace.TryApplyChanges(newSolution))
             {
@@ -182,10 +181,5 @@ internal class FormatCommand : MSBuildWorkspaceCommand<FormatCommandResult>
     {
         WriteLine(Verbosity.Minimal);
         WriteLine($"{count} {((count == 1) ? "document" : "documents")} formatted", ConsoleColors.Green, Verbosity.Minimal);
-    }
-
-    protected override void OperationCanceled(OperationCanceledException ex)
-    {
-        WriteLine("Formatting was canceled.", Verbosity.Minimal);
     }
 }

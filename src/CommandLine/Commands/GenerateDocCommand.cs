@@ -89,8 +89,6 @@ internal class GenerateDocCommand : MSBuildWorkspaceCommand<CommandResult>
 
     public override async Task<CommandResult> ExecuteAsync(ProjectOrSolution projectOrSolution, CancellationToken cancellationToken = default)
     {
-        AssemblyResolver.Register();
-
         var documentationOptions = new DocumentationOptions()
         {
             RootFileHeading = Options.Heading,
@@ -195,17 +193,11 @@ internal class GenerateDocCommand : MSBuildWorkspaceCommand<CommandResult>
             }
         }
 
-        SourceReferenceProvider sourceReferenceProvider = null;
-#if DEBUG
-        if (Options.SourceReferences.Any())
-            sourceReferenceProvider = SourceReferenceProvider.Load(Options.SourceReferences);
-#endif
         var context = new DocumentationContext(
             documentationModel,
             GetUrlProvider(),
             documentationOptions,
             c => CreateDocumentationWriter(c),
-            sourceReferenceProvider: sourceReferenceProvider,
             commonNamespaces: commonNamespaces);
 
         var generator = new DocumentationGenerator(context);
@@ -223,7 +215,7 @@ internal class GenerateDocCommand : MSBuildWorkspaceCommand<CommandResult>
             }
             catch (IOException ex)
             {
-                WriteError(ex);
+                WriteCriticalError(ex);
                 return CommandResults.Fail;
             }
         }

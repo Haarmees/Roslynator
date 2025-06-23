@@ -23,8 +23,8 @@ public sealed class AttributeCodeFixProvider : BaseCodeFixProvider
         get
         {
             return ImmutableArray.Create(
-                DiagnosticIdentifiers.SpecifyExportCodeFixProviderAttributeName,
-                DiagnosticIdentifiers.SpecifyExportCodeRefactoringProviderAttributeName);
+                CodeAnalysisDiagnosticIdentifiers.SpecifyExportCodeFixProviderAttributeName,
+                CodeAnalysisDiagnosticIdentifiers.SpecifyExportCodeRefactoringProviderAttributeName);
         }
     }
 
@@ -40,17 +40,17 @@ public sealed class AttributeCodeFixProvider : BaseCodeFixProvider
 
         switch (diagnostic.Id)
         {
-            case DiagnosticIdentifiers.SpecifyExportCodeFixProviderAttributeName:
-            case DiagnosticIdentifiers.SpecifyExportCodeRefactoringProviderAttributeName:
-                {
-                    CodeAction codeAction = CodeAction.Create(
-                        "Specify name",
-                        ct => SpecifyNameAsync(document, attribute, ct),
-                        GetEquivalenceKey(diagnostic));
+            case CodeAnalysisDiagnosticIdentifiers.SpecifyExportCodeFixProviderAttributeName:
+            case CodeAnalysisDiagnosticIdentifiers.SpecifyExportCodeRefactoringProviderAttributeName:
+            {
+                CodeAction codeAction = CodeAction.Create(
+                    "Specify name",
+                    ct => SpecifyNameAsync(document, attribute, ct),
+                    GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
         }
     }
 

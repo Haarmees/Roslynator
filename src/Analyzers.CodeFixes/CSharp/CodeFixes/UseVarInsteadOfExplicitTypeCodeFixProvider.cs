@@ -13,6 +13,7 @@ using Roslynator.CodeFixes;
 
 namespace Roslynator.CSharp.CodeFixes;
 
+[Obsolete("Use code fix provider 'UseVarOrExplicitTypeCodeFixProvider' instead.")]
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(UseVarInsteadOfExplicitTypeCodeFixProvider))]
 [Shared]
 public sealed class UseVarInsteadOfExplicitTypeCodeFixProvider : BaseCodeFixProvider
@@ -47,23 +48,23 @@ public sealed class UseVarInsteadOfExplicitTypeCodeFixProvider : BaseCodeFixProv
         switch (node)
         {
             case TypeSyntax type:
-                {
-                    CodeAction codeAction = CodeActionFactory.ChangeTypeToVar(document, type, equivalenceKey: GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeActionFactory.ChangeTypeToVar(document, type, equivalenceKey: GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
             case TupleExpressionSyntax tupleExpression:
-                {
-                    CodeAction codeAction = CodeActionFactory.ChangeTypeToVar(document, tupleExpression, equivalenceKey: GetEquivalenceKey(diagnostic));
+            {
+                CodeAction codeAction = CodeActionFactory.ChangeTypeToVar(document, tupleExpression, equivalenceKey: GetEquivalenceKey(diagnostic));
 
-                    context.RegisterCodeFix(codeAction, diagnostic);
-                    break;
-                }
+                context.RegisterCodeFix(codeAction, diagnostic);
+                break;
+            }
             default:
-                {
-                    throw new InvalidOperationException();
-                }
+            {
+                throw new InvalidOperationException();
+            }
         }
     }
 }

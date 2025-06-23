@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Roslynator.CSharp.SyntaxWalkers;
 
 namespace Roslynator.CSharp.Analysis;
 
@@ -82,7 +81,7 @@ public sealed class RemoveOriginalExceptionFromThrowStatementAnalyzer : BaseDiag
         }
     }
 
-    private class Walker : CSharpSyntaxNodeWalker
+    private class Walker : CSharpSyntaxWalker
     {
         [ThreadStatic]
         private static Walker _cachedInstance;

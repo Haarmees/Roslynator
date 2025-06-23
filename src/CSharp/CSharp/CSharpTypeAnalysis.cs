@@ -31,14 +31,17 @@ internal static class CSharpTypeAnalysis
         if (!variables.Any())
             return default;
 
-        if (variableDeclaration.IsParentKind(SyntaxKind.FieldDeclaration, SyntaxKind.EventFieldDeclaration))
+        if (variableDeclaration.IsParentKind(SyntaxKind.FieldDeclaration, SyntaxKind.EventFieldDeclaration, SyntaxKind.FixedStatement))
             return default;
 
         ExpressionSyntax? expression = variables[0].Initializer?.Value?.WalkDownParentheses();
 
         if (expression is null)
             return default;
-
+#if ROSLYN_4_7
+        if (expression.IsKind(SyntaxKind.CollectionExpression))
+            return default;
+#endif
         ITypeSymbol? typeSymbol = semanticModel.GetTypeSymbol(type, cancellationToken);
 
         if (typeSymbol is null)
@@ -73,31 +76,8 @@ internal static class CSharpTypeAnalysis
             }
         }
 
-        switch (expression.Kind())
-        {
-            case SyntaxKind.ObjectCreationExpression:
-            case SyntaxKind.ArrayCreationExpression:
-            case SyntaxKind.CastExpression:
-            case SyntaxKind.AsExpression:
-            case SyntaxKind.ThisExpression:
-            case SyntaxKind.DefaultExpression:
-                {
-                    flags |= TypeAnalysisFlags.TypeObvious;
-                    break;
-                }
-            case SyntaxKind.SimpleMemberAccessExpression:
-                {
-                    ISymbol? symbol = semanticModel.GetSymbol(expression, cancellationToken);
-
-                    if (symbol?.Kind == SymbolKind.Field
-                        && symbol.ContainingType?.TypeKind == TypeKind.Enum)
-                    {
-                        flags |= TypeAnalysisFlags.TypeObvious;
-                    }
-
-                    break;
-                }
-        }
+        if (IsTypeObvious(expression, typeSymbol, includeNullability: false, semanticModel, cancellationToken))
+            flags |= TypeAnalysisFlags.TypeObvious;
 
         return new TypeAnalysis(typeSymbol, flags);
     }
@@ -126,7 +106,7 @@ internal static class CSharpTypeAnalysis
         if (!type.IsVar)
             return false;
 
-        if (variableDeclaration.IsParentKind(SyntaxKind.FieldDeclaration, SyntaxKind.EventFieldDeclaration))
+        if (variableDeclaration.IsParentKind(SyntaxKind.FieldDeclaration, SyntaxKind.EventFieldDeclaration, SyntaxKind.FixedStatement))
             return false;
 
         Debug.Assert(variableDeclaration.Variables.Any());
@@ -193,20 +173,21 @@ internal static class CSharpTypeAnalysis
         {
             case SyntaxKind.FieldDeclaration:
             case SyntaxKind.EventFieldDeclaration:
-                {
-                    return false;
-                }
+            case SyntaxKind.FixedStatement:
+            {
+                return false;
+            }
             case SyntaxKind.LocalDeclarationStatement:
-                {
-                    if (((LocalDeclarationStatementSyntax)variableDeclaration.Parent).IsConst)
-                        return false;
-
-                    break;
-                }
-            case null:
-                {
+            {
+                if (((LocalDeclarationStatementSyntax)variableDeclaration.Parent).IsConst)
                     return false;
-                }
+
+                break;
+            }
+            case null:
+            {
+                return false;
+            }
         }
 
         Debug.Assert(variableDeclaration.Variables.Any());
@@ -221,8 +202,16 @@ internal static class CSharpTypeAnalysis
         if (expression is null)
             return false;
 
-        if (expression.IsKind(SyntaxKind.NullLiteralExpression, SyntaxKind.DefaultLiteralExpression, SyntaxKind.ImplicitObjectCreationExpression))
+        if (expression.IsKind(
+            SyntaxKind.NullLiteralExpression,
+            SyntaxKind.DefaultLiteralExpression,
+#if ROSLYN_4_7
+            SyntaxKind.CollectionExpression,
+#endif
+            SyntaxKind.ImplicitObjectCreationExpression))
+        {
             return false;
+        }
 
         if (expression.IsKind(SyntaxKind.SuppressNullableWarningExpression)
             && expression is PostfixUnaryExpressionSyntax postfixUnary
@@ -282,84 +271,81 @@ internal static class CSharpTypeAnalysis
             case SyntaxKind.TrueLiteralExpression:
             case SyntaxKind.FalseLiteralExpression:
             case SyntaxKind.ThisExpression:
-                {
-                    return true;
-                }
             case SyntaxKind.ObjectCreationExpression:
             case SyntaxKind.ArrayCreationExpression:
             case SyntaxKind.CastExpression:
             case SyntaxKind.AsExpression:
             case SyntaxKind.DefaultExpression:
-                {
-                    return typeSymbol is null
-                        || GetEqualityComparer(includeNullability).Equals(
-                            typeSymbol,
-                            semanticModel.GetTypeSymbol(expression, cancellationToken));
-                }
+            {
+                return typeSymbol is null
+                    || GetEqualityComparer(includeNullability).Equals(
+                        typeSymbol,
+                        semanticModel.GetTypeSymbol(expression, cancellationToken));
+            }
             case SyntaxKind.ImplicitArrayCreationExpression:
+            {
+                var implicitArrayCreation = (ImplicitArrayCreationExpressionSyntax)expression;
+
+                SeparatedSyntaxList<ExpressionSyntax> expressions = implicitArrayCreation.Initializer?.Expressions ?? default;
+
+                if (!expressions.Any())
+                    return false;
+
+                if (typeSymbol is not null)
                 {
-                    var implicitArrayCreation = (ImplicitArrayCreationExpressionSyntax)expression;
+                    var arrayTypeSymbol = semanticModel.GetTypeSymbol(implicitArrayCreation, cancellationToken) as IArrayTypeSymbol;
 
-                    SeparatedSyntaxList<ExpressionSyntax> expressions = implicitArrayCreation.Initializer?.Expressions ?? default;
-
-                    if (!expressions.Any())
+                    if (!GetEqualityComparer(includeNullability).Equals(typeSymbol, arrayTypeSymbol))
                         return false;
 
-                    if (typeSymbol is not null)
-                    {
-                        var arrayTypeSymbol = semanticModel.GetTypeSymbol(implicitArrayCreation, cancellationToken) as IArrayTypeSymbol;
-
-                        if (!GetEqualityComparer(includeNullability).Equals(typeSymbol, arrayTypeSymbol))
-                            return false;
-
-                        typeSymbol = arrayTypeSymbol.ElementType;
-                    }
-
-                    foreach (ExpressionSyntax expression2 in expressions)
-                    {
-                        if (!IsTypeObvious(expression2, typeSymbol, includeNullability, semanticModel, cancellationToken))
-                            return false;
-                    }
-
-                    return true;
+                    typeSymbol = arrayTypeSymbol.ElementType;
                 }
+
+                foreach (ExpressionSyntax expression2 in expressions)
+                {
+                    if (!IsTypeObvious(expression2, typeSymbol, includeNullability, semanticModel, cancellationToken))
+                        return false;
+                }
+
+                return true;
+            }
             case SyntaxKind.SimpleMemberAccessExpression:
-                {
-                    ISymbol? symbol = semanticModel.GetSymbol(expression, cancellationToken);
+            {
+                ISymbol? symbol = semanticModel.GetSymbol(expression, cancellationToken);
 
-                    return symbol?.Kind == SymbolKind.Field
-                        && symbol.ContainingType?.TypeKind == TypeKind.Enum;
-                }
+                return symbol?.Kind == SymbolKind.Field
+                    && symbol.ContainingType?.TypeKind == TypeKind.Enum;
+            }
             case SyntaxKind.InvocationExpression:
+            {
+                if (typeSymbol is not null)
                 {
-                    if (typeSymbol is not null)
+                    var invocationExpression = (InvocationExpressionSyntax)expression;
+                    if (invocationExpression.Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression))
                     {
-                        var invocationExpression = (InvocationExpressionSyntax)expression;
-                        if (invocationExpression.Expression.IsKind(SyntaxKind.SimpleMemberAccessExpression))
+                        ISymbol? symbol = semanticModel.GetSymbol(expression, cancellationToken);
+
+                        if (symbol?.IsStatic == true
+                            && string.Equals(symbol.Name, "Parse", StringComparison.Ordinal)
+                            && GetEqualityComparer(includeNullability).Equals(
+                                ((IMethodSymbol)symbol).ReturnType,
+                                typeSymbol))
                         {
-                            ISymbol? symbol = semanticModel.GetSymbol(expression, cancellationToken);
+                            var simpleMemberAccess = (MemberAccessExpressionSyntax)invocationExpression.Expression;
 
-                            if (symbol?.IsStatic == true
-                                && string.Equals(symbol.Name, "Parse", StringComparison.Ordinal)
-                                && GetEqualityComparer(includeNullability).Equals(
-                                    ((IMethodSymbol)symbol).ReturnType,
-                                    typeSymbol))
+                            ISymbol? symbol2 = semanticModel.GetSymbol(simpleMemberAccess.Expression, cancellationToken);
+
+                            if (SymbolEqualityComparer.Default.Equals(symbol2, typeSymbol)
+                                && semanticModel.GetAliasInfo(simpleMemberAccess.Expression, cancellationToken) is null)
                             {
-                                var simpleMemberAccess = (MemberAccessExpressionSyntax)invocationExpression.Expression;
-
-                                ISymbol? symbol2 = semanticModel.GetSymbol(simpleMemberAccess.Expression, cancellationToken);
-
-                                if (SymbolEqualityComparer.Default.Equals(symbol2, typeSymbol)
-                                    && semanticModel.GetAliasInfo(simpleMemberAccess.Expression, cancellationToken) is null)
-                                {
-                                    return true;
-                                }
+                                return true;
                             }
                         }
                     }
-
-                    break;
                 }
+
+                break;
+            }
         }
 
         return false;
@@ -424,6 +410,15 @@ internal static class CSharpTypeAnalysis
         SemanticModel semanticModel,
         CancellationToken cancellationToken = default)
     {
+        return IsImplicitThatCanBeExplicit(declarationExpression, semanticModel, TypeAppearance.None, cancellationToken);
+    }
+
+    public static bool IsImplicitThatCanBeExplicit(
+        DeclarationExpressionSyntax declarationExpression,
+        SemanticModel semanticModel,
+        TypeAppearance typeAppearance,
+        CancellationToken cancellationToken = default)
+    {
         TypeSyntax type = declarationExpression.Type;
 
         Debug.Assert(type is not null);
@@ -434,34 +429,60 @@ internal static class CSharpTypeAnalysis
         if (!type.IsVar)
             return false;
 
+        if (declarationExpression.Parent is AssignmentExpressionSyntax assignment)
+        {
+            ITypeSymbol? typeSymbol = semanticModel.GetTypeSymbol(assignment.Right, cancellationToken);
+
+            return typeSymbol?.SupportsExplicitDeclaration() == true;
+        }
+
         switch (declarationExpression.Designation)
         {
             case SingleVariableDesignationSyntax singleVariableDesignation:
-                {
-                    return IsLocalThatSupportsExplicitDeclaration(singleVariableDesignation);
-                }
+            {
+                return IsLocalThatSupportsExplicitDeclaration(singleVariableDesignation);
+            }
             case DiscardDesignationSyntax discardDesignation:
-                {
-                    return IsLocalThatSupportsExplicitDeclaration(discardDesignation);
-                }
+            {
+                return IsLocalThatSupportsExplicitDeclaration(discardDesignation);
+            }
             case ParenthesizedVariableDesignationSyntax parenthesizedVariableDesignation:
+            {
+                foreach (VariableDesignationSyntax variableDesignation in parenthesizedVariableDesignation.Variables)
                 {
-                    foreach (VariableDesignationSyntax variableDesignation in parenthesizedVariableDesignation.Variables)
+                    if (variableDesignation is not SingleVariableDesignationSyntax)
+                        return false;
+
+                    if (!IsLocalThatSupportsExplicitDeclaration(variableDesignation))
+                        return false;
+                }
+
+                if (declarationExpression.Parent is AssignmentExpressionSyntax assignmentExpression
+                    && declarationExpression == assignmentExpression.Left)
+                {
+                    ExpressionSyntax expression = assignmentExpression.Right;
+
+                    if (expression is not null)
                     {
-                        if (variableDesignation is not SingleVariableDesignationSyntax singleVariableDesignation2)
-                            return false;
+                        switch (typeAppearance)
+                        {
+                            case TypeAppearance.Obvious:
+                                return !IsTypeObvious(expression, semanticModel, cancellationToken);
+                            case TypeAppearance.NotObvious:
+                                return IsTypeObvious(expression, semanticModel, cancellationToken);
+                        }
 
-                        if (!IsLocalThatSupportsExplicitDeclaration(singleVariableDesignation2))
-                            return false;
+                        Debug.Assert(typeAppearance == TypeAppearance.None, typeAppearance.ToString());
                     }
+                }
 
-                    return true;
-                }
+                return true;
+            }
             default:
-                {
-                    SyntaxDebug.Fail(declarationExpression.Designation);
-                    return false;
-                }
+            {
+                SyntaxDebug.Fail(declarationExpression.Designation);
+                return false;
+            }
         }
 
         bool IsLocalThatSupportsExplicitDeclaration(VariableDesignationSyntax variableDesignation)
@@ -544,11 +565,10 @@ internal static class CSharpTypeAnalysis
                     {
                         case SyntaxKind.IdentifierName:
                             return false;
-
                         case SyntaxKind.GenericName:
                             return true;
-
                         case SyntaxKind.SimpleMemberAccessExpression:
+                        {
                             var memberAccess = (MemberAccessExpressionSyntax)invocation.Expression;
 
                             if (memberAccess.Name.IsKind(SyntaxKind.IdentifierName))
@@ -559,10 +579,12 @@ internal static class CSharpTypeAnalysis
 
                             Debug.Fail(memberAccess.Name.Kind().ToString());
                             break;
-
+                        }
                         default:
+                        {
                             Debug.Fail(invocation.Expression.Kind().ToString());
                             break;
+                        }
                     }
                 }
             }
@@ -588,17 +610,17 @@ internal static class CSharpTypeAnalysis
         switch (tupleExpression.Parent?.Kind())
         {
             case SyntaxKind.SimpleAssignmentExpression:
-                {
-                    var assignment = (AssignmentExpressionSyntax)tupleExpression.Parent;
+            {
+                var assignment = (AssignmentExpressionSyntax)tupleExpression.Parent;
 
-                    return IsExplicitThatCanBeImplicit(tupleExpression, assignment, typeAppearance, semanticModel, cancellationToken);
-                }
+                return IsExplicitThatCanBeImplicit(tupleExpression, assignment, typeAppearance, semanticModel, cancellationToken);
+            }
             case SyntaxKind.ForEachVariableStatement:
-                {
-                    var forEachStatement = (ForEachVariableStatementSyntax)tupleExpression.Parent;
+            {
+                var forEachStatement = (ForEachVariableStatementSyntax)tupleExpression.Parent;
 
-                    return IsExplicitThatCanBeImplicit(tupleExpression, forEachStatement, semanticModel);
-                }
+                return IsExplicitThatCanBeImplicit(tupleExpression, forEachStatement, semanticModel);
+            }
 #if DEBUG
             case SyntaxKind.Argument:
             case SyntaxKind.ArrayInitializerExpression:
@@ -614,20 +636,20 @@ internal static class CSharpTypeAnalysis
             case SyntaxKind.YieldReturnStatement:
             case SyntaxKind.ConditionalExpression:
             case SyntaxKind.ComplexElementInitializerExpression:
-                {
-                    SyntaxDebug.Assert(tupleExpression.ContainsDiagnostics || !tupleExpression.Arguments.Any(f => f.Expression.IsKind(SyntaxKind.DeclarationExpression)), tupleExpression);
-                    return false;
-                }
+            {
+                SyntaxDebug.Assert(tupleExpression.ContainsDiagnostics || !tupleExpression.Arguments.Any(f => f.Expression.IsKind(SyntaxKind.DeclarationExpression)), tupleExpression);
+                return false;
+            }
 #endif
             case null:
-                {
-                    return false;
-                }
+            {
+                return false;
+            }
             default:
-                {
-                    SyntaxDebug.Fail(tupleExpression.Parent);
-                    return false;
-                }
+            {
+                SyntaxDebug.Fail(tupleExpression.Parent);
+                return false;
+            }
         }
     }
 
@@ -762,49 +784,49 @@ internal static class CSharpTypeAnalysis
         switch (forEachStatement.Variable)
         {
             case DeclarationExpressionSyntax declarationExpression:
-                {
-                    TypeSyntax type = declarationExpression.Type;
+            {
+                TypeSyntax type = declarationExpression.Type;
 
-                    Debug.Assert(type is not null);
+                Debug.Assert(type is not null);
 
-                    if (type is null)
-                        return default;
+                if (type is null)
+                    return default;
 
-                    SyntaxDebug.Assert(type.IsVar, type);
+                SyntaxDebug.Assert(type.IsVar, type);
 
-                    if (type.IsVar)
-                        flags |= TypeAnalysisFlags.Implicit;
+                if (type.IsVar)
+                    flags |= TypeAnalysisFlags.Implicit;
 
-                    break;
-                }
+                break;
+            }
             case TupleExpressionSyntax tupleExpression:
+            {
+                foreach (ArgumentSyntax argument in tupleExpression.Arguments)
                 {
-                    foreach (ArgumentSyntax argument in tupleExpression.Arguments)
+                    SyntaxDebug.Assert(argument.Expression.IsKind(SyntaxKind.DeclarationExpression), argument.Expression);
+
+                    if (argument.Expression is DeclarationExpressionSyntax declarationExpression)
                     {
-                        SyntaxDebug.Assert(argument.Expression.IsKind(SyntaxKind.DeclarationExpression), argument.Expression);
+                        TypeSyntax type = declarationExpression.Type;
 
-                        if (argument.Expression is DeclarationExpressionSyntax declarationExpression)
+                        if (type.IsVar)
                         {
-                            TypeSyntax type = declarationExpression.Type;
-
-                            if (type.IsVar)
-                            {
-                                flags |= TypeAnalysisFlags.Implicit;
-                            }
-                            else
-                            {
-                                flags |= TypeAnalysisFlags.Explicit;
-                            }
+                            flags |= TypeAnalysisFlags.Implicit;
+                        }
+                        else
+                        {
+                            flags |= TypeAnalysisFlags.Explicit;
                         }
                     }
+                }
 
-                    break;
-                }
+                break;
+            }
             default:
-                {
-                    SyntaxDebug.Fail(forEachStatement.Variable);
-                    return default;
-                }
+            {
+                SyntaxDebug.Fail(forEachStatement.Variable);
+                return default;
+            }
         }
 
         ForEachStatementInfo info = semanticModel.GetForEachStatementInfo(forEachStatement);

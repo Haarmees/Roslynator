@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using Roslynator.CommandLine.Json;
 using Roslynator.CommandLine.Xml;
 using Roslynator.Diagnostics;
 using static Roslynator.Logger;
@@ -28,8 +29,6 @@ internal class AnalyzeCommand : MSBuildWorkspaceCommand<AnalyzeCommandResult>
 
     public override async Task<AnalyzeCommandResult> ExecuteAsync(ProjectOrSolution projectOrSolution, CancellationToken cancellationToken = default)
     {
-        AssemblyResolver.Register();
-
         var codeAnalyzerOptions = new CodeAnalyzerOptions(
             fileSystemFilter: FileSystemFilter,
             ignoreAnalyzerReferences: Options.IgnoreAnalyzerReferences,
@@ -56,7 +55,7 @@ internal class AnalyzeCommand : MSBuildWorkspaceCommand<AnalyzeCommandResult>
                 || analyzerAssembly.HasAnalyzers
                 || analyzerAssembly.HasFixers)
             {
-                WriteLine($"Add analyzer assembly '{analyzerAssembly.FullName}'", ConsoleColors.DarkGray, Verbosity.Detailed);
+                WriteLine($"Loaded analyzer assembly '{analyzerAssembly.FullName}'", ConsoleColors.DarkGray, Verbosity.Detailed);
             }
         };
 
@@ -98,8 +97,15 @@ internal class AnalyzeCommand : MSBuildWorkspaceCommand<AnalyzeCommandResult>
             && analysisResults.Any(f => f.Diagnostics.Any() || f.CompilerDiagnostics.Any()))
         {
             CultureInfo culture = (Options.Culture is not null) ? CultureInfo.GetCultureInfo(Options.Culture) : null;
-
-            DiagnosticXmlSerializer.Serialize(analysisResults, Options.Output, culture);
+            if (!string.IsNullOrWhiteSpace(Options.OutputFormat) && Options.OutputFormat.Equals("gitlab", StringComparison.CurrentCultureIgnoreCase))
+            {
+                DiagnosticGitLabJsonSerializer.Serialize(analysisResults, Options.Output, culture);
+            }
+            else
+            {
+                // Default output format is xml
+                DiagnosticXmlSerializer.Serialize(analysisResults, Options.Output, culture);
+            }
         }
     }
 
@@ -128,10 +134,5 @@ internal class AnalyzeCommand : MSBuildWorkspaceCommand<AnalyzeCommandResult>
 
         WriteLine(Verbosity.Minimal);
         WriteLine($"{totalCount} {((totalCount == 1) ? "diagnostic" : "diagnostics")} found", ConsoleColors.Green, Verbosity.Minimal);
-    }
-
-    protected override void OperationCanceled(OperationCanceledException ex)
-    {
-        WriteLine("Analysis was canceled.", Verbosity.Quiet);
     }
 }

@@ -11,7 +11,7 @@ using Roslynator.CSharp.SyntaxWalkers;
 
 namespace Roslynator.CSharp.Analysis.UnusedParameter;
 
-internal class UnusedParameterWalker : CSharpSyntaxNodeWalker
+internal class UnusedParameterWalker : TypeSyntaxWalker
 {
     [ThreadStatic]
     private static UnusedParameterWalker _cachedInstance;
@@ -68,13 +68,16 @@ internal class UnusedParameterWalker : CSharpSyntaxNodeWalker
 
     protected override void VisitType(TypeSyntax node)
     {
+        if (node is null)
+            return;
+
         switch (node.Kind())
         {
             case SyntaxKind.ArrayType:
-                {
-                    VisitArrayType((ArrayTypeSyntax)node);
-                    break;
-                }
+            {
+                VisitArrayType((ArrayTypeSyntax)node);
+                break;
+            }
             case SyntaxKind.AliasQualifiedName:
             case SyntaxKind.GenericName:
             case SyntaxKind.IdentifierName:
@@ -85,17 +88,17 @@ internal class UnusedParameterWalker : CSharpSyntaxNodeWalker
             case SyntaxKind.QualifiedName:
             case SyntaxKind.RefType:
             case SyntaxKind.TupleType:
-                {
-                    if (IsAnyTypeParameter)
-                        base.VisitType(node);
+            {
+                if (IsAnyTypeParameter)
+                    Visit(node);
 
-                    break;
-                }
+                break;
+            }
             default:
-                {
-                    base.VisitType(node);
-                    break;
-                }
+            {
+                Visit(node);
+                break;
+            }
         }
     }
 

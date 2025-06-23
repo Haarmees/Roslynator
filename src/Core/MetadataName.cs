@@ -22,8 +22,6 @@ public readonly struct MetadataName : IEquatable<MetadataName>
     /// <summary>
     /// Initializes a new instance of <see cref="MetadataName"/>.
     /// </summary>
-    /// <param name="containingNamespaces"></param>
-    /// <param name="name"></param>
     public MetadataName(IEnumerable<string> containingNamespaces, string name)
         : this(containingNamespaces, Array.Empty<string>(), name)
     {
@@ -38,9 +36,6 @@ public readonly struct MetadataName : IEquatable<MetadataName>
     /// <summary>
     /// Initializes a new instance of <see cref="MetadataName"/>.
     /// </summary>
-    /// <param name="containingNamespaces"></param>
-    /// <param name="containingTypes"></param>
-    /// <param name="name"></param>
     public MetadataName(IEnumerable<string> containingNamespaces, IEnumerable<string> containingTypes, string name)
     {
         if (containingNamespaces is null)
@@ -57,8 +52,6 @@ public readonly struct MetadataName : IEquatable<MetadataName>
     /// <summary>
     /// Initializes a new instance of <see cref="MetadataName"/>.
     /// </summary>
-    /// <param name="containingNamespaces"></param>
-    /// <param name="name"></param>
     public MetadataName(ImmutableArray<string> containingNamespaces, string name)
         : this(containingNamespaces, ImmutableArray<string>.Empty, name)
     {
@@ -67,9 +60,6 @@ public readonly struct MetadataName : IEquatable<MetadataName>
     /// <summary>
     /// Initializes a new instance of <see cref="MetadataName"/>.
     /// </summary>
-    /// <param name="containingNamespaces"></param>
-    /// <param name="containingTypes"></param>
-    /// <param name="name"></param>
     public MetadataName(ImmutableArray<string> containingNamespaces, ImmutableArray<string> containingTypes, string name)
     {
         if (containingNamespaces.IsDefault)
@@ -128,38 +118,38 @@ public readonly struct MetadataName : IEquatable<MetadataName>
         switch (typeQualificationStyle)
         {
             case SymbolDisplayTypeQualificationStyle.NameOnly:
-                {
-                    return Name;
-                }
+            {
+                return Name;
+            }
             case SymbolDisplayTypeQualificationStyle.NameAndContainingTypes:
-                {
-                    if (ContainingTypes.Any())
-                        return string.Join("+", ContainingTypes) + "+" + Name;
+            {
+                if (ContainingTypes.Any())
+                    return string.Join("+", ContainingTypes) + "+" + Name;
 
-                    return Name;
-                }
+                return Name;
+            }
             case SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces:
+            {
+                if (ContainingNamespaces.Any())
                 {
-                    if (ContainingNamespaces.Any())
-                    {
-                        string @namespace = string.Join(".", ContainingNamespaces);
+                    string @namespace = string.Join(".", ContainingNamespaces);
 
-                        if (ContainingTypes.Any())
-                        {
-                            return @namespace + "." + string.Join("+", ContainingTypes) + "+" + Name;
-                        }
-                        else
-                        {
-                            return @namespace + "." + Name;
-                        }
-                    }
-                    else if (ContainingTypes.Any())
+                    if (ContainingTypes.Any())
                     {
-                        return string.Join("+", ContainingTypes) + "+" + Name;
+                        return @namespace + "." + string.Join("+", ContainingTypes) + "+" + Name;
                     }
-
-                    return Name;
+                    else
+                    {
+                        return @namespace + "." + Name;
+                    }
                 }
+                else if (ContainingTypes.Any())
+                {
+                    return string.Join("+", ContainingTypes) + "+" + Name;
+                }
+
+                return Name;
+            }
         }
 
         throw new ArgumentException($"Unknown enum value '{typeQualificationStyle}'.", nameof(typeQualificationStyle));
@@ -219,7 +209,6 @@ public readonly struct MetadataName : IEquatable<MetadataName>
     /// <summary>
     /// Indicates whether this instance and a specified <see cref="MetadataName"/> are equal.
     /// </summary>
-    /// <param name="other"></param>
     public bool Equals(MetadataName other)
     {
         if (IsDefault)
@@ -305,7 +294,6 @@ public readonly struct MetadataName : IEquatable<MetadataName>
     /// <summary>
     /// Converts the string representation of a fully qualified metadata name to its <see cref="MetadataName"/> equivalent.
     /// </summary>
-    /// <param name="name"></param>
     /// <exception cref="ArgumentNullException"><paramref name="name"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentException"><paramref name="name"/> is empty or invalid.</exception>
     public static MetadataName Parse(string name)
@@ -317,8 +305,6 @@ public readonly struct MetadataName : IEquatable<MetadataName>
     /// Converts the string representation of a fully qualified metadata name to its <see cref="MetadataName"/> equivalent.
     /// A return value indicates whether the parsing succeeded.
     /// </summary>
-    /// <param name="name"></param>
-    /// <param name="metadataName"></param>
     public static bool TryParse(string name, out MetadataName metadataName)
     {
         metadataName = Parse(name, shouldThrow: false);

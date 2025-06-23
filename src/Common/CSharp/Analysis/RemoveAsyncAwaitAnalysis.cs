@@ -6,8 +6,6 @@ using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Roslynator;
-using Roslynator.CSharp;
 using Roslynator.CSharp.Syntax;
 using Roslynator.CSharp.SyntaxWalkers;
 
@@ -125,21 +123,21 @@ internal readonly struct RemoveAsyncAwaitAnalysis : IDisposable
         switch (body.Kind())
         {
             case SyntaxKind.Block:
-                {
-                    return AnalyzeMethodBody(lambda, (BlockSyntax)body, semanticModel, cancellationToken);
-                }
+            {
+                return AnalyzeMethodBody(lambda, (BlockSyntax)body, semanticModel, cancellationToken);
+            }
             case SyntaxKind.AwaitExpression:
+            {
+                var awaitExpression = (AwaitExpressionSyntax)body;
+
+                if (!AwaitExpressionWalker.ContainsAwaitExpression(awaitExpression.Expression)
+                    && VerifyTypes(lambda, awaitExpression, semanticModel, cancellationToken))
                 {
-                    var awaitExpression = (AwaitExpressionSyntax)body;
-
-                    if (!AwaitExpressionWalker.ContainsAwaitExpression(awaitExpression.Expression)
-                        && VerifyTypes(lambda, awaitExpression, semanticModel, cancellationToken))
-                    {
-                        return new RemoveAsyncAwaitAnalysis(awaitExpression);
-                    }
-
-                    break;
+                    return new RemoveAsyncAwaitAnalysis(awaitExpression);
                 }
+
+                break;
+            }
         }
 
         return default;
@@ -175,84 +173,84 @@ internal readonly struct RemoveAsyncAwaitAnalysis : IDisposable
         switch (statement.Kind())
         {
             case SyntaxKind.ReturnStatement:
+            {
+                var returnStatement = (ReturnStatementSyntax)statement;
+
+                AwaitExpressionSyntax awaitExpression = GetAwaitExpression(returnStatement);
+
+                if (awaitExpression is null)
+                    return default;
+
+                AwaitExpressionWalker walker = VisitStatements();
+
+                HashSet<AwaitExpressionSyntax> awaitExpressions = walker.AwaitExpressions;
+
+                if (awaitExpressions.Count == 1)
                 {
-                    var returnStatement = (ReturnStatementSyntax)statement;
+                    if (VerifyTypes(node, awaitExpression, semanticModel, cancellationToken))
+                        return new RemoveAsyncAwaitAnalysis(walker);
+                }
+                else if (awaitExpressions.Count > 1)
+                {
+                    StatementSyntax prevStatement = statements[statements.IndexOf(returnStatement) - 1];
 
-                    AwaitExpressionSyntax awaitExpression = GetAwaitExpression(returnStatement);
-
-                    if (awaitExpression is null)
-                        return default;
-
-                    AwaitExpressionWalker walker = VisitStatements();
-
-                    HashSet<AwaitExpressionSyntax> awaitExpressions = walker.AwaitExpressions;
-
-                    if (awaitExpressions.Count == 1)
+                    switch (prevStatement.Kind())
                     {
-                        if (VerifyTypes(node, awaitExpression, semanticModel, cancellationToken))
-                            return new RemoveAsyncAwaitAnalysis(walker);
-                    }
-                    else if (awaitExpressions.Count > 1)
-                    {
-                        StatementSyntax prevStatement = statements[statements.IndexOf(returnStatement) - 1];
-
-                        switch (prevStatement.Kind())
+                        case SyntaxKind.IfStatement:
                         {
-                            case SyntaxKind.IfStatement:
-                                {
-                                    if (VerifyIfStatement((IfStatementSyntax)prevStatement, awaitExpressions.Count - 1, endsWithElse: false)
-                                        && VerifyTypes(node, awaitExpressions, semanticModel, cancellationToken))
-                                    {
-                                        return new RemoveAsyncAwaitAnalysis(walker);
-                                    }
+                            if (VerifyIfStatement((IfStatementSyntax)prevStatement, awaitExpressions.Count - 1, endsWithElse: false)
+                                && VerifyTypes(node, awaitExpressions, semanticModel, cancellationToken))
+                            {
+                                return new RemoveAsyncAwaitAnalysis(walker);
+                            }
 
-                                    break;
-                                }
-                            case SyntaxKind.SwitchStatement:
-                                {
-                                    if (VerifySwitchStatement((SwitchStatementSyntax)prevStatement, awaitExpressions.Count - 1, containsDefaultSection: false)
-                                        && VerifyTypes(node, awaitExpressions, semanticModel, cancellationToken))
-                                    {
-                                        return new RemoveAsyncAwaitAnalysis(walker);
-                                    }
+                            break;
+                        }
+                        case SyntaxKind.SwitchStatement:
+                        {
+                            if (VerifySwitchStatement((SwitchStatementSyntax)prevStatement, awaitExpressions.Count - 1, containsDefaultSection: false)
+                                && VerifyTypes(node, awaitExpressions, semanticModel, cancellationToken))
+                            {
+                                return new RemoveAsyncAwaitAnalysis(walker);
+                            }
 
-                                    break;
-                                }
+                            break;
                         }
                     }
-
-                    return default;
                 }
+
+                return default;
+            }
             case SyntaxKind.IfStatement:
+            {
+                AwaitExpressionWalker walker = VisitStatements();
+
+                HashSet<AwaitExpressionSyntax> awaitExpressions = walker.AwaitExpressions;
+
+                if (awaitExpressions.Count > 0
+                    && VerifyIfStatement((IfStatementSyntax)statement, awaitExpressions.Count, endsWithElse: true)
+                    && VerifyTypes(node, awaitExpressions, semanticModel, cancellationToken))
                 {
-                    AwaitExpressionWalker walker = VisitStatements();
-
-                    HashSet<AwaitExpressionSyntax> awaitExpressions = walker.AwaitExpressions;
-
-                    if (awaitExpressions.Count > 0
-                        && VerifyIfStatement((IfStatementSyntax)statement, awaitExpressions.Count, endsWithElse: true)
-                        && VerifyTypes(node, awaitExpressions, semanticModel, cancellationToken))
-                    {
-                        return new RemoveAsyncAwaitAnalysis(walker);
-                    }
-
-                    return default;
+                    return new RemoveAsyncAwaitAnalysis(walker);
                 }
+
+                return default;
+            }
             case SyntaxKind.SwitchStatement:
+            {
+                AwaitExpressionWalker walker = VisitStatements();
+
+                HashSet<AwaitExpressionSyntax> awaitExpressions = walker.AwaitExpressions;
+
+                if (awaitExpressions.Count > 0
+                    && VerifySwitchStatement((SwitchStatementSyntax)statement, awaitExpressions.Count, containsDefaultSection: true)
+                    && VerifyTypes(node, awaitExpressions, semanticModel, cancellationToken))
                 {
-                    AwaitExpressionWalker walker = VisitStatements();
-
-                    HashSet<AwaitExpressionSyntax> awaitExpressions = walker.AwaitExpressions;
-
-                    if (awaitExpressions.Count > 0
-                        && VerifySwitchStatement((SwitchStatementSyntax)statement, awaitExpressions.Count, containsDefaultSection: true)
-                        && VerifyTypes(node, awaitExpressions, semanticModel, cancellationToken))
-                    {
-                        return new RemoveAsyncAwaitAnalysis(walker);
-                    }
-
-                    return default;
+                    return new RemoveAsyncAwaitAnalysis(walker);
                 }
+
+                return default;
+            }
         }
 
         return default;
@@ -364,7 +362,7 @@ internal readonly struct RemoveAsyncAwaitAnalysis : IDisposable
 
         ITypeSymbol returnType = methodSymbol.ReturnType;
 
-        if (returnType?.OriginalDefinition.EqualsOrInheritsFrom(MetadataNames.System_Threading_Tasks_Task_T) != true)
+        if (returnType?.OriginalDefinition.IsAwaitable(semanticModel, node.SpanStart) != true)
             return false;
 
         ITypeSymbol typeArgument = ((INamedTypeSymbol)returnType).TypeArguments.SingleOrDefault(shouldThrow: false);
@@ -374,7 +372,7 @@ internal readonly struct RemoveAsyncAwaitAnalysis : IDisposable
 
         foreach (AwaitExpressionSyntax awaitExpression in awaitExpressions)
         {
-            if (!VerifyAwaitType(awaitExpression, typeArgument, semanticModel, cancellationToken))
+            if (!VerifyAwaitType(awaitExpression, returnType, typeArgument, semanticModel, cancellationToken))
                 return false;
         }
 
@@ -394,7 +392,7 @@ internal readonly struct RemoveAsyncAwaitAnalysis : IDisposable
 
         ITypeSymbol returnType = methodSymbol.ReturnType;
 
-        if (returnType?.OriginalDefinition.EqualsOrInheritsFrom(MetadataNames.System_Threading_Tasks_Task_T) != true)
+        if (returnType?.OriginalDefinition.IsAwaitable(semanticModel, node.SpanStart) != true)
             return false;
 
         ITypeSymbol typeArgument = ((INamedTypeSymbol)returnType).TypeArguments.SingleOrDefault(shouldThrow: false);
@@ -402,10 +400,15 @@ internal readonly struct RemoveAsyncAwaitAnalysis : IDisposable
         if (typeArgument is null)
             return false;
 
-        return VerifyAwaitType(awaitExpression, typeArgument, semanticModel, cancellationToken);
+        return VerifyAwaitType(awaitExpression, returnType, typeArgument, semanticModel, cancellationToken);
     }
 
-    private static bool VerifyAwaitType(AwaitExpressionSyntax awaitExpression, ITypeSymbol typeArgument, SemanticModel semanticModel, CancellationToken cancellationToken)
+    private static bool VerifyAwaitType(
+        AwaitExpressionSyntax awaitExpression,
+        ITypeSymbol returnType,
+        ITypeSymbol typeArgument,
+        SemanticModel semanticModel,
+        CancellationToken cancellationToken)
     {
         if (!SymbolEqualityComparer.Default.Equals(typeArgument, semanticModel.GetTypeSymbol(awaitExpression, cancellationToken)))
             return false;
@@ -417,15 +420,13 @@ internal readonly struct RemoveAsyncAwaitAnalysis : IDisposable
         if (expressionTypeSymbol is null)
             return false;
 
-        if (expressionTypeSymbol.OriginalDefinition.EqualsOrInheritsFrom(MetadataNames.System_Threading_Tasks_Task_T))
+        if (SymbolEqualityComparer.Default.Equals(returnType, expressionTypeSymbol))
             return true;
 
         SimpleMemberInvocationExpressionInfo invocationInfo = SyntaxInfo.SimpleMemberInvocationExpressionInfo(expression);
 
-        return invocationInfo.Success
-            && invocationInfo.Arguments.Count == 1
-            && invocationInfo.NameText == "ConfigureAwait"
-            && expressionTypeSymbol.OriginalDefinition.HasMetadataName(MetadataNames.System_Runtime_CompilerServices_ConfiguredTaskAwaitable_T);
+        return invocationInfo is { Success: true, Arguments.Count: 1, NameText: "ConfigureAwait" }
+            && SymbolEqualityComparer.Default.Equals(returnType, semanticModel.GetTypeSymbol(invocationInfo.Expression, cancellationToken));
     }
 
     private static IMethodSymbol GetMethodSymbol(

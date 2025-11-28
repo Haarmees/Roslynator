@@ -23,8 +23,6 @@ namespace Roslynator.CommandLine
 
         public override async Task<SuppressCommandResult> ExecuteAsync(ProjectOrSolution projectOrSolution, CancellationToken cancellationToken = default)
         {
-            AssemblyResolver.Register();
-            
             var codeWarningSuppressorOptions = new CodeWarningSuppressorOptions(
                 ignoreAnalyzerReferences: Options.IgnoreAnalyzerReferences,
                 severityLevel: SeverityLevel,
